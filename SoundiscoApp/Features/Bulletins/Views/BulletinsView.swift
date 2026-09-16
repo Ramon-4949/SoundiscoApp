@@ -13,15 +13,7 @@ struct BulletinsView: View {
             } else {
                 ForEach(model.items) { item in
                     NavigationLink {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 20) {
-                                Text(item.asunto).font(.title.bold())
-                                if let date = AgendaDate.parse(item.fecha_publicacion) {
-                                    Text(date.formatted(date: .abbreviated, time: .shortened)).font(.subheadline).foregroundStyle(.secondary)
-                                }
-                                Text(item.mensaje).textSelection(.enabled)
-                            }.frame(maxWidth: .infinity, alignment: .leading).padding(24)
-                        }.navigationTitle("Comunicado").navigationBarTitleDisplayMode(.inline)
+                        BulletinDetailView(bulletin: item)
                     } label: {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(item.asunto).font(.headline)

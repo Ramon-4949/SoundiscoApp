@@ -73,7 +73,12 @@ struct AdminDashboardView: View {
                 }
 
                 ForEach(model.asignacionesFiltradas) { asignacion in
-                    AdminAssignmentRow(asignacion: asignacion)
+                    NavigationLink {
+                        AssignmentDetailView(assignment: Assignment(asignacion), allowsChecklistUpdates: false)
+                    } label: {
+                        AdminAssignmentRow(asignacion: asignacion)
+                    }
+                    .buttonStyle(.plain)
                 }
             } header: {
                 HStack {
@@ -184,26 +189,12 @@ private struct AdminAssignmentRow: View {
             } else {
                 Label("Sin fecha límite", systemImage: "calendar.badge.exclamationmark")
             }
-            DisclosureGroup("Detalle") {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Responsables").font(.subheadline.bold())
-                    Text(asignacion.asignadoA.isEmpty ? "Sin responsables" : asignacion.asignadoA.map { $0.nombre ?? "Empleado sin nombre" }.joined(separator: ", "))
-                    if let instrucciones = asignacion.instruccionesOpcionales, !instrucciones.isEmpty {
-                        Text(instrucciones)
-                    }
-                    if asignacion.tipoFlujo == .operacionesCampo {
-                        ForEach(asignacion.hitos.sorted { $0.orden < $1.orden }) { hito in
-                            Label {
-                                Text("\(hito.scheduleLabel) · \(hito.titulo)")
-                            } icon: {
-                                Image(systemName: hito.estado == .completado ? "checkmark.circle.fill" :
-                                      hito.estaHabilitado(en: asignacion.hitos) ? "clock" : "lock")
-                            }
-                            .accessibilityLabel("\(hito.titulo), \(hito.estado.rawValue.replacingOccurrences(of: "_", with: " "))")
-                        }
-                    }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+            HStack {
+                Text("Ver detalle")
+                Spacer()
+                Image(systemName: "chevron.right")
             }
+            .font(.subheadline.weight(.medium)).foregroundStyle(Brand.red)
         }
         .font(.subheadline)
         .padding(.vertical, 10)

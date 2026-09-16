@@ -23,7 +23,7 @@ final class AssignmentsViewModel: ObservableObject {
             var offset = 0
             while true {
                 let rows: [AssignmentLink] = try await client.from("asignacion_equipo")
-                    .select("asignacion_id,asignaciones(*,hitos_itinerario(*))")
+                    .select("asignacion_id,asignaciones(*,hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol)))")
                     .eq("perfil_id", value: userID).order("asignacion_id")
                     .range(from: offset, to: offset + 199).execute().value
                 guard !Task.isCancelled else { return }

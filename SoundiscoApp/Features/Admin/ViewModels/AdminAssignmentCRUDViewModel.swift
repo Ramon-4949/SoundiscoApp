@@ -6,12 +6,43 @@ import Supabase
 final class AdminAssignmentCRUDViewModel: ObservableObject {
     @Published private(set) var isSaving = false
     @Published private(set) var lastSavedAssignment: Asignacion?
+    @Published private(set) var empleados: [Empleado] = []
+    @Published private(set) var isLoadingEmployees = false
     @Published private(set) var errorMessage: String?
 
     private let client: SupabaseClient
 
     init(client: SupabaseClient? = nil) {
         self.client = client ?? SupabaseClientFactory.shared
+    }
+
+    func loadEmployees() async {
+        guard !isLoadingEmployees else { return }
+        isLoadingEmployees = true
+        errorMessage = nil
+        defer { isLoadingEmployees = false }
+
+        do {
+            var result: [Empleado] = []
+            var offset = 0
+            while true {
+                let page: [Empleado] = try await client
+                    .from("perfiles")
+                    .select("id,nombre_completo,rol")
+                    .order("nombre_completo")
+                    .range(from: offset, to: offset + 199)
+                    .execute()
+                    .value
+                guard !Task.isCancelled else { return }
+                result += page
+                if page.count < 200 { break }
+                offset += 200
+            }
+            empleados = result
+        } catch {
+            guard !Task.isCancelled else { return }
+            errorMessage = error.localizedDescription
+        }
     }
 
     @discardableResult
@@ -90,7 +121,7 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
             .from("asignaciones")
             .select(
                 "id,tipo_flujo,titulo,ubicacion,nivel_prioridad,instrucciones,estado,fecha_creacion,fecha_limite," +
-                "hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol,avatar_url))"
+                "hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol))"
             )
             .eq("id", value: id)
             .single()
@@ -131,6 +162,9 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
 
         var foundIncomplete = false
         for milestone in ordered {
+            guard !milestone.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw AdminDataError.itinerarioRequerido
+            }
             if foundIncomplete && milestone.estado != .bloqueado {
                 throw AdminDataError.secuenciaHitosInvalida
             }
@@ -183,6 +217,7 @@ private struct MilestoneMutationPayload: Encodable {
     let orden: Int
     let titulo: String
     let horaEstimada: String
+    let fechaProgramada: Date
     let estado: EstadoHito
     let notasIncidencias: String?
 
@@ -191,6 +226,7 @@ private struct MilestoneMutationPayload: Encodable {
         orden = draft.orden
         titulo = draft.titulo.trimmingCharacters(in: .whitespacesAndNewlines)
         horaEstimada = draft.horaEstimada
+        fechaProgramada = draft.fechaProgramada
         estado = draft.estado
         notasIncidencias = draft.notasIncidencias
     }
@@ -200,6 +236,7 @@ private struct MilestoneMutationPayload: Encodable {
         case orden
         case titulo = "descripcion"
         case horaEstimada = "hora_estimada"
+        case fechaProgramada = "fecha_programada"
         case estado = "estado_hito"
         case notasIncidencias = "notas_incidencias"
     }

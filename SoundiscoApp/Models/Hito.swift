@@ -12,6 +12,7 @@ struct Hito: Codable, Identifiable, Hashable, Sendable {
     var orden: Int
     var titulo: String
     var horaEstimada: String
+    var fechaProgramada: Date?
     var estado: EstadoHito
     var notasIncidencias: String?
 
@@ -21,6 +22,7 @@ struct Hito: Codable, Identifiable, Hashable, Sendable {
         case orden
         case titulo = "descripcion"
         case horaEstimada = "hora_estimada"
+        case fechaProgramada = "fecha_programada"
         case estado = "estado_hito"
         case notasIncidencias = "notas_incidencias"
     }
@@ -37,6 +39,7 @@ struct HitoDraft: Codable, Hashable, Sendable {
     var orden: Int
     var titulo: String
     var horaEstimada: String
+    var fechaProgramada: Date
     var estado: EstadoHito
     var notasIncidencias: String?
 
@@ -44,15 +47,24 @@ struct HitoDraft: Codable, Hashable, Sendable {
         id: UUID = UUID(),
         orden: Int,
         titulo: String,
-        horaEstimada: String,
+        fechaProgramada: Date,
         estado: EstadoHito = .bloqueado,
         notasIncidencias: String? = nil
     ) {
         self.id = id
         self.orden = orden
         self.titulo = titulo
-        self.horaEstimada = horaEstimada
+        self.fechaProgramada = fechaProgramada
+        self.horaEstimada = Self.sqlTime(from: fechaProgramada)
         self.estado = estado
         self.notasIncidencias = notasIncidencias
+    }
+
+    private static func sqlTime(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: date)
     }
 }

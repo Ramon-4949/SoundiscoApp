@@ -9,10 +9,22 @@ final class AdminDashboardViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
     @Published var filtro: FiltroAsignacionAdmin = .todas
+    @Published var busqueda = ""
 
     private let client: SupabaseClient
 
     var asignacionesFiltradas: [Asignacion] {
+        let resultado = asignacionesPorEstado
+        let consulta = busqueda.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !consulta.isEmpty else { return resultado }
+        return resultado.filter {
+            $0.titulo.localizedStandardContains(consulta) ||
+            ($0.ubicacion?.localizedStandardContains(consulta) ?? false) ||
+            $0.asignadoA.contains { $0.nombre?.localizedStandardContains(consulta) ?? false }
+        }
+    }
+
+    private var asignacionesPorEstado: [Asignacion] {
         switch filtro {
         case .todas:
             return asignaciones
@@ -43,7 +55,7 @@ final class AdminDashboardViewModel: ObservableObject {
                 .from("asignaciones")
                 .select(
                     "id,tipo_flujo,titulo,ubicacion,nivel_prioridad,instrucciones,estado,fecha_creacion,fecha_limite," +
-                    "hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol,avatar_url))"
+                    "hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol))"
                 )
                 .order("fecha_creacion", ascending: false)
                 .execute()

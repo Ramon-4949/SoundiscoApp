@@ -1,7 +1,15 @@
 import SwiftUI
 
 struct BulletinDetailView: View {
-    let bulletin: Bulletin
+    @Environment(\.isAdministrator) private var isAdministrator
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var model = AdminMessageViewModel()
+    @State private var bulletin: Bulletin
+    @State private var editor: Bulletin?
+    @State private var confirmDelete = false
+    @State private var failure: String?
+
+    init(bulletin: Bulletin) { _bulletin = State(initialValue: bulletin) }
 
     var body: some View {
         ScrollView {
@@ -42,6 +50,36 @@ struct BulletinDetailView: View {
         .navigationTitle("Detalle del comunicado")
         .navigationBarTitleDisplayMode(.inline)
         .tint(Brand.red)
+        .toolbar {
+            if isAdministrator {
+                Menu {
+                    Button("Editar", systemImage: "pencil") { editor = bulletin }
+                    Button("Eliminar", systemImage: "trash", role: .destructive) { confirmDelete = true }
+                } label: { Label("Administrar comunicado", systemImage: "ellipsis.circle") }
+                .disabled(model.isLoading)
+            }
+        }
+        .sheet(item: $editor) { item in
+            NavigationStack {
+                AdminMessageComposerView(editing: item, onSaved: { saved in
+                    bulletin = Bulletin(id: saved.id, asunto: saved.asunto, mensaje: saved.cuerpoMensaje,
+                                        fecha_publicacion: ISO8601DateFormatter().string(from: saved.fechaEnvio))
+                }, onComplete: {})
+            }
+        }
+        .confirmationDialog("¿Eliminar este comunicado?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Eliminar comunicado", role: .destructive) {
+                Task {
+                    do {
+                        try await model.deleteMessage(id: bulletin.id)
+                        dismiss()
+                    } catch { failure = error.localizedDescription }
+                }
+            }
+        } message: { Text("Dejará de estar disponible para toda la plantilla. Esta acción no se puede deshacer.") }
+        .alert("No se pudo eliminar", isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
+            Button("Aceptar", role: .cancel) { failure = nil }
+        } message: { Text(failure ?? "") }
     }
 }
 

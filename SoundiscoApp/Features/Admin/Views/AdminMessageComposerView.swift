@@ -8,6 +8,16 @@ struct AdminMessageComposerView: View {
     @State private var alertMessage: String?
     @FocusState private var focused: Field?
     let onComplete: () -> Void
+    private let editing: Bulletin?
+    private let onSaved: ((Mensaje) -> Void)?
+
+    init(editing: Bulletin? = nil, onSaved: ((Mensaje) -> Void)? = nil, onComplete: @escaping () -> Void) {
+        self.editing = editing
+        self.onSaved = onSaved
+        self.onComplete = onComplete
+        _asunto = State(initialValue: editing?.asunto ?? "")
+        _cuerpo = State(initialValue: editing?.mensaje ?? "")
+    }
 
     private enum Field { case asunto, cuerpo }
 
@@ -38,7 +48,7 @@ struct AdminMessageComposerView: View {
                     HStack {
                         Spacer()
                         if model.isLoading { ProgressView().tint(.white) }
-                        Label(model.isLoading ? "Publicando…" : "Publicar comunicado", systemImage: "paperplane.fill")
+                        Label(model.isLoading ? "Guardando…" : editing == nil ? "Publicar comunicado" : "Guardar cambios", systemImage: "paperplane.fill")
                             .font(.headline)
                         Spacer()
                     }
@@ -48,11 +58,18 @@ struct AdminMessageComposerView: View {
                 .foregroundStyle(canPublish ? Color.white : Color.secondary)
             }
         }
-        .navigationTitle("Crear comunicado")
+        .disabled(model.isLoading)
+        .interactiveDismissDisabled(model.isLoading)
+        .navigationTitle(editing == nil ? "Crear comunicado" : "Editar comunicado")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancelar") { dismiss() }.disabled(model.isLoading)
+            }
+        }
         .tint(Brand.red)
         .scrollDismissesKeyboard(.interactively)
-        .alert("No se pudo publicar", isPresented: alertBinding) {
+        .alert("No se pudo guardar", isPresented: alertBinding) {
             Button("Aceptar", role: .cancel) { alertMessage = nil }
         } message: {
             Text(alertMessage ?? "Error desconocido")
@@ -69,9 +86,14 @@ struct AdminMessageComposerView: View {
     }
 
     private func publish() async {
+        guard canPublish, !model.isLoading else { return }
         focused = nil
         do {
-            _ = try await model.publishMessage(MensajeDraft(asunto: asunto, cuerpoMensaje: cuerpo))
+            let draft = MensajeDraft(asunto: asunto, cuerpoMensaje: cuerpo)
+            let saved: Mensaje
+            if let editing { saved = try await model.editMessage(id: editing.id, draft: draft) }
+            else { saved = try await model.publishMessage(draft) }
+            onSaved?(saved)
             onComplete()
             dismiss()
         } catch {

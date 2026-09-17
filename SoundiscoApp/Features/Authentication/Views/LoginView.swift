@@ -27,13 +27,18 @@ struct LoginView: View {
                 VStack(spacing: 12) {
                     PrimaryAction(title: model.busy ? "Iniciando sesión…" : "Iniciar sesión", action: { model.signIn(using: auth) })
                     Button {
-                        model.notice = AuthNotice(title: "Acceso con Face ID", message: "Primero inicia sesión con tu correo y contraseña para habilitar el acceso biométrico.")
+                        Task { await auth.signInWithBiometrics() }
                     } label: {
-                        Label("Ingresar con Face ID", systemImage: "faceid")
-                            .font(.headline).frame(maxWidth: .infinity, minHeight: 54)
+                        HStack(spacing: 10) {
+                            if auth.biometricLoginBusy { ProgressView() }
+                            Label(auth.biometricLoginBusy ? "Verificando identidad…" : "Entrar con Face ID", systemImage: "faceid")
+                        }
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, minHeight: 54)
                     }
                     .foregroundStyle(.primary)
                     .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                    .accessibilityIdentifier("login.faceID")
                 }
                 VStack(spacing: 8) {
                     Text("¿No tienes una cuenta?").foregroundStyle(.secondary)
@@ -43,7 +48,10 @@ struct LoginView: View {
             .frame(maxWidth: 440).padding(.horizontal, 24).frame(maxWidth: .infinity)
         }
         .scrollDismissesKeyboard(.interactively)
-        .disabled(model.busy)
+        .disabled(model.busy || auth.biometricBusy || auth.biometricLoginBusy || auth.signingOut)
+        .onAppear {
+            if auth.isLocked, let email = auth.userEmail { model.email = email }
+        }
         .background(Color(uiColor: .systemGroupedBackground))
         .sheet(isPresented: $recoveryPresented) { PasswordRecoveryView(initialEmail: model.email) }
         .alert(item: $model.notice) { item in

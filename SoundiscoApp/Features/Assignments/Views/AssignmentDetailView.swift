@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AssignmentDetailView: View {
+    @Environment(\.isAdministrator) private var isAdministrator
     @StateObject private var model: AssignmentDetailViewModel
     private let allowsChecklistUpdates: Bool
 
@@ -48,6 +49,15 @@ struct AssignmentDetailView: View {
         .navigationTitle("Detalle de asignación")
         .navigationBarTitleDisplayMode(.inline)
         .tint(Brand.red)
+        .toolbar {
+            if isAdministrator {
+                ToolbarItem(placement: .topBarTrailing) {
+                    AdminAssignmentMenu(assignmentID: model.assignment.id) {
+                        Task { await model.reload() }
+                    }
+                }
+            }
+        }
         .task { await model.reload() }
         .refreshable { await model.reload() }
         .alert("No se pudo actualizar", isPresented: errorBinding) {

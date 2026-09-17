@@ -97,7 +97,7 @@ struct AdminDashboardView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink { NotificationsView() } label: {
-                    Label("Notificaciones", systemImage: "bell")
+                    NotificationBell()
                 }
                 Button { searching = true } label: {
                     Label("Buscar", systemImage: "magnifyingglass")

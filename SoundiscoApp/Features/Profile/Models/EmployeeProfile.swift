@@ -5,4 +5,5 @@ struct EmployeeProfile: Decodable {
     let nombre_completo: String?
     let rol: String?
     let telefono: String?
+    let cargo: String?
 }

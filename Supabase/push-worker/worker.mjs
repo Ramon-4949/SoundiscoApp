@@ -1,0 +1,150 @@
+import http2 from 'node:http2';
+import { createPrivateKey, sign } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
+
+export function providerToken(key, keyID, teamID, now = Date.now()) {
+  const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const unsigned = encode({ alg: 'ES256', kid: keyID }) + '.' +
+    encode({ iss: teamID, iat: Math.floor(now / 1000) });
+  return unsigned + '.' + sign('sha256', Buffer.from(unsigned),
+    { key, dsaEncoding: 'ieee-p1363' }).toString('base64url');
+}
+
+export function payload(job) {
+  return {
+    aps: {
+      alert: { title: 'SounDisco', body: 'Tienes una actualización. Abre la app para ver los detalles.' },
+      sound: 'default', 'thread-id': 'soundisco-notifications',
+    },
+    notification_id: job.notification_id,
+    recipient_id: job.recipient,
+  };
+}
+
+export async function rpc(config, name, params = {}) {
+  const response = await fetch(config.url + '/rest/v1/rpc/' + name, {
+    method: 'POST', redirect: 'error',
+    headers: { apikey: config.serviceKey, Authorization: 'Bearer ' + config.serviceKey,
+      'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!response.ok) throw new Error('Supabase RPC ' + name + ' failed: ' + response.status);
+  const body = await response.text();
+  return body ? JSON.parse(body) : null;
+}
+
+export function sendPush(job, config, jwt, connect = http2.connect) {
+  return new Promise((resolve, reject) => {
+    if (!['sandbox', 'production'].includes(job.environment)) {
+      reject(new Error('Invalid APNs environment'));
+      return;
+    }
+    const host = job.environment === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
+    const client = connect('https://' + host);
+    let settled = false;
+    const finish = (error, result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      client.destroy();
+      if (error) reject(error); else resolve(result);
+    };
+    const timer = setTimeout(() => finish(new Error('APNs timeout')), 15000);
+    client.on('error', () => finish(new Error('APNs connection error')));
+    let request;
+    try {
+      request = client.request({
+        ':method': 'POST', ':path': '/3/device/' + job.token,
+        authorization: 'bearer ' + jwt, 'apns-topic': config.bundleID,
+        'apns-push-type': 'alert', 'apns-priority': '10',
+        'apns-collapse-id': job.notification_id,
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + 3600),
+      });
+    } catch {
+      finish(new Error('APNs request error'));
+      return;
+    }
+    let status = 0;
+    let body = '';
+    request.on('response', headers => { status = Number(headers[':status']); });
+    request.setEncoding('utf8');
+    request.on('data', chunk => { body += chunk; });
+    request.on('error', () => finish(new Error('APNs stream error')));
+    request.on('end', () => {
+      let reason;
+      try { reason = JSON.parse(body).reason; } catch { reason = 'HTTP ' + status; }
+      // Only Unregistered invalidates a device. Topic/environment mistakes do not.
+      finish(null, { success: status === 200,
+        error: status === 200 ? null : String(reason ?? 'HTTP ' + status).slice(0, 100),
+        invalid: status === 410 && reason === 'Unregistered' });
+    });
+    request.end(JSON.stringify(payload(job)));
+  });
+}
+
+export async function runBatch(config, key, dependencies = {}) {
+  const call = dependencies.rpc ?? rpc;
+  const send = dependencies.sendPush ?? sendPush;
+  await call(config, 'generate_notification_reminders');
+  const jobs = await call(config, 'claim_notification_pushes');
+  const jwt = providerToken(key, config.keyID, config.teamID);
+  let acknowledgmentFailures = 0;
+  for (let offset = 0; offset < jobs.length; offset += 5) {
+    const results = await Promise.allSettled(jobs.slice(offset, offset + 5).map(async job => {
+      let result;
+      try { result = await send(job, config, jwt); }
+      catch { result = { success: false, error: 'Transport error', invalid: false }; }
+      await call(config, 'finish_notification_push', {
+        p_job: job.job_id, p_lease: job.lease, p_success: result.success,
+        p_error: result.error, p_invalid: result.invalid,
+      });
+    }));
+    acknowledgmentFailures += results.filter(result => result.status === 'rejected').length;
+  }
+  if (acknowledgmentFailures) throw new Error('Push acknowledgments failed: ' + acknowledgmentFailures);
+  return jobs.length;
+}
+
+export function configuration(env = process.env) {
+  for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','APNS_KEY_ID','APNS_TEAM_ID','APNS_KEY_PATH','APNS_BUNDLE_ID']) {
+    if (!env[name]) throw new Error('Missing configuration: ' + name);
+  }
+  const url = new URL(env.SUPABASE_URL);
+  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
+    throw new Error('SUPABASE_URL must be an HTTPS origin');
+  }
+  return {
+    url: url.origin, serviceKey: env.SUPABASE_SERVICE_ROLE_KEY,
+    keyID: env.APNS_KEY_ID, teamID: env.APNS_TEAM_ID,
+    bundleID: env.APNS_BUNDLE_ID, keyPath: env.APNS_KEY_PATH,
+  };
+}
+
+async function main() {
+  const config = configuration();
+  const key = createPrivateKey(readFileSync(config.keyPath));
+  if (key.asymmetricKeyType !== 'ec' || key.asymmetricKeyDetails?.namedCurve !== 'prime256v1') {
+    throw new Error('APNs requires a P-256 signing key');
+  }
+  const shutdown = new AbortController();
+  for (const signal of ['SIGTERM','SIGINT']) process.on(signal, () => shutdown.abort());
+  while (!shutdown.signal.aborted) {
+    try {
+      const count = await runBatch(config, key);
+      console.info(JSON.stringify({ processed: count, at: new Date().toISOString() }));
+    } catch {
+      // No tokens, user IDs, request headers or remote response contents in logs.
+      console.error('Push cycle failed. Check server configuration and private outbox status.');
+      if (process.argv.includes('--once')) { process.exitCode = 1; return; }
+    }
+    if (process.argv.includes('--once')) return;
+    try { await delay(10000, undefined, { signal: shutdown.signal }); } catch { break; }
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(() => { console.error('Worker startup failed. Check required configuration and APNs key.'); process.exitCode = 1; });
+}

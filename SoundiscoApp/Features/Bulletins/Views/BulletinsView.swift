@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct BulletinsView: View {
+    @Environment(\.isAdministrator) private var isAdministrator
     @StateObject private var model = BulletinsViewModel()
+    @State private var creating = false
     var body: some View {
         List {
             if model.loading { ProgressView("Cargando comunicados…") }
@@ -24,5 +26,13 @@ struct BulletinsView: View {
             }
         }
         .navigationTitle("Comunicados").task { await model.load() }.refreshable { await model.load() }
+        .toolbar {
+            if isAdministrator {
+                Button { creating = true } label: { Label("Crear comunicado", systemImage: "square.and.pencil") }
+            }
+        }
+        .sheet(isPresented: $creating, onDismiss: { Task { await model.load() } }) {
+            NavigationStack { AdminMessageComposerView(onComplete: {}) }
+        }
     }
 }

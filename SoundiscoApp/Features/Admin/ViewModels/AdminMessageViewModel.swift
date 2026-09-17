@@ -81,17 +81,20 @@ final class AdminMessageViewModel: ObservableObject {
     }
 
     func deleteMessage(id: UUID) async throws {
-        guard !isLoading else { return }
+        guard !isLoading else { throw AdminDataError.respuestaInvalida }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
 
         do {
-            try await client
+            let _: Mensaje = try await client
                 .from("comunicados")
-                .delete(returning: .minimal)
+                .delete()
                 .eq("id", value: id)
+                .select()
+                .single()
                 .execute()
+                .value
             mensajes.removeAll { $0.id == id }
         } catch {
             errorMessage = error.localizedDescription

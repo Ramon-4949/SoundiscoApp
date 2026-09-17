@@ -11,18 +11,11 @@ enum Brand {
 struct BrandMark: View {
     var size: CGFloat = 76
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: size * 0.23).fill(.black)
-            RoundedRectangle(cornerRadius: 4).fill(.red)
-                .frame(width: size * 0.19, height: size * 0.49)
-                .offset(x: size * 0.29, y: size * 0.24)
-            RoundedRectangle(cornerRadius: 4).fill(.red)
-                .frame(width: size * 0.43, height: size * 0.18)
-                .offset(x: size * 0.29, y: size * 0.24)
-            Circle().fill(.red).frame(width: size * 0.21, height: size * 0.21)
-                .offset(x: size * 0.55, y: size * 0.53)
-        }
-        .frame(width: size, height: size).accessibilityLabel("SounDisco")
+        Image("BrandLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityLabel("SounDisco")
     }
 }
 

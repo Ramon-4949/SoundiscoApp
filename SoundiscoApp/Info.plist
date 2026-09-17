@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
+    <key>NSFaceIDUsageDescription</key>
+    <string>SounDisco usa Face ID para proteger el acceso a tu sesión.</string>
     <key>CFBundleURLTypes</key><array><dict>
         <key>CFBundleURLName</key><string>SoundiscoAuth</string>
         <key>CFBundleURLSchemes</key><array><string>soundisco</string></array>

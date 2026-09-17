@@ -63,8 +63,7 @@ struct AssignmentListView: View {
         .searchable(text: $agenda.search, isPresented: $searching, prompt: "Buscar asignaciones")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                NavigationLink { NotificationsView() } label: { Image(systemName: "bell") }
-                    .accessibilityLabel("Notificaciones")
+                NavigationLink { NotificationsView() } label: { NotificationBell() }
                 Button { searching.toggle() } label: { Image(systemName: "magnifyingglass") }
                     .accessibilityLabel("Buscar")
             }

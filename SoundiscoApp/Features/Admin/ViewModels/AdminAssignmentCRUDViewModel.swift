@@ -80,7 +80,7 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
     }
 
     func deleteAssignment(id: UUID) async throws {
-        guard !isSaving else { return }
+        guard !isSaving else { throw AdminDataError.respuestaInvalida }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
@@ -116,7 +116,7 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
         }
     }
 
-    private func fetchAssignment(id: UUID) async throws -> Asignacion {
+    func fetchAssignment(id: UUID) async throws -> Asignacion {
         try await client
             .from("asignaciones")
             .select(

@@ -15,6 +15,25 @@ struct AdminAssignmentFormView: View {
 
     let tipo: TipoFlujo
     let onComplete: () -> Void
+    private let editing: Asignacion?
+
+    init(tipo: TipoFlujo, editing: Asignacion? = nil, onComplete: @escaping () -> Void) {
+        self.tipo = tipo
+        self.editing = editing
+        self.onComplete = onComplete
+        if let editing {
+            _titulo = State(initialValue: editing.titulo)
+            _ubicacion = State(initialValue: editing.ubicacion ?? "")
+            _prioridad = State(initialValue: editing.prioridad)
+            _instrucciones = State(initialValue: editing.instruccionesOpcionales ?? "")
+            _fechaLimite = State(initialValue: editing.fechaLimite ?? .now)
+            _responsables = State(initialValue: Set(editing.asignadoA.map(\.id)))
+            _hitos = State(initialValue: editing.hitos.sorted { $0.orden < $1.orden }.map {
+                HitoEditorItem(id: $0.id, titulo: $0.titulo, fecha: $0.fechaProgramada,
+                               estado: $0.estado, notas: $0.notasIncidencias)
+            })
+        }
+    }
 
     private enum Field: Hashable { case titulo, ubicacion, instrucciones }
 
@@ -42,20 +61,24 @@ struct AdminAssignmentFormView: View {
                             TextField("Nombre del hito", text: $hito.titulo)
                             DatePicker(
                                 "Fecha y hora",
-                                selection: $hito.fecha,
+                                selection: Binding(get: { hito.fecha ?? .now }, set: { hito.fecha = $0 }),
                                 displayedComponents: [.date, .hourAndMinute]
                             )
+                            if hito.fecha == nil {
+                                Text("Selecciona la fecha del hito").font(.caption).foregroundStyle(.red)
+                            }
                         }
                         .padding(.vertical, 4)
                     }
-                    .onDelete { hitos.remove(atOffsets: $0) }
-                    .onMove { hitos.move(fromOffsets: $0, toOffset: $1) }
+                    .onDelete { if !hasProgress { hitos.remove(atOffsets: $0) } }
+                    .onMove { if !hasProgress { hitos.move(fromOffsets: $0, toOffset: $1) } }
 
                     Button {
                         hitos.append(HitoEditorItem(fecha: suggestedMilestoneDate))
                     } label: {
                         Label("Añadir hito", systemImage: "plus.circle.fill")
                     }
+                    .disabled(hasProgress)
                 } header: {
                     Text("Itinerario")
                 } footer: {
@@ -64,6 +87,10 @@ struct AdminAssignmentFormView: View {
             }
 
             Section("Responsables") {
+                if let error = model.errorMessage {
+                    Text(error).foregroundStyle(.red)
+                    Button("Reintentar") { Task { await model.loadEmployees() } }
+                }
                 if model.isLoadingEmployees {
                     ProgressView("Cargando empleados…")
                 } else if availableEmployees.isEmpty {
@@ -117,7 +144,7 @@ struct AdminAssignmentFormView: View {
                     HStack {
                         Spacer()
                         if model.isSaving { ProgressView().tint(.white) }
-                        Text(model.isSaving ? "Guardando…" : "Crear asignación")
+                        Text(saveTitle)
                             .font(.headline)
                         Spacer()
                     }
@@ -127,13 +154,24 @@ struct AdminAssignmentFormView: View {
                 .foregroundStyle(canSave ? Color.white : Color.secondary)
             }
         }
-        .navigationTitle(tipo == .operacionesCampo ? "Operación de campo" : "Tarea administrativa")
+        .disabled(model.isSaving)
+        .interactiveDismissDisabled(model.isSaving)
+        .navigationTitle(editing != nil ? "Editar asignación" : tipo == .operacionesCampo ? "Operación de campo" : "Tarea administrativa")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { if tipo == .operacionesCampo { EditButton() } }
+        .toolbar {
+            if tipo == .operacionesCampo && !hasProgress {
+                ToolbarItem(placement: .topBarTrailing) { EditButton() }
+            }
+            if editing != nil {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }.disabled(model.isSaving)
+                }
+            }
+        }
         .tint(Brand.red)
         .scrollDismissesKeyboard(.interactively)
         .task { await model.loadEmployees() }
-        .alert("No se pudo crear", isPresented: alertBinding) {
+        .alert("No se pudo guardar", isPresented: alertBinding) {
             Button("Aceptar", role: .cancel) { alertMessage = nil }
         } message: {
             Text(alertMessage ?? "Error desconocido")
@@ -141,18 +179,16 @@ struct AdminAssignmentFormView: View {
     }
 
     private var availableEmployees: [Empleado] {
-        model.empleados.filter { employee in
-            switch tipo {
-            case .operacionesCampo: employee.rol == .tecnico
-            case .tareaAdministrativa: employee.rol == .admin
-            }
-        }
+        model.empleados
+    }
+
+    private var saveTitle: String {
+        if model.isSaving { return "Guardando…" }
+        return editing == nil ? "Crear asignación" : "Guardar cambios"
     }
 
     private var employeeEmptyMessage: String {
-        tipo == .operacionesCampo
-            ? "No hay perfiles con rol técnico."
-            : "No hay perfiles con rol administrador."
+        "No hay perfiles de empleados disponibles."
     }
 
     private var canSave: Bool {
@@ -160,7 +196,7 @@ struct AdminAssignmentFormView: View {
               !responsables.isEmpty else { return false }
         if tipo == .operacionesCampo {
             return !ubicacion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-                !hitos.isEmpty && hitos.allSatisfy { !$0.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                !hitos.isEmpty && hitos.allSatisfy { $0.fecha != nil && !$0.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         }
         return true
     }
@@ -168,6 +204,8 @@ struct AdminAssignmentFormView: View {
     private var suggestedMilestoneDate: Date {
         (hitos.last?.fecha ?? .now).addingTimeInterval(3_600)
     }
+
+    private var hasProgress: Bool { editing?.hitos.contains { $0.estado == .completado } == true }
 
     private var alertBinding: Binding<Bool> {
         Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })
@@ -178,14 +216,17 @@ struct AdminAssignmentFormView: View {
     }
 
     private func save() async {
+        guard canSave, !model.isSaving else { return }
         focusedField = nil
         let itinerary = tipo == .operacionesCampo
             ? hitos.enumerated().map { index, item in
                 HitoDraft(
+                    id: item.id,
                     orden: index + 1,
                     titulo: item.titulo,
-                    fechaProgramada: item.fecha,
-                    estado: index == 0 ? .enCurso : .bloqueado
+                    fechaProgramada: item.fecha!,
+                    estado: hasProgress ? item.estado : index == 0 ? .enCurso : .bloqueado,
+                    notasIncidencias: item.notas
                 )
             }
             : []
@@ -195,12 +236,18 @@ struct AdminAssignmentFormView: View {
             ubicacion: tipo == .operacionesCampo ? ubicacion : nil,
             prioridad: prioridad,
             instruccionesOpcionales: instrucciones.nilIfBlank,
+            estado: editing?.estado ?? .pendiente,
             empleadosIDs: Array(responsables),
+            fechaCreacion: editing?.fechaCreacion ?? .now,
             fechaLimite: tipo == .tareaAdministrativa ? fechaLimite : nil,
             hitos: itinerary
         )
         do {
-            _ = try await model.createAssignment(draft)
+            if let editing {
+                _ = try await model.updateAssignment(id: editing.id, with: draft)
+            } else {
+                _ = try await model.createAssignment(draft)
+            }
             onComplete()
             dismiss()
         } catch {
@@ -210,9 +257,11 @@ struct AdminAssignmentFormView: View {
 }
 
 private struct HitoEditorItem: Identifiable {
-    let id = UUID()
+    var id = UUID()
     var titulo = ""
-    var fecha: Date
+    var fecha: Date?
+    var estado: EstadoHito = .bloqueado
+    var notas: String?
 }
 
 private extension String {

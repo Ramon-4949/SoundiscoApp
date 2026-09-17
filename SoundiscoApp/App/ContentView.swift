@@ -1,17 +1,22 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var auth = SessionViewModel()
     var body: some View {
         Group {
             if auth.initializing { LaunchView() }
             else if auth.recoveringPassword { NewPasswordView() }
+            else if auth.isLocked { NavigationStack { LoginView() } }
             else if let id = auth.userID { HomeView().id(id) }
             else { NavigationStack { LoginView() } }
         }
         .tint(Brand.red)
         .environmentObject(auth)
         .task { await auth.observeSession() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { auth.lockSession() }
+        }
         .onOpenURL { url in Task { await auth.handle(url) } }
         .alert(item: $auth.notice) { notice in
             Alert(title: Text(notice.title), message: Text(notice.message), dismissButton: .default(Text("Entendido")))

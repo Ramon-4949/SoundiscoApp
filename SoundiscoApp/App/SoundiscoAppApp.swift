@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct SoundiscoAppApp: App {
+    @UIApplicationDelegateAdaptor(NotificationAppDelegate.self) private var notificationDelegate
     var body: some Scene {
         WindowGroup {
             ContentView()

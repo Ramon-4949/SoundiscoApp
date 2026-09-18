@@ -6,7 +6,7 @@ La app incluye bandeja segmentada, filtros, lectura individual, actualización
 Realtime con reconciliación periódica, campana con indicador de pendientes,
 registro APNs y apertura del detalle tras autenticar la cuenta destinataria.
 
-Las migraciones se prepararon y probaron localmente. No se han aplicado al
+Las migraciones se prepararon, probaron localmente y fueron aplicadas al
 proyecto remoto. El worker autorizado está implementado en
 `push-worker/worker.mjs`, con pruebas locales y guía de despliegue.
 Falta configurar sus secretos y desplegarlo. No se ha enviado ningún push real.

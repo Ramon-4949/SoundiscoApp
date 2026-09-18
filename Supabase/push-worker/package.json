@@ -1,0 +1,17 @@
+{
+  "name": "soundisco-push-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker APNs segmentado para SounDisco",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "start": "node worker.mjs",
+    "test": "node --test worker.test.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

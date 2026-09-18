@@ -156,4 +156,6 @@ await db.exec(`select set_config('test.uid','${admin}',false);
   reset role;`);
 assert.equal((await db.query('select * from claim_notification_pushes()')).rows.length,0);
 console.log('PASS account switch: old recipient queue cannot target newly registered owner');
+const { testDynamicNotifications } = await import('./notifications_dynamic.test.mjs');
+await testDynamicNotifications(db, { admin, alice, bob, otherAdmin });
 await db.close();

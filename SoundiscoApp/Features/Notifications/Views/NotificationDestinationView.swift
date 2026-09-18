@@ -19,7 +19,10 @@ struct NotificationDestinationView: View {
                     Label(model.notification?.titulo ?? "Notificación", systemImage: "bell")
                 } description: {
                     Text(model.failure ?? model.notification?.mensaje ?? "Este aviso ya no está disponible para tu cuenta.")
-                    if model.notification != nil { Text("El contenido se eliminó o ya no está asignado a tu cuenta.") }
+                    if let destination = model.notification?.destino_tipo,
+                       ["asignacion", "comunicado"].contains(destination), model.failure == nil {
+                        Text("El contenido se eliminó o ya no está asignado a tu cuenta.")
+                    }
                 } actions: {
                     if model.failure != nil { Button("Reintentar") { Task { await load() } } }
                 }

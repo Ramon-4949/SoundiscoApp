@@ -1,5 +1,10 @@
 # Notificaciones de SounDisco
 
+Actualización: para mensajes push personalizados, aplicar `notifications_dynamic.sql`
+después de las migraciones de este documento y seguir `NOTIFICATIONS_DYNAMIC.md`.
+La nueva versión del worker usa `claim_notification_pushes_v2` y textos dinámicos
+autorizados por el usuario, sustituyendo el payload genérico descrito originalmente.
+
 ## Estado de la implementación
 
 La app incluye bandeja segmentada, filtros, lectura individual, actualización
@@ -52,8 +57,8 @@ Una RPC únicamente permite marcar como leídos los avisos propios.
 
 ## Pendiente para push con la app cerrada
 
-- El envío a APNs ya está autorizado. El contenido visible es genérico,
-  sin nombres de empleados, ubicaciones ni instrucciones en la pantalla bloqueada.
+- El envío a APNs está autorizado. La actualización dinámica incluye nombres y
+  títulos del evento en el aviso visible; no incluye ubicaciones ni instrucciones.
 - Habilitar Push Notifications para `hola.SoundiscoApp` en Apple Developer,
   y regenerar/actualizar el perfil de firma.
 - Clave APNs .p8, Key ID y Team ID, solo en secretos del servidor.

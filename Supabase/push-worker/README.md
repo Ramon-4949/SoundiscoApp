@@ -4,7 +4,8 @@ Node.js 22. Ejecutar en un servidor con salida HTTPS a Supabase y HTTP/2 a APNs.
 No se ejecuta dentro de la app iOS. En Render se despliega como Web Service;
 Express escucha en `0.0.0.0:$PORT` y expone `/health`.
 
-Aplicar primero notifications_setup.sql y notification_reminders.sql.
+Aplicar primero notifications_setup.sql y notification_reminders.sql, y después
+notifications_dynamic.sql ANTES de desplegar esta versión del worker.
 Configurar secretos del servicio:
 
 - SUPABASE_URL: https://gsrwfgpyflwozxzizmnv.supabase.co
@@ -37,10 +38,12 @@ La entrega es al menos una vez: si Apple acepta y falla el registro en Supabase,
 puede repetirse un envío. apns-collapse-id agrupa reintentos del mismo aviso.
 La bandeja conserva el historial aunque el dispositivo rechace notificaciones.
 
-El payload visible es siempre genérico. Solo incluye notification_id y recipient_id
-como metadatos de navegación. No incluye nombre, ubicación, instrucciones ni
-asunto del comunicado; no se registran tokens ni secretos en los logs.
+El payload usa `title` y `body` generados por los triggers y devueltos por
+`claim_notification_pushes_v2`. Incluye los nombres de empleados, hitos,
+asignaciones y asuntos de comunicados que correspondan al evento autorizado.
+No incluye ubicaciones ni instrucciones. Conserva notification_id y recipient_id
+como metadatos de navegación; no se registran textos, tokens ni secretos en logs.
+Título y cuerpo se limitan a 120 y 500 caracteres Unicode respectivamente.
+La guía de actualización está en `../NOTIFICATIONS_DYNAMIC.md`.
 
-Falta configurar los secretos, habilitar Push Notifications en Apple Developer,
-desplegar el worker y probar con un dispositivo firmado. No se han enviado avisos
-reales durante las pruebas locales.
+Las pruebas locales usan datos ficticios y no envían avisos reales.

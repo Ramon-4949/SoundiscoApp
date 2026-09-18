@@ -1,11 +1,7 @@
 import SwiftUI
 
 enum Brand {
-    static let red = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 1, green: 0.3, blue: 0.35, alpha: 1)
-            : UIColor(red: 0.76, green: 0, blue: 0.09, alpha: 1)
-    })
+    static let red = Color(red: 0.76, green: 0, blue: 0.09)
 }
 
 struct BrandMark: View {
@@ -29,6 +25,7 @@ struct AuthField: View {
     var contentType: UITextContentType? = nil
     var capitalization: TextInputAutocapitalization = .never
     @State private var visible = false
+    @FocusState private var focused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -42,6 +39,7 @@ struct AuthField: View {
                 }
                 .textContentType(contentType).keyboardType(keyboard)
                 .textInputAutocapitalization(capitalization).autocorrectionDisabled()
+                .focused($focused)
                 .accessibilityLabel(title)
                 if secure {
                     Button { visible.toggle() } label: {
@@ -53,7 +51,15 @@ struct AuthField: View {
             }
             .padding(.leading, 14).padding(.trailing, secure ? 2 : 14)
             .frame(minHeight: 52)
-            .background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        focused ? Brand.red : Color(uiColor: .separator).opacity(0.55),
+                        lineWidth: focused ? 1.5 : 1
+                    )
+            }
+            .animation(.easeOut(duration: 0.16), value: focused)
         }
     }
 }
@@ -66,7 +72,7 @@ struct PrimaryAction: View {
             HStack { Text(title); Image(systemName: "arrow.right") }
                 .font(.headline).frame(maxWidth: .infinity, minHeight: 54)
                 .foregroundStyle(.white)
-                .background(Color(red: 0.76, green: 0, blue: 0.09), in: RoundedRectangle(cornerRadius: 8))
+                .background(Brand.red, in: RoundedRectangle(cornerRadius: 8))
         }
     }
 }

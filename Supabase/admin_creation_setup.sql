@@ -2,6 +2,7 @@
 -- Completa el esquema necesario para asignaciones, hitos y comunicados.
 
 alter table public.asignaciones
+  alter column ubicacion drop not null,
   add column if not exists estado text not null default 'pendiente',
   add column if not exists fecha_limite timestamptz;
 

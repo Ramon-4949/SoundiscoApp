@@ -25,7 +25,12 @@ struct RegistrationView: View {
                         ForEach(model.positions, id: \.self) { Text($0) }
                     }
                     .pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(8).background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                    .padding(12)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(Color(uiColor: .separator).opacity(0.55), lineWidth: 1)
+                    }
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     AuthField(title: "Contraseña", icon: "lock", placeholder: "Crea una contraseña",

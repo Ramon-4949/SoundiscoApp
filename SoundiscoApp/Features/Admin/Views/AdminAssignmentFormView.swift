@@ -5,9 +5,9 @@ struct AdminAssignmentFormView: View {
     @StateObject private var model = AdminAssignmentCRUDViewModel()
     @State private var titulo = ""
     @State private var ubicacion = ""
-    @State private var prioridad: PrioridadAsignacion = .media
+    @State private var prioridad: PrioridadAsignacion = .baja
     @State private var instrucciones = ""
-    @State private var fechaLimite = Date().addingTimeInterval(86_400)
+    @State private var fechaCreacion = Date()
     @State private var responsables = Set<UUID>()
     @State private var hitos = [HitoEditorItem(fecha: Date().addingTimeInterval(3_600))]
     @State private var alertMessage: String?
@@ -26,142 +26,161 @@ struct AdminAssignmentFormView: View {
             _ubicacion = State(initialValue: editing.ubicacion ?? "")
             _prioridad = State(initialValue: editing.prioridad)
             _instrucciones = State(initialValue: editing.instruccionesOpcionales ?? "")
-            _fechaLimite = State(initialValue: editing.fechaLimite ?? .now)
+            _fechaCreacion = State(initialValue: editing.fechaCreacion)
             _responsables = State(initialValue: Set(editing.asignadoA.map(\.id)))
-            _hitos = State(initialValue: editing.hitos.sorted { $0.orden < $1.orden }.map {
+            let editorHitos = editing.hitos.sorted { $0.orden < $1.orden }.map {
                 HitoEditorItem(id: $0.id, titulo: $0.titulo, fecha: $0.fechaProgramada,
                                estado: $0.estado, notas: $0.notasIncidencias)
-            })
+            }
+            _hitos = State(initialValue: editorHitos.isEmpty
+                ? [HitoEditorItem(fecha: editing.fechaLimite ?? Date().addingTimeInterval(3_600))]
+                : editorHitos)
         }
     }
 
     private enum Field: Hashable { case titulo, ubicacion, instrucciones }
 
     var body: some View {
-        Form {
-            Section("Asignación") {
-                TextField("Título", text: $titulo)
-                    .focused($focusedField, equals: .titulo)
-                if tipo == .operacionesCampo {
-                    TextField("Ubicación del evento", text: $ubicacion)
-                        .focused($focusedField, equals: .ubicacion)
-                } else {
-                    DatePicker(
-                        "Fecha límite",
-                        selection: $fechaLimite,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
-                }
+        ScrollView {
+          VStack(alignment: .leading, spacing: 28) {
+            formSection("TÍTULO DE LA ASIGNACIÓN") {
+                HStack(spacing: 12) {
+                    Image(systemName: "doc.text").foregroundStyle(Brand.red)
+                    TextField("Ej. Montaje de Sonido Principal", text: $titulo)
+                        .focused($focusedField, equals: .titulo)
+                }.inputSurface()
             }
+                if tipo == .operacionesCampo {
+                    formSection("UBICACIÓN DEL EVENTO") {
+                        HStack(spacing: 12) {
+                            Image(systemName: "mappin.and.ellipse").foregroundStyle(Brand.red)
+                            TextField("Ej. Auditorio Central - Piso 2", text: $ubicacion)
+                                .focused($focusedField, equals: .ubicacion)
+                        }.inputSurface()
+                    }
+                }
 
-            if tipo == .operacionesCampo {
-                Section {
+            formSection("ITINERARIO Y LOGÍSTICA DE TIEMPOS") {
                     ForEach($hitos) { $hito in
-                        VStack(alignment: .leading, spacing: 10) {
-                            TextField("Nombre del hito", text: $hito.titulo)
-                            DatePicker(
-                                "Fecha y hora",
-                                selection: Binding(get: { hito.fecha ?? .now }, set: { hito.fecha = $0 }),
-                                displayedComponents: [.date, .hourAndMinute]
-                            )
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Image(systemName: "pencil").foregroundStyle(.secondary)
+                                TextField("Salida en ruta", text: $hito.titulo)
+                                if !hasProgress {
+                                    Button {
+                                        hitos.removeAll { $0.id == hito.id }
+                                    } label: { Image(systemName: "xmark").foregroundStyle(.secondary) }
+                                    .accessibilityLabel("Eliminar hito")
+                                }
+                            }
+                            ViewThatFits(in: .horizontal) {
+                                HStack(spacing: 16) {
+                                    milestoneDate($hito, components: .date, title: "FECHA", icon: "calendar")
+                                    milestoneDate($hito, components: .hourAndMinute, title: "HORARIO", icon: "clock")
+                                }
+                                VStack(alignment: .leading, spacing: 12) {
+                                    milestoneDate($hito, components: .date, title: "FECHA", icon: "calendar")
+                                    milestoneDate($hito, components: .hourAndMinute, title: "HORARIO", icon: "clock")
+                                }
+                            }
                             if hito.fecha == nil {
                                 Text("Selecciona la fecha del hito").font(.caption).foregroundStyle(.red)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .inputSurface()
+                        .contextMenu {
+                            if !hasProgress {
+                                Button("Mover arriba", systemImage: "arrow.up") { moveHito(hito.id, direction: -1) }
+                                Button("Mover abajo", systemImage: "arrow.down") { moveHito(hito.id, direction: 1) }
+                            }
+                        }
                     }
-                    .onDelete { if !hasProgress { hitos.remove(atOffsets: $0) } }
-                    .onMove { if !hasProgress { hitos.move(fromOffsets: $0, toOffset: $1) } }
 
                     Button {
                         hitos.append(HitoEditorItem(fecha: suggestedMilestoneDate))
                     } label: {
-                        Label("Añadir hito", systemImage: "plus.circle.fill")
+                        Label("Añadir Hito / Horario", systemImage: "plus.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                            .background(Brand.red.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(Brand.red.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
                     }
+                    .buttonStyle(.plain).foregroundStyle(Brand.red)
                     .disabled(hasProgress)
-                } header: {
-                    Text("Itinerario")
-                } footer: {
-                    Text("Los técnicos completarán los hitos en este mismo orden.")
-                }
             }
 
-            Section("Responsables") {
-                if let error = model.errorMessage {
-                    Text(error).foregroundStyle(.red)
-                    Button("Reintentar") { Task { await model.loadEmployees() } }
-                }
-                if model.isLoadingEmployees {
-                    ProgressView("Cargando empleados…")
-                } else if availableEmployees.isEmpty {
-                    ContentUnavailableView(
-                        "Sin empleados disponibles",
-                        systemImage: "person.2.slash",
-                        description: Text(employeeEmptyMessage)
-                    )
-                } else {
-                    ForEach(availableEmployees) { employee in
-                        Button {
-                            toggle(employee.id)
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(employee.nombre ?? "Empleado sin nombre")
-                                    Text(employee.rol?.label ?? "Rol sin definir")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: responsables.contains(employee.id) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(responsables.contains(employee.id) ? Brand.red : .secondary)
+            formSection("ASIGNAR RESPONSABLES") {
+                if let bookingWindow {
+                    NavigationLink {
+                        EmployeeSelectionView(selected: $responsables, window: bookingWindow, excluding: editing?.id)
+                    } label: {
+                        HStack {
+                            Image(systemName: "person.2").foregroundStyle(Brand.red)
+                            Text("Responsables Asignados").foregroundStyle(.primary)
+                            Spacer()
+                            if !responsables.isEmpty {
+                                Text("\(responsables.count)").foregroundStyle(.secondary)
                             }
-                            .contentShape(Rectangle())
+                            Image(systemName: "chevron.right").foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("\(employee.nombre ?? "Empleado"), \(responsables.contains(employee.id) ? "seleccionado" : "no seleccionado")")
+                        .inputSurface()
                     }
+                    .buttonStyle(.plain)
+                } else {
+                    Label("Responsables Asignados", systemImage: "person.2")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading).inputSurface()
+                }
+                if bookingWindow == nil {
+                    Text("Define un período válido para consultar disponibilidad.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
 
-            Section("Prioridad") {
+            formSection("NIVEL DE PRIORIDAD") {
                 Picker("Nivel", selection: $prioridad) {
                     ForEach(PrioridadAsignacion.allCases, id: \.self) {
-                        Text($0.label).tag($0)
+                        Label($0.label, systemImage: "flag.fill").tag($0)
                     }
                 }
                 .pickerStyle(.segmented)
             }
 
-            Section("Instrucciones opcionales") {
-                TextField("Indicaciones para el equipo", text: $instrucciones, axis: .vertical)
-                    .lineLimit(3...7)
-                    .focused($focusedField, equals: .instrucciones)
+            formSection("INSTRUCCIONES LOGÍSTICAS (OPCIONAL)") {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "text.bubble").foregroundStyle(Brand.red)
+                    TextField("Ej. Revisar balance de cableado multipar y consolas auxiliares.", text: $instrucciones, axis: .vertical)
+                        .lineLimit(3...7)
+                        .focused($focusedField, equals: .instrucciones)
+                }.inputSurface()
             }
 
-            Section {
                 Button {
                     Task { await save() }
                 } label: {
                     HStack {
                         Spacer()
                         if model.isSaving { ProgressView().tint(.white) }
-                        Text(saveTitle)
+                        Label(saveTitle, systemImage: "checkmark.circle")
                             .font(.headline)
                         Spacer()
                     }
+                    .padding(.vertical, 18)
+                    .background(canSave ? Brand.red : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
                 }
+                .buttonStyle(.plain)
                 .disabled(!canSave || model.isSaving)
-                .listRowBackground(canSave ? Color(red: 0.76, green: 0, blue: 0.09) : Color(uiColor: .tertiarySystemFill))
                 .foregroundStyle(canSave ? Color.white : Color.secondary)
-            }
+          }.padding(20)
         }
+        .background(Color(uiColor: .systemGroupedBackground))
+        .toolbar(.hidden, for: .tabBar)
         .disabled(model.isSaving)
         .interactiveDismissDisabled(model.isSaving)
-        .navigationTitle(editing != nil ? "Editar asignación" : tipo == .operacionesCampo ? "Operación de campo" : "Tarea administrativa")
+        .navigationTitle(editing != nil ? "Editar asignación" : "Crear Asignación")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if tipo == .operacionesCampo && !hasProgress {
-                ToolbarItem(placement: .topBarTrailing) { EditButton() }
-            }
             if editing != nil {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }.disabled(model.isSaving)
@@ -170,7 +189,6 @@ struct AdminAssignmentFormView: View {
         }
         .tint(Brand.red)
         .scrollDismissesKeyboard(.interactively)
-        .task { await model.loadEmployees() }
         .alert("No se pudo guardar", isPresented: alertBinding) {
             Button("Aceptar", role: .cancel) { alertMessage = nil }
         } message: {
@@ -178,8 +196,42 @@ struct AdminAssignmentFormView: View {
         }
     }
 
-    private var availableEmployees: [Empleado] {
-        model.empleados
+    private func formSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary)
+            content()
+        }
+    }
+
+    private func milestoneDate(_ hito: Binding<HitoEditorItem>, components: DatePickerComponents, title: String, icon: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).foregroundStyle(Brand.red)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title).font(.caption2).foregroundStyle(.secondary)
+                DatePicker(title, selection: Binding(get: { hito.wrappedValue.fecha ?? .now },
+                    set: { hito.wrappedValue.fecha = $0 }), displayedComponents: components)
+                    .labelsHidden().fixedSize()
+            }
+        }
+    }
+
+    private func moveHito(_ id: UUID, direction: Int) {
+        guard let index = hitos.firstIndex(where: { $0.id == id }), hitos.indices.contains(index + direction) else { return }
+        hitos.swapAt(index, index + direction)
+    }
+
+    private var bookingWindow: AssignmentBookingWindow? {
+        if tipo == .tareaAdministrativa {
+            let dates = hitos.compactMap(\.fecha)
+            guard dates.count == hitos.count, let end = dates.last,
+                  end >= fechaCreacion,
+                  zip(dates, dates.dropFirst()).allSatisfy({ $0 <= $1 }) else { return nil }
+            return AssignmentBookingWindow(start: fechaCreacion, end: end)
+        }
+        let dates = hitos.compactMap(\.fecha)
+        guard dates.count == hitos.count, let start = dates.first, let end = dates.last,
+              zip(dates, dates.dropFirst()).allSatisfy({ $0 <= $1 }) else { return nil }
+        return AssignmentBookingWindow(start: start, end: end)
     }
 
     private var saveTitle: String {
@@ -187,22 +239,28 @@ struct AdminAssignmentFormView: View {
         return editing == nil ? "Crear asignación" : "Guardar cambios"
     }
 
-    private var employeeEmptyMessage: String {
-        "No hay perfiles de empleados disponibles."
-    }
-
     private var canSave: Bool {
         guard !titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              !responsables.isEmpty else { return false }
+              !responsables.isEmpty, bookingWindow != nil else { return false }
+        guard validMilestones else { return false }
         if tipo == .operacionesCampo {
-            return !ubicacion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-                !hitos.isEmpty && hitos.allSatisfy { $0.fecha != nil && !$0.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            return !ubicacion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
-        return true
+        return hitos.allSatisfy {
+            guard let date = $0.fecha else { return false }
+            return date >= fechaCreacion
+        }
     }
 
     private var suggestedMilestoneDate: Date {
         (hitos.last?.fecha ?? .now).addingTimeInterval(3_600)
+    }
+
+    private var validMilestones: Bool {
+        let dates = hitos.compactMap(\.fecha)
+        return !hitos.isEmpty && dates.count == hitos.count &&
+            hitos.allSatisfy { !$0.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } &&
+            zip(dates, dates.dropFirst()).allSatisfy { $0 <= $1 }
     }
 
     private var hasProgress: Bool { editing?.hitos.contains { $0.estado == .completado } == true }
@@ -211,15 +269,10 @@ struct AdminAssignmentFormView: View {
         Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })
     }
 
-    private func toggle(_ id: UUID) {
-        if responsables.contains(id) { responsables.remove(id) } else { responsables.insert(id) }
-    }
-
     private func save() async {
         guard canSave, !model.isSaving else { return }
         focusedField = nil
-        let itinerary = tipo == .operacionesCampo
-            ? hitos.enumerated().map { index, item in
+        let itinerary = hitos.enumerated().map { index, item in
                 HitoDraft(
                     id: item.id,
                     orden: index + 1,
@@ -229,7 +282,6 @@ struct AdminAssignmentFormView: View {
                     notasIncidencias: item.notas
                 )
             }
-            : []
         let draft = AsignacionDraft(
             tipoFlujo: tipo,
             titulo: titulo,
@@ -238,8 +290,8 @@ struct AdminAssignmentFormView: View {
             instruccionesOpcionales: instrucciones.nilIfBlank,
             estado: editing?.estado ?? .pendiente,
             empleadosIDs: Array(responsables),
-            fechaCreacion: editing?.fechaCreacion ?? .now,
-            fechaLimite: tipo == .tareaAdministrativa ? fechaLimite : nil,
+            fechaCreacion: fechaCreacion,
+            fechaLimite: tipo == .tareaAdministrativa ? itinerary.last?.fechaProgramada : nil,
             hitos: itinerary
         )
         do {
@@ -271,8 +323,12 @@ private extension String {
     }
 }
 
-private extension RolEmpleado {
-    var label: String { self == .admin ? "Administración" : "Técnico" }
+private extension View {
+    func inputSurface() -> some View {
+        padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+    }
 }
 
 private extension PrioridadAsignacion {

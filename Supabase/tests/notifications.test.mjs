@@ -32,7 +32,13 @@ await db.exec(`
     ('${bob}','Bob','tecnico'),('${otherAdmin}','Supervisor','admin');
   select set_config('test.uid','${admin}',false);
 `);
-for (const path of ['../admin_creation_setup.sql','../assignment_checklist_setup.sql','../admin_crud_completion.sql','../notifications_setup.sql']) {
+for (const path of [
+  '../admin_creation_setup.sql',
+  '../assignment_checklist_setup.sql',
+  '../admin_crud_completion.sql',
+  '../administrative_assignment_location_fix.sql',
+  '../notifications_setup.sql'
+]) {
   await db.exec(readFileSync(new URL(path, import.meta.url),'utf8'));
 }
 // Migration must also be safe to reapply.

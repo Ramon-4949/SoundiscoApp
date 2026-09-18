@@ -145,12 +145,14 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
             guard !draft.hitos.isEmpty else { throw AdminDataError.itinerarioRequerido }
             try validateMilestones(draft.hitos)
         case .tareaAdministrativa:
-            guard draft.ubicacion == nil, draft.hitos.isEmpty else {
+            guard draft.ubicacion == nil else {
                 throw AdminDataError.tareaAdministrativaConItinerario
             }
-            guard draft.fechaLimite != nil else {
-                throw AdminDataError.fechaLimiteRequerida
-            }
+            guard !draft.hitos.isEmpty else { throw AdminDataError.itinerarioRequerido }
+            try validateMilestones(draft.hitos)
+            guard draft.hitos.allSatisfy({
+                $0.fechaProgramada >= draft.fechaCreacion
+            }) else { throw AdminDataError.hitosFueraPeriodo }
         }
     }
 
@@ -161,6 +163,7 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
         }
 
         var foundIncomplete = false
+        var previousDate: Date?
         for milestone in ordered {
             guard !milestone.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw AdminDataError.itinerarioRequerido
@@ -168,6 +171,10 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
             if foundIncomplete && milestone.estado != .bloqueado {
                 throw AdminDataError.secuenciaHitosInvalida
             }
+            if let previousDate, milestone.fechaProgramada < previousDate {
+                throw AdminDataError.secuenciaHitosInvalida
+            }
+            previousDate = milestone.fechaProgramada
             if milestone.estado != .completado {
                 foundIncomplete = true
             }
@@ -197,7 +204,9 @@ private struct AssignmentMutationPayload: Encodable {
         instrucciones = draft.instruccionesOpcionales
         estado = draft.estado
         fechaCreacion = draft.fechaCreacion
-        fechaLimite = draft.fechaLimite
+        fechaLimite = draft.tipoFlujo == .tareaAdministrativa
+            ? draft.hitos.sorted { $0.orden < $1.orden }.last?.fechaProgramada
+            : nil
     }
 
     enum CodingKeys: String, CodingKey {

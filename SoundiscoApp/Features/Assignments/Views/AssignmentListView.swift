@@ -9,11 +9,8 @@ struct AssignmentListView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("CENTRO DE ASIGNACIONES", systemImage: "circle.fill")
-                            .font(.caption.weight(.semibold)).foregroundStyle(Brand.red)
-                        Text("Hola, \(auth.displayName)").font(.largeTitle.bold())
-                    }
+                    AgendaHomeHeader(name: auth.displayName, searching: $searching)
+                    if searching { AgendaSearchField(text: $agenda.search) }
                     HStack(alignment: .firstTextBaseline) {
                         Text("Asignaciones actuales").font(.title3.bold())
                         Spacer()
@@ -21,16 +18,11 @@ struct AssignmentListView: View {
                             .font(.subheadline)
                     }
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 18) {
+                        HStack(spacing: 10) {
                             ForEach(AssignmentFilter.allCases, id: \.self) { option in
-                                Button { agenda.filter = option } label: {
-                                    VStack(spacing: 8) {
-                                        Text(option.rawValue).font(.subheadline.weight(agenda.filter == option ? .semibold : .regular))
-                                        Rectangle().fill(agenda.filter == option ? Brand.red : .clear).frame(height: 3)
-                                    }.padding(.top, 10)
+                                AgendaFilterPill(title: option.rawValue, selected: agenda.filter == option) {
+                                    agenda.filter = option
                                 }
-                                .foregroundStyle(agenda.filter == option ? Brand.red : .secondary)
-                                .accessibilityAddTraits(agenda.filter == option ? .isSelected : [])
                             }
                         }
                     }
@@ -48,7 +40,10 @@ struct AssignmentListView: View {
                     } else {
                         LazyVStack(spacing: 16) {
                             ForEach(agenda.filtered(at: context.date)) { assignment in
-                                NavigationLink { AssignmentDetailView(assignment: assignment) } label: {
+                                NavigationLink {
+                                    AssignmentDetailView(assignment: assignment)
+                                        .toolbar(.visible, for: .navigationBar)
+                                } label: {
                                     AssignmentCard(assignment: assignment, now: context.date)
                                 }.buttonStyle(.plain)
                             }
@@ -59,15 +54,9 @@ struct AssignmentListView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .refreshable { await reload() }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $agenda.search, isPresented: $searching, prompt: "Buscar asignaciones")
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                NavigationLink { NotificationsView() } label: { NotificationBell() }
-                Button { searching.toggle() } label: { Image(systemName: "magnifyingglass") }
-                    .accessibilityLabel("Buscar")
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
+        .tint(Brand.red)
+        .onChange(of: searching) { _, visible in if !visible { agenda.search = "" } }
     }
 
     private func reload() async { if let id = auth.userID { await agenda.load(userID: id) } }

@@ -68,13 +68,15 @@ begin
     raise exception 'Itinerario invalido' using errcode = '23514';
   end if;
   v_count := jsonb_array_length(p_hitos);
+  if v_count = 0 then
+    raise exception 'La asignacion requiere al menos un hito' using errcode = '23514';
+  end if;
   if v_old.tipo_flujo = 'campo' then
-    if nullif(btrim(p_asignacion->>'ubicacion'), '') is null or v_count = 0 then
+    if nullif(btrim(p_asignacion->>'ubicacion'), '') is null then
       raise exception 'Campo requiere ubicacion e itinerario' using errcode = '23514';
     end if;
-  elsif v_count <> 0 or nullif(p_asignacion->>'ubicacion','') is not null
-        or nullif(p_asignacion->>'fecha_limite','') is null then
-    raise exception 'Administracion requiere fecha limite y no admite itinerario' using errcode = '23514';
+  elsif nullif(p_asignacion->>'ubicacion','') is not null then
+    raise exception 'Administracion no admite ubicacion' using errcode = '23514';
   end if;
   if exists (select 1 from jsonb_array_elements(p_hitos) h
     where nullif(btrim(h->>'descripcion'), '') is null
@@ -86,6 +88,23 @@ begin
   if (select count(distinct h->>'id') from jsonb_array_elements(p_hitos) h) <> v_count
     or (select count(distinct h->>'orden') from jsonb_array_elements(p_hitos) h) <> v_count then
     raise exception 'Los hitos deben tener IDs y ordenes unicos' using errcode = '23514';
+  end if;
+  if exists (
+    select 1 from (
+      select (h->>'fecha_programada')::timestamptz fecha,
+        lag((h->>'fecha_programada')::timestamptz)
+          over (order by (h->>'orden')::integer) anterior
+      from jsonb_array_elements(p_hitos) h
+    ) ordered_hitos where fecha < anterior
+  ) then
+    raise exception 'Las fechas de los hitos deben seguir el orden del itinerario' using errcode = '23514';
+  end if;
+  if v_old.tipo_flujo = 'administrativa' and exists (
+    select 1 from jsonb_array_elements(p_hitos) h
+    where (h->>'fecha_programada')::timestamptz
+      < v_old.fecha_creacion
+  ) then
+    raise exception 'Los hitos administrativos no pueden ser anteriores a la creacion' using errcode = '23514';
   end if;
   if exists (select 1 from jsonb_array_elements(p_hitos) j join public.hitos_itinerario h
     on h.id = (j->>'id')::uuid where h.asignacion_id <> p_asignacion_id) then
@@ -106,7 +125,11 @@ begin
     ubicacion = nullif(btrim(p_asignacion->>'ubicacion'), ''),
     nivel_prioridad = p_asignacion->>'nivel_prioridad',
     instrucciones = nullif(btrim(p_asignacion->>'instrucciones'), ''),
-    fecha_limite = nullif(p_asignacion->>'fecha_limite','')::timestamptz
+    fecha_limite = case when v_old.tipo_flujo = 'administrativa' then (
+      select (h->>'fecha_programada')::timestamptz
+      from jsonb_array_elements(p_hitos) h
+      order by (h->>'orden')::integer desc limit 1
+    ) else null end
   where id = p_asignacion_id;
   -- El estado y las fechas de finalizacion pertenecen al checklist del servidor.
   delete from public.asignacion_equipo where asignacion_id = p_asignacion_id;

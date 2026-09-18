@@ -66,7 +66,7 @@ struct AdminAssignmentFormView: View {
                             HStack {
                                 Image(systemName: "pencil").foregroundStyle(.secondary)
                                 TextField("Salida en ruta", text: $hito.titulo)
-                                if !hasProgress {
+                                if canDelete(hito) {
                                     Button {
                                         hitos.removeAll { $0.id == hito.id }
                                     } label: { Image(systemName: "xmark").foregroundStyle(.secondary) }
@@ -107,7 +107,6 @@ struct AdminAssignmentFormView: View {
                                 .strokeBorder(Brand.red.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
                     }
                     .buttonStyle(.plain).foregroundStyle(Brand.red)
-                    .disabled(hasProgress)
             }
 
             formSection("ASIGNAR RESPONSABLES") {
@@ -264,6 +263,10 @@ struct AdminAssignmentFormView: View {
     }
 
     private var hasProgress: Bool { editing?.hitos.contains { $0.estado == .completado } == true }
+
+    private func canDelete(_ hito: HitoEditorItem) -> Bool {
+        hitos.count > 1 && hito.estado != .completado
+    }
 
     private var alertBinding: Binding<Bool> {
         Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })

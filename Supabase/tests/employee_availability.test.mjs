@@ -56,7 +56,7 @@ try {
     select set_config('test.uid','${admin}',false);
   `);
   for (const file of ['admin_creation_setup.sql','assignment_checklist_setup.sql',
-    'admin_crud_completion.sql','administrative_assignment_location_fix.sql',
+    'admin_crud_completion.sql','assignment_milestone_editing_fix.sql','administrative_assignment_location_fix.sql',
     'notifications_setup.sql','notification_reminders.sql','employee_availability.sql']) {
     await db.exec(readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
   }
@@ -82,6 +82,25 @@ try {
   await assert.rejects(update(other, administrative(16, 17), [alice], otherMilestones), /no esta disponible/);
   await update(fieldID, field(), [alice], fieldMilestones);
   console.log('PASS boundaries, non-overlap, field timestamps, cross-type conflicts and editing');
+
+  await db.query(
+    "update hitos_itinerario set completado=true,estado_hito='completado' where id=$1",
+    [fieldMilestones[0].id]
+  );
+  const addedMilestone = milestones(18, 18)[0];
+  await update(fieldID, field(), [alice], [...fieldMilestones, { ...addedMilestone, orden: 3 }]);
+  assert.equal((await db.query(
+    'select count(*)::int n from hitos_itinerario where asignacion_id=$1', [fieldID]
+  )).rows[0].n, 3);
+  await update(fieldID, field(), [alice], [fieldMilestones[0], { ...addedMilestone, orden: 2 }]);
+  assert.equal((await db.query(
+    'select estado_hito from hitos_itinerario where id=$1', [addedMilestone.id]
+  )).rows[0].estado_hito, 'en_curso');
+  await assert.rejects(
+    update(fieldID, field(), [alice], [{ ...addedMilestone, orden: 1 }]),
+    /completados deben conservarse/
+  );
+  console.log('PASS adding and deleting pending milestones while completed history stays protected');
 
   await db.query("update asignaciones set estado='completada' where id=$1", [first]);
   assert.equal((await availability(10, 11)).find(e => e.id === alice).disponible, true);

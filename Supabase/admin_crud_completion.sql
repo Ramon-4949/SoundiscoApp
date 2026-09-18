@@ -112,13 +112,16 @@ begin
   end if;
   select exists(select 1 from public.hitos_itinerario where asignacion_id = p_asignacion_id
     and (coalesce(completado,false) or estado_hito = 'completado')) into v_progress;
-  if v_progress and (
-    v_count <> (select count(*) from public.hitos_itinerario where asignacion_id = p_asignacion_id)
-    or exists(select 1 from public.hitos_itinerario h where h.asignacion_id = p_asignacion_id
-      and not exists(select 1 from jsonb_array_elements(p_hitos) j
-        where (j->>'id')::uuid = h.id and (j->>'orden')::integer = h.orden))
+  if v_progress and exists (
+    select 1 from public.hitos_itinerario h
+    where h.asignacion_id = p_asignacion_id
+      and (coalesce(h.completado, false) or h.estado_hito = 'completado')
+      and not exists (
+        select 1 from jsonb_array_elements(p_hitos) j
+        where (j->>'id')::uuid = h.id and (j->>'orden')::integer = h.orden
+      )
   ) then
-    raise exception 'El checklist avanzo. Conserva sus pasos y orden; vuelve a abrir el editor.' using errcode = '23514';
+    raise exception 'Los hitos completados deben conservarse en su posicion original' using errcode = '23514';
   end if;
 
   update public.asignaciones set titulo = btrim(p_asignacion->>'titulo'),
@@ -145,11 +148,30 @@ begin
     on conflict(id) do update set orden = excluded.orden, descripcion = excluded.descripcion,
       hora_estimada = excluded.hora_estimada, fecha_programada = excluded.fecha_programada;
   end loop;
-  if not v_progress then
-    update public.hitos_itinerario set estado_hito = 'bloqueado' where asignacion_id = p_asignacion_id;
-    update public.hitos_itinerario set estado_hito = 'en_curso' where id = (
-      select id from public.hitos_itinerario where asignacion_id = p_asignacion_id order by orden limit 1);
-  end if;
+  update public.hitos_itinerario
+  set estado_hito = 'bloqueado'
+  where asignacion_id = p_asignacion_id
+    and not (coalesce(completado, false) or estado_hito = 'completado');
+  update public.hitos_itinerario set estado_hito = 'en_curso' where id = (
+    select id from public.hitos_itinerario
+    where asignacion_id = p_asignacion_id
+      and not (coalesce(completado, false) or estado_hito = 'completado')
+    order by orden limit 1);
+  update public.asignaciones
+  set estado = case
+    when not exists (
+      select 1 from public.hitos_itinerario h
+      where h.asignacion_id = p_asignacion_id
+        and not (coalesce(h.completado, false) or h.estado_hito = 'completado')
+    ) then 'completada'
+    when exists (
+      select 1 from public.hitos_itinerario h
+      where h.asignacion_id = p_asignacion_id
+        and (coalesce(h.completado, false) or h.estado_hito = 'completado')
+    ) then 'en_curso'
+    else 'pendiente'
+  end
+  where id = p_asignacion_id;
 end;
 $$;
 

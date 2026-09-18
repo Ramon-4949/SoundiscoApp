@@ -47,12 +47,23 @@ struct HomeView: View {
             if let id = auth.userID { await notifications.observe(userID: id) }
         }
         .task(id: auth.userID) {
+            if let id = auth.userID { await agenda.observe(userID: id) }
+        }
+        .task(id: auth.userID) {
             if let id = auth.userID { await push.connect(userID: id) }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, let id = auth.userID {
-                Task { await push.connect(userID: id); await notifications.load(userID: id) }
+                Task {
+                    await push.connect(userID: id)
+                    await notifications.load(userID: id)
+                    await agenda.load(userID: id)
+                }
             }
+        }
+        .onChange(of: notifications.items.map(\.id)) { oldIDs, newIDs in
+            guard oldIDs != newIDs, let id = auth.userID else { return }
+            Task { await agenda.load(userID: id) }
         }
         .sheet(item: $push.route) { route in
             NavigationStack {
@@ -68,7 +79,6 @@ struct HomeView: View {
         .task(id: auth.userID) {
             if let id = auth.userID {
                 await profile.load(userID: id)
-                await agenda.load(userID: id)
             }
         }
     }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AssignmentDetailView: View {
     @Environment(\.isAdministrator) private var isAdministrator
+    @EnvironmentObject private var notifications: NotificationsViewModel
     @StateObject private var model: AssignmentDetailViewModel
     private let allowsChecklistUpdates: Bool
 
@@ -61,6 +62,10 @@ struct AssignmentDetailView: View {
             }
         }
         .task { await model.reload() }
+        .onChange(of: notifications.items.map(\.id)) { oldIDs, newIDs in
+            guard oldIDs != newIDs else { return }
+            Task { await model.reload() }
+        }
         .refreshable { await model.reload() }
         .alert("No se pudo actualizar", isPresented: errorBinding) {
             Button("Reintentar") { Task { await model.reload() } }

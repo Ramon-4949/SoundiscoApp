@@ -18,11 +18,15 @@ test('JWT uses ES256 P1363 signature and Apple claims', () => {
     { key: publicKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(signature, 'base64url')), true);
 });
 
-test('payload allows only generic content and routing identifiers', () => {
+test('payload uses only server-generated text and routing identifiers', () => {
   assert.deepEqual(Object.keys(payload(job)).sort(), ['aps','notification_id','recipient_id']);
   assert.equal(JSON.stringify(payload(job)).includes('PRIVATE'), false);
   assert.equal(JSON.stringify(payload(job)).includes(job.token), false);
   assert.ok(Buffer.byteLength(JSON.stringify(payload(job))) < 4096);
+  const dynamic = payload({ ...job, title: 'Confirmación de Hito', body: 'Alice confirmó Montaje' });
+  assert.deepEqual(dynamic.aps.alert, { title: 'Confirmación de Hito', body: 'Alice confirmó Montaje' });
+  const long = payload({ ...job, title: '😀'.repeat(9000), body: '\\"😀'.repeat(9000) });
+  assert.ok(Buffer.byteLength(JSON.stringify(long)) < 4096);
 });
 
 function fakeTransport(status, reason, capture) {
@@ -78,7 +82,7 @@ test('batch acknowledges successes and failures without skipping other jobs', as
   const acknowledgments = [];
   const count = await runBatch(config, privateKey, {
     rpc: async (_, name, params) => {
-      if (name === 'claim_notification_pushes') return [job, { ...job, job_id: 'second' }];
+      if (name === 'claim_notification_pushes_v2') return [job, { ...job, job_id: 'second' }];
       if (name === 'finish_notification_push') acknowledgments.push(params);
     },
     sendPush: async current => {

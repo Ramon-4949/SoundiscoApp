@@ -13,9 +13,14 @@ export function providerToken(key, keyID, teamID, now = Date.now()) {
 }
 
 export function payload(job) {
+  const text = (value, fallback, limit) => typeof value === 'string' && value.trim()
+    ? Array.from(value.trim()).slice(0, limit).join('') : fallback;
   return {
     aps: {
-      alert: { title: 'SounDisco', body: 'Tienes una actualización. Abre la app para ver los detalles.' },
+      alert: {
+        title: text(job.title, 'SounDisco', 120),
+        body: text(job.body, 'Tienes una actualización. Abre la app para ver los detalles.', 500),
+      },
       sound: 'default', 'thread-id': 'soundisco-notifications',
     },
     notification_id: job.notification_id,
@@ -97,7 +102,7 @@ export async function runBatch(config, key, dependencies = {}) {
   const call = dependencies.rpc ?? rpc;
   const send = dependencies.sendPush ?? sendPush;
   await call(config, 'generate_notification_reminders');
-  const jobs = await call(config, 'claim_notification_pushes');
+  const jobs = await call(config, 'claim_notification_pushes_v2');
   const jwt = providerToken(key, config.keyID, config.teamID);
   let acknowledgmentFailures = 0;
   for (let offset = 0; offset < jobs.length; offset += 5) {

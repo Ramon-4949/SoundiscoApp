@@ -24,10 +24,18 @@ export function payload(job) {
 }
 
 export async function rpc(config, name, params = {}) {
+  const headers = {
+    apikey: config.serviceKey,
+    'Content-Type': 'application/json',
+  };
+  // Legacy service_role keys are JWTs and must also identify the Postgres role.
+  // New sb_secret keys authenticate through apikey and must not be parsed as JWTs.
+  if (!config.serviceKey.startsWith('sb_secret_')) {
+    headers.Authorization = 'Bearer ' + config.serviceKey;
+  }
   const response = await fetch(config.url + '/rest/v1/rpc/' + name, {
     method: 'POST', redirect: 'error',
-    headers: { apikey: config.serviceKey, Authorization: 'Bearer ' + config.serviceKey,
-      'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(params),
     signal: AbortSignal.timeout(20000),
   });

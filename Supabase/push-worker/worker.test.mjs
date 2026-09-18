@@ -101,6 +101,23 @@ test('RPC errors do not disclose credentials or server responses', async () => {
   } finally { globalThis.fetch = original; }
 });
 
+test('RPC sends new Supabase secret keys only through apikey', async () => {
+  const original = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (_url, options) => {
+    captured = options.headers;
+    return new Response('[]', { status: 200 });
+  };
+  try {
+    await rpc({ ...config, serviceKey: 'sb_secret_example' }, 'claim_notification_pushes');
+    assert.equal(captured.apikey, 'sb_secret_example');
+    assert.equal(captured.Authorization, undefined);
+
+    await rpc({ ...config, serviceKey: 'legacy.jwt.key' }, 'claim_notification_pushes');
+    assert.equal(captured.Authorization, 'Bearer legacy.jwt.key');
+  } finally { globalThis.fetch = original; }
+});
+
 test('configuration requires secrets and rejects non-HTTPS origins', () => {
   assert.throws(() => configuration({}), /Missing configuration/);
   assert.throws(() => configuration({

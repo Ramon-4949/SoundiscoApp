@@ -1,8 +1,8 @@
 import http2 from 'node:http2';
 import { createPrivateKey, sign } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
+import express from 'express';
 
 export function providerToken(key, keyID, teamID, now = Date.now()) {
   const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -109,39 +109,61 @@ export async function runBatch(config, key, dependencies = {}) {
 }
 
 export function configuration(env = process.env) {
-  for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','APNS_KEY_ID','APNS_TEAM_ID','APNS_KEY_PATH','APNS_BUNDLE_ID']) {
-    if (!env[name]) throw new Error('Missing configuration: ' + name);
+  for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','APNS_KEY_ID','APNS_TEAM_ID','APPLE_P8_KEY','APNS_BUNDLE_ID']) {
+    if (!env[name]?.trim()) throw new Error('Missing configuration: ' + name);
   }
   const url = new URL(env.SUPABASE_URL);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
     throw new Error('SUPABASE_URL must be an HTTPS origin');
   }
+  const port = Number(env.PORT ?? 10000);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error('PORT must be a valid TCP port');
+  }
   return {
     url: url.origin, serviceKey: env.SUPABASE_SERVICE_ROLE_KEY,
     keyID: env.APNS_KEY_ID, teamID: env.APNS_TEAM_ID,
-    bundleID: env.APNS_BUNDLE_ID, keyPath: env.APNS_KEY_PATH,
+    bundleID: env.APNS_BUNDLE_ID,
+    privateKey: env.APPLE_P8_KEY.replace(/\\n/g, '\n').trim(),
+    port,
   };
+}
+
+export function startHealthServer(port) {
+  const app = express();
+  app.disable('x-powered-by');
+  app.get('/', (_request, response) => response.status(200).json({ service: 'soundisco-push-worker', status: 'ok' }));
+  app.get('/health', (_request, response) => response.status(200).json({ status: 'ok' }));
+  return app.listen(port, '0.0.0.0', () => {
+    console.info(JSON.stringify({ service: 'health', status: 'listening', port }));
+  });
 }
 
 async function main() {
   const config = configuration();
-  const key = createPrivateKey(readFileSync(config.keyPath));
+  const key = createPrivateKey(config.privateKey);
   if (key.asymmetricKeyType !== 'ec' || key.asymmetricKeyDetails?.namedCurve !== 'prime256v1') {
     throw new Error('APNs requires a P-256 signing key');
   }
+  const once = process.argv.includes('--once');
+  const server = once ? null : startHealthServer(config.port);
   const shutdown = new AbortController();
   for (const signal of ['SIGTERM','SIGINT']) process.on(signal, () => shutdown.abort());
-  while (!shutdown.signal.aborted) {
-    try {
-      const count = await runBatch(config, key);
-      console.info(JSON.stringify({ processed: count, at: new Date().toISOString() }));
-    } catch {
-      // No tokens, user IDs, request headers or remote response contents in logs.
-      console.error('Push cycle failed. Check server configuration and private outbox status.');
-      if (process.argv.includes('--once')) { process.exitCode = 1; return; }
+  try {
+    while (!shutdown.signal.aborted) {
+      try {
+        const count = await runBatch(config, key);
+        console.info(JSON.stringify({ processed: count, at: new Date().toISOString() }));
+      } catch {
+        // No tokens, user IDs, request headers or remote response contents in logs.
+        console.error('Push cycle failed. Check server configuration and private outbox status.');
+        if (once) { process.exitCode = 1; return; }
+      }
+      if (once) return;
+      try { await delay(10000, undefined, { signal: shutdown.signal }); } catch { break; }
     }
-    if (process.argv.includes('--once')) return;
-    try { await delay(10000, undefined, { signal: shutdown.signal }); } catch { break; }
+  } finally {
+    server?.close();
   }
 }
 

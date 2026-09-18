@@ -1,7 +1,8 @@
 # Worker APNs
 
-Node.js 22 o posterior; sin dependencias npm. Ejecutar en un servidor con salida
-HTTPS a Supabase y HTTP/2 a APNs. No se ejecuta dentro de la app iOS.
+Node.js 22. Ejecutar en un servidor con salida HTTPS a Supabase y HTTP/2 a APNs.
+No se ejecuta dentro de la app iOS. En Render se despliega como Web Service;
+Express escucha en `0.0.0.0:$PORT` y expone `/health`.
 
 Aplicar primero notifications_setup.sql y notification_reminders.sql.
 Configurar secretos del servicio:
@@ -10,12 +11,14 @@ Configurar secretos del servicio:
 - SUPABASE_SERVICE_ROLE_KEY: clave service_role, nunca la publishable.
 - APNS_KEY_ID: identificador de la clave APNs.
 - APNS_TEAM_ID: identificador del equipo Apple Developer.
-- APNS_KEY_PATH: ruta al archivo .p8 montado como secreto de solo lectura.
+- APPLE_P8_KEY: contenido completo y multilinea del archivo .p8.
 - APNS_BUNDLE_ID: hola.SoundiscoApp.
+- PORT: lo asigna Render automáticamente; no es necesario configurarlo.
 
-Arranque continuo: `node worker.mjs`.
+Instalación: `npm install`.
+Arranque continuo: `npm start`.
 Ejecución de un lote: `node worker.mjs --once`.
-Pruebas sin servicios externos: `node --test worker.test.mjs`.
+Pruebas sin servicios externos: `npm test`.
 
 El servicio debe mantenerse activo mediante el supervisor de la plataforma con
 reinicio automático. Cada ciclo genera recordatorios y reclama hasta 50 envíos,

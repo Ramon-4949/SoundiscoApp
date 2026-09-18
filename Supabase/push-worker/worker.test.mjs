@@ -105,6 +105,22 @@ test('configuration requires secrets and rejects non-HTTPS origins', () => {
   assert.throws(() => configuration({}), /Missing configuration/);
   assert.throws(() => configuration({
     SUPABASE_URL: 'http://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
-    APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team', APNS_KEY_PATH: 'key.p8', APNS_BUNDLE_ID: 'bundle',
+    APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team', APPLE_P8_KEY: 'private-key', APNS_BUNDLE_ID: 'bundle',
   }), /HTTPS/);
+});
+
+test('configuration reads the APNs key from the environment and normalizes escaped newlines', () => {
+  const result = configuration({
+    SUPABASE_URL: 'https://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
+    APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team',
+    APPLE_P8_KEY: '-----BEGIN PRIVATE KEY-----\\nvalue\\n-----END PRIVATE KEY-----',
+    APNS_BUNDLE_ID: 'hola.SoundiscoApp', PORT: '10000',
+  });
+  assert.equal(result.privateKey, '-----BEGIN PRIVATE KEY-----\nvalue\n-----END PRIVATE KEY-----');
+  assert.equal(result.port, 10000);
+  assert.throws(() => configuration({
+    SUPABASE_URL: 'https://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
+    APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team', APPLE_P8_KEY: 'private-key',
+    APNS_BUNDLE_ID: 'hola.SoundiscoApp', PORT: 'invalid',
+  }), /PORT/);
 });

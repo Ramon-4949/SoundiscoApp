@@ -25,8 +25,8 @@ enum AdminDataError: LocalizedError, Sendable {
     case ubicacionRequerida
     case itinerarioRequerido
     case tareaAdministrativaConItinerario
-    case fechaLimiteRequerida
     case secuenciaHitosInvalida
+    case hitosFueraPeriodo
     case mensajeInvalido
     case respuestaInvalida
 
@@ -39,13 +39,13 @@ enum AdminDataError: LocalizedError, Sendable {
         case .ubicacionRequerida:
             return "Una operación de campo necesita ubicación."
         case .itinerarioRequerido:
-            return "Una operación de campo necesita al menos un hito."
+            return "La asignación necesita al menos un hito."
         case .tareaAdministrativaConItinerario:
-            return "Una tarea administrativa no puede incluir ubicación ni hitos."
-        case .fechaLimiteRequerida:
-            return "Una tarea administrativa necesita fecha límite."
+            return "Una tarea administrativa no puede incluir ubicación."
         case .secuenciaHitosInvalida:
             return "Los hitos deben tener un orden único y no pueden avanzar si el anterior no está completado."
+        case .hitosFueraPeriodo:
+            return "Los hitos administrativos no pueden programarse antes de crear la asignación."
         case .mensajeInvalido:
             return "El comunicado necesita asunto y contenido."
         case .respuestaInvalida:

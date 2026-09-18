@@ -16,13 +16,15 @@ struct AssignmentDetailView: View {
                 header
                 if model.assignment.isField {
                     location
-                    itinerary
                 } else {
                     deadline
                 }
+                if !model.assignment.milestones.isEmpty {
+                    itinerary
+                }
                 responsiblePeople
                 instructions
-                if model.assignment.isField, !model.assignment.milestones.isEmpty {
+                if !model.assignment.milestones.isEmpty {
                     NavigationLink {
                         AssignmentChecklistView(model: model, allowsUpdates: allowsChecklistUpdates)
                     } label: {

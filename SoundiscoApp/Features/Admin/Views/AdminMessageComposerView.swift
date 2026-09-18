@@ -54,7 +54,7 @@ struct AdminMessageComposerView: View {
                     }
                 }
                 .disabled(!canPublish || model.isLoading)
-                .listRowBackground(canPublish ? Color(red: 0.76, green: 0, blue: 0.09) : Color(uiColor: .tertiarySystemFill))
+                .listRowBackground(canPublish ? Brand.red : Color(uiColor: .tertiarySystemFill))
                 .foregroundStyle(canPublish ? Color.white : Color.secondary)
             }
         }

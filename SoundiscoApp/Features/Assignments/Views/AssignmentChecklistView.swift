@@ -80,7 +80,7 @@ struct AssignmentChecklistView: View {
                         .font(.headline).padding(.vertical, 12)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color(red: 0.76, green: 0, blue: 0.09))
+                    .tint(Brand.red)
                     .disabled(model.savingMilestoneID != nil)
                 } else if state == .locked {
                     Label("Se habilitará al completar el paso anterior", systemImage: "lock")

@@ -3,38 +3,98 @@ import SwiftUI
 struct AssignmentCard: View {
     let assignment: Assignment
     var now: Date = .now
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var textSize
+
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top, spacing: 14) {
-                Image(systemName: assignment.isField ? "truck.box" : "doc.text")
-                    .font(.title2).foregroundStyle(.white).frame(width: 48, height: 48)
-                    .background(Color(red: 0.76, green: 0, blue: 0.09), in: RoundedRectangle(cornerRadius: 8))
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(assignment.isField ? "Campo" : "Administrativa").font(.caption).foregroundStyle(.secondary)
-                    Text(assignment.titulo).font(.headline).fixedSize(horizontal: false, vertical: true)
+            let layout = textSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+                : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+            layout {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(systemName: assignment.isField ? "truck.box" : "doc.text")
+                        .font(.title2).foregroundStyle(.white).frame(width: 46, height: 46)
+                        .background(Brand.red, in: RoundedRectangle(cornerRadius: 8))
+                    VStack(alignment: .leading, spacing: 3) {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 8) { category; priority }
+                            VStack(alignment: .leading, spacing: 4) { category; priority }
+                        }
+                        Text(assignment.titulo).font(.headline).foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                Spacer(minLength: 0)
+                statusBadge
             }
+
+            VStack(alignment: .leading, spacing: 10) {
+                if assignment.isField {
+                    if let milestone = assignment.nextMilestone {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Image(systemName: "clock").foregroundStyle(Brand.red)
+                            Text(AgendaDate.label(milestone.scheduleValue)).foregroundStyle(.primary)
+                            Text(milestone.descripcion ?? "Hito").foregroundStyle(.secondary)
+                        }
+                    }
+                    Label(assignment.ubicacion ?? "Ubicación por confirmar", systemImage: "mappin.and.ellipse")
+                        .foregroundStyle(.secondary)
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: "clock").foregroundStyle(Brand.red)
+                        Text(assignment.deadline.map { "Hasta \($0.formatted(date: .abbreviated, time: .shortened))" }
+                             ?? "Fecha límite por confirmar").foregroundStyle(.primary)
+                    }
+                }
+            }
+            .font(.subheadline).frame(maxWidth: .infinity, alignment: .leading).padding(12)
+            .background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+
             HStack {
-                Text((assignment.nivel_prioridad ?? "Sin prioridad").capitalized).foregroundStyle(Brand.red)
+                Text("Detalle")
+                Image(systemName: "arrow.right")
                 Spacer()
-                Label(assignment.status(at: now), systemImage: assignment.completed ? "checkmark.circle.fill" : "clock")
-                    .foregroundStyle(assignment.completed ? Color.green : Color.primary)
-            }.font(.caption.weight(.semibold))
-            Divider()
-            if assignment.isField {
-                if let milestone = assignment.nextMilestone {
-                    Label("\(AgendaDate.label(milestone.scheduleValue)) · \(milestone.descripcion ?? "Hito")", systemImage: "clock")
-                }
-                Label(assignment.ubicacion ?? "Ubicación por confirmar", systemImage: "mappin.and.ellipse")
-                    .foregroundStyle(.secondary)
-            } else {
-                Label(assignment.deadline.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Fecha límite por confirmar", systemImage: "calendar")
+                Image(systemName: "chevron.right")
             }
-            HStack { Text("Detalle"); Spacer(); Image(systemName: "chevron.right") }
-                .font(.subheadline.weight(.medium)).foregroundStyle(Brand.red)
+            .font(.subheadline).foregroundStyle(Brand.red)
         }
-        .font(.subheadline).padding(20).frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.03)))
+    }
+
+    private var category: some View {
+        Text(assignment.isField ? "Campo" : "Oficina").font(.caption).foregroundStyle(.secondary)
+    }
+
+    private var priority: some View {
+        Text((assignment.nivel_prioridad ?? "Sin prioridad").uppercased())
+            .font(.caption2.bold()).foregroundStyle(.white)
+            .padding(.horizontal, 6).padding(.vertical, 3)
+            .background(Brand.red, in: RoundedRectangle(cornerRadius: 4))
+    }
+
+    private var state: String {
+        if assignment.completed { return "Completada" }
+        if assignment.overdue(at: now) { return "Vencida" }
+        return assignment.estado == "en_curso" ? "En curso" : "Pendiente"
+    }
+
+    private var stateColor: Color {
+        switch state {
+        case "Completada": .green
+        case "Vencida": .red
+        case "En curso": .blue
+        default: .yellow
+        }
+    }
+
+    private var statusBadge: some View {
+        Text(state).font(.caption.weight(.semibold))
+            .foregroundStyle(colorScheme == .dark ? Color.white : Color.black.opacity(0.85))
+            .padding(.horizontal, 9).padding(.vertical, 4)
+            .background(stateColor.opacity(colorScheme == .dark ? 0.32 : 0.19), in: Capsule())
+            .fixedSize()
     }
 }

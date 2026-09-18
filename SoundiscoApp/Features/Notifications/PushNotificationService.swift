@@ -34,13 +34,6 @@ final class PushNotificationService: ObservableObject {
     }
 
     func requestPermission() async {
-        #if PERSONAL_TEAM_BUILD
-        // Personal development teams cannot sign the APNs entitlement. The
-        // persistent Supabase inbox and its Realtime updates remain available.
-        permissionDenied = false
-        failure = nil
-        return
-        #else
         do {
             let center = UNUserNotificationCenter.current()
             var settings = await center.notificationSettings()
@@ -53,7 +46,6 @@ final class PushNotificationService: ObservableObject {
                 UIApplication.shared.registerForRemoteNotifications()
             }
         } catch { failure = "No se pudieron activar los avisos: \(error.localizedDescription)" }
-        #endif
     }
 
     func receivedToken(_ data: Data) async {

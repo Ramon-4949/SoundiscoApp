@@ -1,0 +1,13 @@
+# Apple Push Notification service credentials
+*.p8
+
+# Local server secrets
+.env
+.env.*
+!.env.example
+node_modules/
+
+# Xcode per-user state and local build output
+xcuserdata/
+DerivedData/
+.DS_Store

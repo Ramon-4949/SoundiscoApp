@@ -45,14 +45,12 @@ final class AssignmentDetailViewModel: ObservableObject {
         defer { savingMilestoneID = nil }
 
         do {
+            let parameters = [
+                "p_hito_id": milestone.id.uuidString,
+                "p_notas": notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            ]
             try await client
-                .rpc(
-                    "employee_complete_milestone",
-                    params: CompleteMilestoneRPC(
-                        milestoneID: milestone.id,
-                        notes: notes?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
-                    )
-                )
+                .rpc("employee_complete_milestone", params: parameters)
                 .execute()
             await reload()
         } catch {
@@ -64,18 +62,4 @@ final class AssignmentDetailViewModel: ObservableObject {
     func clearError() {
         errorMessage = nil
     }
-}
-
-private struct CompleteMilestoneRPC: Encodable {
-    let milestoneID: UUID
-    let notes: String?
-
-    enum CodingKeys: String, CodingKey {
-        case milestoneID = "p_hito_id"
-        case notes = "p_notas"
-    }
-}
-
-private extension String {
-    var nilIfBlank: String? { isEmpty ? nil : self }
 }

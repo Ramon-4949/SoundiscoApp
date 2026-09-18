@@ -8,7 +8,8 @@ Aplicar primero notifications_setup.sql y notification_reminders.sql.
 Configurar secretos del servicio:
 
 - SUPABASE_URL: https://gsrwfgpyflwozxzizmnv.supabase.co
-- SUPABASE_SERVICE_ROLE_KEY: clave service_role, nunca la publishable.
+- SUPABASE_SERVICE_ROLE_KEY: clave secreta `sb_secret_...` o `service_role` heredada;
+  nunca la publishable.
 - APNS_KEY_ID: identificador de la clave APNs.
 - APNS_TEAM_ID: identificador del equipo Apple Developer.
 - APPLE_P8_KEY: contenido completo y multilinea del archivo .p8.

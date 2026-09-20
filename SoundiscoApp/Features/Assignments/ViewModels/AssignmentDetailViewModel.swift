@@ -40,6 +40,11 @@ final class AssignmentDetailViewModel: ObservableObject {
 
     func complete(_ milestone: Milestone, notes: String?) async throws {
         guard savingMilestoneID == nil else { return }
+        guard !assignment.overdue(at: .now) else {
+            let error = AssignmentCompletionError.expired
+            errorMessage = error.localizedDescription
+            throw error
+        }
         savingMilestoneID = milestone.id
         errorMessage = nil
         defer { savingMilestoneID = nil }
@@ -61,5 +66,13 @@ final class AssignmentDetailViewModel: ObservableObject {
 
     func clearError() {
         errorMessage = nil
+    }
+}
+
+private enum AssignmentCompletionError: LocalizedError {
+    case expired
+
+    var errorDescription: String? {
+        "La fecha límite de esta asignación ya venció. El checklist está bloqueado."
     }
 }

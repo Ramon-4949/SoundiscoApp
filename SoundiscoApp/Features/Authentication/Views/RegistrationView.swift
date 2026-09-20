@@ -57,6 +57,9 @@ struct RegistrationView: View {
         .disabled(model.busy)
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: model.registered) { _, registered in
+            if registered { dismiss() }
+        }
         .alert(item: $model.notice) { item in
             Alert(title: Text(item.title), message: Text(item.message), dismissButton: .default(Text("Entendido")))
         }

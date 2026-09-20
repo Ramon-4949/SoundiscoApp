@@ -4,6 +4,7 @@ import Combine
 @MainActor
 final class RegistrationViewModel: ObservableObject {
     @Published var busy = false
+    @Published private(set) var registered = false
     @Published var username = ""
     @Published var fullName = ""
     @Published var email = ""
@@ -52,6 +53,8 @@ final class RegistrationViewModel: ObservableObject {
                     username: trimmed[0], name: trimmed[1], phone: trimmed[2], job: position)
                 password = ""
                 confirmation = ""
+                auth.notice = AuthNotice(title: "Cuenta creada: en revisión", message: "Tu cuenta está bajo revisión. La aprobación tarda aproximadamente 24 horas. Te avisaremos cuando un administrador apruebe tu acceso.")
+                registered = true
             } catch { notice = .failure(error) }
         }
     }

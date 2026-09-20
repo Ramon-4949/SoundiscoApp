@@ -10,6 +10,9 @@ struct NotificationDestinationView: View {
     var body: some View {
         Group {
             if model.loading { ProgressView("Cargando detalle…") }
+            else if model.notification?.destino_tipo == "perfil", isAdministrator {
+                AdminUsersView()
+            }
             else if let assignment = model.assignment {
                 AssignmentDetailView(assignment: assignment, allowsChecklistUpdates: !isAdministrator)
             } else if let bulletin = model.bulletin {

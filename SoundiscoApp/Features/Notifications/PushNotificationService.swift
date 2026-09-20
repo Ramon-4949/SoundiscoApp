@@ -82,6 +82,11 @@ final class PushNotificationService: ObservableObject {
         if registered {
             try await client.rpc("unregister_push_device", params: Params(p_installation: installation)).execute()
         }
+        await clearLocalRegistration()
+    }
+
+    // Account deletion already removed the device on the server.
+    func clearLocalRegistration() async {
         registered = false
         UserDefaults.standard.set(false, forKey: "push.registered")
         userID = nil

@@ -23,12 +23,17 @@ struct Assignment: Decodable, Identifiable {
     var responsibleNames: [String] {
         asignacion_equipo?.compactMap { $0.perfiles?.nombre }.nilIfEmpty ?? ["Equipo asignado"]
     }
-    var deadline: Date? { AgendaDate.parse(fecha_limite) }
+    var deadline: Date? {
+        AgendaDate.parse(fecha_limite)
+            ?? milestones.reversed().compactMap { AgendaDate.parse($0.fecha_programada) }.first
+    }
     var completed: Bool {
         if let estado { return ["completada", "completado", "finalizada", "finalizado"].contains(estado.lowercased()) }
         return isField && !milestones.isEmpty && milestones.allSatisfy { $0.completado == true }
     }
-    func overdue(at date: Date) -> Bool { !completed && deadline.map { $0 < date } == true }
+    func overdue(at date: Date) -> Bool {
+        !completed && (estado == "vencida" || deadline.map { $0 <= date } == true)
+    }
     func status(at date: Date) -> String { completed ? "Completada" : overdue(at: date) ? "Vencida" : "Pendiente" }
 
     nonisolated init(_ assignment: Asignacion) {

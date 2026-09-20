@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000003 /* Supabase */; };
+		C8437E1D305E516600562DC9 /* SoundiscIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C8437E1C305E516600562DC9 /* SoundiscIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		C808318730589093002AB0B4 /* SoundiscoApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SoundiscoApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8437E1C305E516600562DC9 /* SoundiscIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = SoundiscIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -51,6 +53,7 @@
 			isa = PBXGroup;
 			children = (
 				C808318930589093002AB0B4 /* SoundiscoApp */,
+				C8437E1C305E516600562DC9 /* SoundiscIcon.icon */,
 				C808318830589093002AB0B4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -131,6 +134,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8437E1D305E516600562DC9 /* SoundiscIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,7 +276,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APNS_ENVIRONMENT = development;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = SoundiscIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SoundiscoApp/SoundiscoApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -307,7 +311,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APNS_ENVIRONMENT = production;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = SoundiscIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SoundiscoApp/SoundiscoApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;

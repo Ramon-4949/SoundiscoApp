@@ -204,9 +204,7 @@ private struct AssignmentMutationPayload: Encodable {
         instrucciones = draft.instruccionesOpcionales
         estado = draft.estado
         fechaCreacion = draft.fechaCreacion
-        fechaLimite = draft.tipoFlujo == .tareaAdministrativa
-            ? draft.hitos.sorted { $0.orden < $1.orden }.last?.fechaProgramada
-            : nil
+        fechaLimite = draft.hitos.sorted { $0.orden < $1.orden }.last?.fechaProgramada
     }
 
     enum CodingKeys: String, CodingKey {

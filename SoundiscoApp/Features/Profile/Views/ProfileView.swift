@@ -4,6 +4,9 @@ struct ProfileView: View {
     @EnvironmentObject private var auth: SessionViewModel
     @StateObject private var model = ProfileViewModel()
     @State private var confirmSignOut = false
+    @State private var confirmDeletion = false
+    @State private var deletionFailure: String?
+    @Environment(\.isAdministrator) private var isAdministrator
 
     var body: some View {
         Form {
@@ -24,6 +27,21 @@ struct ProfileView: View {
                 information("Número de teléfono", value: model.profile?.telefono, symbol: "phone")
                 information("Cargo", value: nonblank(model.profile?.cargo) ?? nonblank(auth.jobTitle) ?? roleTitle,
                             symbol: "building.2")
+                if isAdministrator {
+                    NavigationLink { AdminUsersView() } label: {
+                        HStack(alignment: .center, spacing: 12) {
+                            icon("person.badge.shield.checkmark")
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Panel de control")
+                                Text("Gestionar usuarios y accesos")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
             }
 
             if let error = model.error {
@@ -48,6 +66,18 @@ struct ProfileView: View {
                 .disabled(auth.biometricBusy || auth.signingOut)
                 .tint(Brand.red)
                 if auth.biometricBusy { ProgressView("Verificando identidad…") }
+
+                Button(role: .destructive) { confirmDeletion = true } label: {
+                    HStack(spacing: 12) {
+                        icon("trash")
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Eliminar cuenta")
+                            Text("Eliminación permanente").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if auth.signingOut { ProgressView() }
+                    }
+                }.disabled(auth.signingOut)
 
                 LabeledContent {
                     Text("Español (DO)").foregroundStyle(.secondary)
@@ -76,6 +106,20 @@ struct ProfileView: View {
         .tint(Brand.red)
         .task(id: auth.userID) { await load() }
         .refreshable { await load() }
+        .confirmationDialog("¿Eliminar tu cuenta definitivamente?", isPresented: $confirmDeletion, titleVisibility: .visible) {
+            Button("Eliminar cuenta definitivamente", role: .destructive) {
+                Task {
+                    do { try await auth.deleteAccount() }
+                    catch { deletionFailure = AuthNotice.failure(error).message }
+                }
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Se eliminarán tus credenciales, perfil y dispositivos registrados. Se retirará tu participación de las asignaciones. El historial operativo compartido se conservará sin tu perfil. Esta acción no se puede deshacer.")
+        }
+        .alert("No se pudo eliminar la cuenta", isPresented: Binding(get: { deletionFailure != nil }, set: { if !$0 { deletionFailure = nil } })) {
+            Button("Aceptar", role: .cancel) { deletionFailure = nil }
+        } message: { Text(deletionFailure ?? "") }
         .confirmationDialog("¿Cerrar sesión?", isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button("Cerrar sesión", role: .destructive) { Task { await auth.signOut() } }
             Button("Cancelar", role: .cancel) {}

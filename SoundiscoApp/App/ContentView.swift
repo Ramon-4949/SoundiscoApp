@@ -8,7 +8,7 @@ struct ContentView: View {
             if auth.initializing { LaunchView() }
             else if auth.recoveringPassword { NewPasswordView() }
             else if auth.isLocked { NavigationStack { LoginView() } }
-            else if let id = auth.userID { HomeView().id(id) }
+            else if let id = auth.userID { AccountAccessGate().id(id) }
             else { NavigationStack { LoginView() } }
         }
         .tint(Brand.red)

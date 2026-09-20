@@ -5,6 +5,7 @@ struct AssignmentChecklistView: View {
     let allowsUpdates: Bool
     @State private var notes = ""
     @State private var alertMessage: String?
+    @State private var now = Date()
     @FocusState private var notesFocused: Bool
 
     var body: some View {
@@ -24,7 +25,11 @@ struct AssignmentChecklistView: View {
         .navigationBarTitleDisplayMode(.inline)
         .tint(Brand.red)
         .safeAreaInset(edge: .bottom) {
-            if allCompleted {
+            if isExpired {
+                Label("Asignación vencida", systemImage: "lock.fill")
+                    .font(.headline).foregroundStyle(Brand.red)
+                    .frame(maxWidth: .infinity).padding().background(.bar)
+            } else if allCompleted {
                 Label("Asignación completada", systemImage: "checkmark.seal.fill")
                     .font(.headline).foregroundStyle(.green)
                     .frame(maxWidth: .infinity).padding().background(.bar)
@@ -34,6 +39,13 @@ struct AssignmentChecklistView: View {
             Button("Aceptar", role: .cancel) { alertMessage = nil }
         } message: {
             Text(alertMessage ?? "Error desconocido")
+        }
+        .task {
+            while !Task.isCancelled {
+                now = .now
+                do { try await Task.sleep(for: .seconds(15)) }
+                catch { break }
+            }
         }
     }
 
@@ -63,6 +75,9 @@ struct AssignmentChecklistView: View {
                     if let savedNotes = milestone.notas_incidencias, !savedNotes.isEmpty {
                         Text(savedNotes).font(.subheadline).foregroundStyle(.secondary)
                     }
+                } else if isExpired {
+                    Label("La fecha límite venció. Este checklist está bloqueado.", systemImage: "lock.fill")
+                        .font(.subheadline).foregroundStyle(Brand.red)
                 } else if state == .current && allowsUpdates {
                     TextField("Notas o incidencias (opcional)", text: $notes, axis: .vertical)
                         .lineLimit(3...6).focused($notesFocused).padding(12)
@@ -120,6 +135,10 @@ struct AssignmentChecklistView: View {
 
     private var allCompleted: Bool {
         !model.assignment.milestones.isEmpty && model.assignment.milestones.allSatisfy(\.isCompleted)
+    }
+
+    private var isExpired: Bool {
+        model.assignment.overdue(at: now)
     }
 
     private var alertBinding: Binding<Bool> {

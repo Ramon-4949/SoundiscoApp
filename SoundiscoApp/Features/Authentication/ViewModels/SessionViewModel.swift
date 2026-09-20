@@ -127,8 +127,25 @@ final class SessionViewModel: ObservableObject {
             data: ["nombre_usuario": .string(username), "nombre_completo": .string(name),
                    "telefono": .string(phone), "cargo": .string(job)]
         )
-        guard let session = response.session else { throw RegistrationError.sessionRequired }
-        user = session.user
+        // Auth can create the account without issuing a session while email confirmation is enabled.
+        if let session = response.session { user = session.user }
+    }
+
+    func deleteAccount() async throws {
+        guard !signingOut else { return }
+        signingOut = true
+        defer { signingOut = false }
+        try await client.rpc("delete_my_account").execute()
+        if let id = userID { UserDefaults.standard.removeObject(forKey: "biometric.\(id.uuidString)") }
+        biometricRevision += 1
+        biometricContext?.invalidate()
+        await PushNotificationService.shared.clearLocalRegistration()
+        try? await client.auth.signOut(scope: .local)
+        user = nil
+        biometricEnabled = false
+        isLocked = false
+        recoveringPassword = false
+        notice = AuthNotice(title: "Cuenta eliminada", message: "Tu cuenta y tus datos de perfil se han eliminado.")
     }
 
     func handle(_ url: URL) async {

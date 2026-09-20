@@ -14,7 +14,7 @@ extension AuthNotice {
         if raw.localizedCaseInsensitiveContains("Invalid login credentials") {
             text = "El correo o la contraseña no son correctos."
         } else if raw.localizedCaseInsensitiveContains("Email not confirmed") {
-            text = "La cuenta todavía no está habilitada. Contacta con administración."
+            text = "Supabase todavía exige confirmar tu correo. Si un administrador ya aprobó tu cuenta, administración debe sincronizar esa aprobación con el acceso de correo."
         } else if raw.localizedCaseInsensitiveContains("rate limit") {
             text = "Has realizado varios intentos. Espera unos minutos y vuelve a intentarlo."
         } else if error is URLError {

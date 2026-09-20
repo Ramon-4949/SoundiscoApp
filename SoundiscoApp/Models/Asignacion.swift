@@ -110,7 +110,11 @@ struct Asignacion: Codable, Identifiable, Hashable, Sendable {
 
     func estadoEfectivo(at date: Date = .now) -> EstadoAsignacion {
         guard estado != .completada else { return .completada }
-        if let fechaLimite, fechaLimite < date { return .vencida }
+        let limite = fechaLimite ?? hitos.sorted { $0.orden < $1.orden }
+            .reversed()
+            .compactMap(\.fechaProgramada)
+            .first
+        if let limite, limite <= date { return .vencida }
         return estado
     }
 }

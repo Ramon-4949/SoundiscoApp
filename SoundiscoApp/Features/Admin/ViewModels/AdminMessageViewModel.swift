@@ -117,9 +117,11 @@ final class AdminMessageViewModel: ObservableObject {
     }
 
     private func validate(_ draft: MensajeDraft) throws {
-        guard !draft.asunto.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              !draft.cuerpoMensaje.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw AdminDataError.mensajeInvalido
+        if let error = FormValidation.text(draft.asunto, field: "El asunto", minimum: 3, maximum: 140) {
+            throw AdminDataError.campoInvalido(error)
+        }
+        if let error = FormValidation.text(draft.cuerpoMensaje, field: "El mensaje", minimum: 10, maximum: 4000) {
+            throw AdminDataError.campoInvalido(error)
         }
     }
 }

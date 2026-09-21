@@ -108,7 +108,7 @@ final class SessionViewModel: ObservableObject {
             user = session?.user
             if initializing || previousID != userID {
                 biometricEnabled = userID.map { UserDefaults.standard.bool(forKey: "biometric.\($0.uuidString)") } ?? false
-                isLocked = biometricEnabled && event == .initialSession
+                isLocked = false
             }
             initializing = false
         }
@@ -160,15 +160,6 @@ final class SessionViewModel: ObservableObject {
         defer { signingOut = false }
         biometricRevision += 1
         biometricContext?.invalidate()
-
-        // Face ID is a quick re-entry method. Keep Supabase's session in its
-        // Keychain storage and present the authentication gate instead of
-        // revoking the refresh token that Face ID needs.
-        if userID != nil, biometricEnabled {
-            recoveringPassword = false
-            isLocked = true
-            return
-        }
 
         await performRemoteSignOut()
     }

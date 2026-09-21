@@ -7,12 +7,24 @@ struct AssignmentNoteEditor: View {
     @State private var saving = false
     @State private var failure: String?
     @State private var requestID = UUID()
+    @State private var validationAttempted = false
+
+    private var rawContentError: String? {
+        FormValidation.text(content, field: "La nota", minimum: 3, maximum: 4000)
+    }
+
+    private var contentError: String? { validationAttempted ? rawContentError : nil }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Nota / Incidencia") {
-                    TextEditor(text: $content).frame(minHeight: 180).accessibilityLabel("Contenido de la nota")
+                    TextEditor(text: $content)
+                        .frame(minHeight: 180)
+                        .padding(6)
+                        .validationBorder(contentError)
+                        .accessibilityLabel("Contenido de la nota")
+                    FieldValidationMessage(message: contentError)
                     Text("\(content.count) / 4000").font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -23,13 +35,15 @@ struct AssignmentNoteEditor: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Publicar") {
+                        validationAttempted = true
+                        guard rawContentError == nil else { return }
                         saving = true
                         Task {
                             defer { saving = false }
                             do { try await model.addNote(id: requestID, content: content); dismiss() }
                             catch { failure = error.localizedDescription }
                         }
-                    }.disabled(saving || content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || content.count > 4000)
+                    }.disabled(saving)
                 }
             }
             .disabled(saving).overlay { if saving { ProgressView() } }

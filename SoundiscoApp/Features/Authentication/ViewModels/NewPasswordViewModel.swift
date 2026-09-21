@@ -8,15 +8,20 @@ final class NewPasswordViewModel: ObservableObject {
     @Published var confirmation = ""
     @Published private(set) var busy = false
     @Published var notice: AuthNotice?
+    @Published private(set) var validationAttempted = false
     private let client: SupabaseClient
     init(client: SupabaseClient? = nil) { self.client = client ?? SupabaseService.client }
 
+    var passwordError: String? { validationAttempted ? FormValidation.password(password) : nil }
+    var confirmationError: String? {
+        validationAttempted ? FormValidation.confirmation(confirmation, password: password) : nil
+    }
+
     func save() async -> Bool {
         guard !busy else { return false }
-        guard AuthValidation.passwordScore(password) == 4, password == confirmation else {
-            notice = AuthNotice(title: "Revisa la contraseña", message: "Cumple los requisitos y escribe la misma contraseña en ambos campos.")
-            return false
-        }
+        validationAttempted = true
+        guard FormValidation.password(password) == nil,
+              FormValidation.confirmation(confirmation, password: password) == nil else { return false }
         busy = true
         defer { busy = false }
         do {

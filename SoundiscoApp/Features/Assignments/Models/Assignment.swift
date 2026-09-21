@@ -60,6 +60,7 @@ struct Milestone: Decodable, Identifiable {
     let estado_hito: String?
     let notas_incidencias: String?
     let hora_real_completado: String?
+    var sla_abierto: Bool? = nil
     var scheduleValue: String? { fecha_programada ?? hora_estimada }
     var isCompleted: Bool { completado == true || estado_hito == "completado" }
 

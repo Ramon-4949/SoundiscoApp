@@ -1,6 +1,8 @@
 import Foundation
 
 enum RolEmpleado: String, Codable, CaseIterable, Sendable {
+    case empleado
+    // Compatibilidad mientras se ejecuta la migración de roles en Supabase.
     case tecnico
     case admin
 }

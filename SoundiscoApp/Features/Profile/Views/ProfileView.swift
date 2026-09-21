@@ -28,6 +28,15 @@ struct ProfileView: View {
                 information("Cargo", value: nonblank(model.profile?.cargo) ?? nonblank(auth.jobTitle) ?? roleTitle,
                             symbol: "building.2")
                 if isAdministrator {
+                    NavigationLink { AdminPerformanceView() } label: {
+                        HStack(spacing: 12) {
+                            icon("chart.bar.xaxis")
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Rendimiento")
+                                Text("Métricas y estadísticas del equipo").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }.padding(.vertical, 4)
+                    }
                     NavigationLink { AdminUsersView() } label: {
                         HStack(alignment: .center, spacing: 12) {
                             icon("person.badge.shield.checkmark")
@@ -151,7 +160,7 @@ struct ProfileView: View {
     private var roleTitle: String? {
         switch model.profile?.rol {
         case "admin": "Administración"
-        case "tecnico": "Técnico"
+        case "empleado", "tecnico": "Empleado"
         default: nil
         }
     }

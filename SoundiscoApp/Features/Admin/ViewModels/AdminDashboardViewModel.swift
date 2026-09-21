@@ -8,7 +8,7 @@ final class AdminDashboardViewModel: ObservableObject {
     @Published private(set) var metricas = AdminDashboardMetrics.empty
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
-    @Published var filtro: FiltroAsignacionAdmin = .todas
+    @Published var filtro: FiltroAsignacionAdmin = .pendientes
     @Published var busqueda = ""
 
     private let client: SupabaseClient

@@ -17,6 +17,8 @@ enum FiltroAsignacionAdmin: String, CaseIterable, Sendable {
     case pendientes
     case vencidas
     case completadas
+
+    static let homeOptions: [FiltroAsignacionAdmin] = [.pendientes, .vencidas, .completadas]
 }
 
 enum AdminDataError: LocalizedError, Sendable {

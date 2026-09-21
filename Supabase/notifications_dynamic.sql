@@ -107,7 +107,7 @@ begin
     if kind is not null then
       perform notification_private.emit(recipient,kind,title,body,'asignacion',e.assignment_id,a.estado,event_key);
     end if;
-    if a.id is not null and (is_admin or recipient = any(team)) then
+    if a.id is not null and is_admin then
       milestone_index := 0;
       foreach milestone in array e.completed_milestones loop
         milestone_index := milestone_index + 1;
@@ -115,6 +115,8 @@ begin
           actor_name || ' confirmó ' || milestone,'asignacion',e.assignment_id,a.estado,
           event_key || ':hito:' || milestone_index::text);
       end loop;
+    end if;
+    if a.id is not null and (is_admin or recipient = any(team)) then
       if lower(a.nivel_prioridad) = 'alta' and lower(coalesce(e.old_priority,'')) <> 'alta' then
         perform notification_private.emit(recipient,'asignacion_urgente','¡URGENTE!',
           'La asignación ' || assignment_title || ' ha sido marcada como urgente. Se requiere atención inmediata en el evento.',

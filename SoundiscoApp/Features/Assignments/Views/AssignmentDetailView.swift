@@ -4,6 +4,7 @@ struct AssignmentDetailView: View {
     @Environment(\.isAdministrator) private var isAdministrator
     @EnvironmentObject private var notifications: NotificationsViewModel
     @StateObject private var model: AssignmentDetailViewModel
+    @State private var showsNoteEditor = false
     private let allowsChecklistUpdates: Bool
 
     init(assignment: Assignment, allowsChecklistUpdates: Bool = true) {
@@ -25,6 +26,18 @@ struct AssignmentDetailView: View {
                 }
                 responsiblePeople
                 instructions
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Notas e incidencias").font(.headline)
+                    if model.notes.isEmpty { Text("Sin notas registradas").foregroundStyle(.secondary) }
+                    ForEach(model.notes) { note in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(note.usuario_id == model.userID ? "Tú" : "Colaborador").font(.caption.bold())
+                            Text(note.contenido).textSelection(.enabled)
+                            Text(AgendaDate.label(note.created_at)).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Divider()
+                    }
+                }.detailSurface()
                 if !model.assignment.milestones.isEmpty {
                     NavigationLink {
                         AssignmentChecklistView(model: model, allowsUpdates: allowsChecklistUpdates)
@@ -52,6 +65,13 @@ struct AssignmentDetailView: View {
         .navigationTitle("Detalle de asignación")
         .navigationBarTitleDisplayMode(.inline)
         .tint(Brand.red)
+        .safeAreaInset(edge: .bottom) {
+            Button { showsNoteEditor = true } label: {
+                Label("Añadir Nota / Reportar Incidencia", systemImage: "square.and.pencil")
+                    .frame(maxWidth: .infinity)
+            }.buttonStyle(.borderedProminent).tint(Brand.red).padding().background(.bar)
+        }
+        .sheet(isPresented: $showsNoteEditor) { AssignmentNoteEditor(model: model) }
         .toolbar {
             if isAdministrator {
                 ToolbarItem(placement: .topBarTrailing) {

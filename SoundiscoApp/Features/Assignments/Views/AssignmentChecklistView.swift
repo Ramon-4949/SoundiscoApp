@@ -3,162 +3,145 @@ import SwiftUI
 struct AssignmentChecklistView: View {
     @ObservedObject var model: AssignmentDetailViewModel
     let allowsUpdates: Bool
-    @State private var notes = ""
-    @State private var alertMessage: String?
-    @State private var now = Date()
-    @FocusState private var notesFocused: Bool
+    @State private var failure: String?
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                if let error = model.errorMessage {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(error).font(.subheadline).foregroundStyle(.secondary)
+                        Button("Reintentar") { Task { await model.reload() } }
+                    }.padding(.bottom, 24)
+                }
                 ForEach(Array(model.assignment.milestones.enumerated()), id: \.element.id) { index, milestone in
-                    milestoneRow(milestone, index: index)
+                    timelineRow(milestone, index: index)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .frame(maxWidth: 680)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20).padding(.top, 32).padding(.bottom, 28)
+            .frame(maxWidth: 680).frame(maxWidth: .infinity, alignment: .center)
         }
         .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle("Checklist")
-        .navigationBarTitleDisplayMode(.inline)
-        .tint(Brand.red)
-        .safeAreaInset(edge: .bottom) {
-            if isExpired {
-                Label("Asignación vencida", systemImage: "lock.fill")
-                    .font(.headline).foregroundStyle(Brand.red)
-                    .frame(maxWidth: .infinity).padding().background(.bar)
-            } else if allCompleted {
-                Label("Asignación completada", systemImage: "checkmark.seal.fill")
-                    .font(.headline).foregroundStyle(.green)
-                    .frame(maxWidth: .infinity).padding().background(.bar)
-            }
-        }
-        .alert("No se pudo completar el hito", isPresented: alertBinding) {
-            Button("Aceptar", role: .cancel) { alertMessage = nil }
-        } message: {
-            Text(alertMessage ?? "Error desconocido")
-        }
+        .navigationTitle("Checklist").navigationBarTitleDisplayMode(.inline).tint(Brand.red)
+        .refreshable { await model.reload() }
         .task {
             while !Task.isCancelled {
-                now = .now
-                do { try await Task.sleep(for: .seconds(15)) }
-                catch { break }
+                await model.reload()
+                do { try await Task.sleep(for: .seconds(10)) } catch { break }
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await model.reload() } }
+        }
+        .alert("No se pudo confirmar", isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
+            Button("Aceptar", role: .cancel) {}
+        } message: { Text(failure ?? "") }
     }
 
-    private func milestoneRow(_ milestone: Milestone, index: Int) -> some View {
-        let state = state(for: index)
-        return HStack(alignment: .top, spacing: 14) {
-            VStack(spacing: 0) {
-                milestoneIcon(state: state, index: index)
-                if index < model.assignment.milestones.count - 1 {
-                    Rectangle().fill(Color(uiColor: .separator))
-                        .frame(width: 2)
-                        .frame(minHeight: state == .current ? 190 : 58)
+    private func timelineRow(_ milestone: Milestone, index: Int) -> some View {
+        let confirmation = model.confirmation(for: milestone)
+        let historical = milestone.isCompleted && milestone.sla_abierto != true
+        let confirmed = confirmation != nil || historical
+        let locked = !confirmed && !milestone.isCompleted
+            && !model.assignment.milestones[..<index].allSatisfy(\.isCompleted)
+        return HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                Circle().fill(confirmed || locked ? Color(uiColor: .tertiarySystemFill) : Brand.red)
+                if confirmed {
+                    Image(systemName: "checkmark").font(.body.weight(.semibold)).foregroundStyle(.primary)
+                } else if locked {
+                    Image(systemName: "lock.fill").font(.subheadline).foregroundStyle(.secondary)
+                } else {
+                    Text("\(index + 1)").font(.headline).foregroundStyle(.white)
                 }
             }
+            .frame(width: 40, height: 40)
+            .shadow(color: confirmed || locked ? .clear : Brand.red.opacity(0.22), radius: 5, y: 3)
+            .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(milestone.descripcion ?? "Hito").font(.headline)
-                    Spacer()
-                    Text(AgendaDate.label(milestone.scheduleValue))
-                        .font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 10) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text(milestone.descripcion ?? "Hito").font(.headline)
+                        Spacer(minLength: 8)
+                        Text(timeLabel(milestone)).font(.caption).foregroundStyle(.secondary).fixedSize()
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(milestone.descripcion ?? "Hito").font(.headline)
+                        Text(timeLabel(milestone)).font(.caption).foregroundStyle(.secondary)
+                    }
                 }
-
-                if state == .completed {
-                    Label("Completado", systemImage: "checkmark.circle.fill")
-                        .font(.caption).foregroundStyle(.green)
-                    if let savedNotes = milestone.notas_incidencias, !savedNotes.isEmpty {
-                        Text(savedNotes).font(.subheadline).foregroundStyle(.secondary)
-                    }
-                } else if isExpired {
-                    Label("La fecha límite venció. Este checklist está bloqueado.", systemImage: "lock.fill")
-                        .font(.subheadline).foregroundStyle(Brand.red)
-                } else if state == .current && allowsUpdates {
-                    TextField("Notas o incidencias (opcional)", text: $notes, axis: .vertical)
-                        .lineLimit(3...6).focused($notesFocused).padding(12)
-                        .background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
-                    Button {
-                        Task { await confirm(milestone) }
-                    } label: {
-                        HStack {
-                            Spacer()
-                            if model.savingMilestoneID == milestone.id { ProgressView().tint(.white) }
-                            Label(model.savingMilestoneID == milestone.id ? "Confirmando…" : "Confirmar hito",
-                                  systemImage: "checkmark.circle")
-                            Spacer()
-                        }
-                        .font(.headline).padding(.vertical, 12)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Brand.red)
-                    .disabled(model.savingMilestoneID != nil)
-                } else if state == .locked {
-                    Label("Se habilitará al completar el paso anterior", systemImage: "lock")
+                if let confirmation {
+                    Label("Confirmado", systemImage: "checkmark.circle")
+                        .font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    Text(evaluationLabel(confirmation.evaluacion))
+                        .font(.caption).foregroundStyle(evaluationColor(confirmation.evaluacion))
+                } else if historical {
+                    Text("Hito completado").font(.subheadline).foregroundStyle(.secondary)
+                } else if locked {
+                    Text("Disponible cuando avance el hito anterior.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 } else {
-                    Label("Hito en curso", systemImage: "clock")
-                        .font(.subheadline).foregroundStyle(Brand.red)
+                    Text(milestone.isCompleted ? "Tu confirmación está pendiente" : "En Curso")
+                        .font(.caption.weight(.semibold)).foregroundStyle(Brand.red)
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Brand.red.opacity(0.10), in: Capsule())
+                    if allowsUpdates {
+                        Button {
+                            Task {
+                                do { try await model.complete(milestone) }
+                                catch { failure = error.localizedDescription; model.clearError() }
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if model.savingMilestoneID == milestone.id { ProgressView().tint(.white) }
+                                Label(model.savingMilestoneID == milestone.id ? "Confirmando…" : "Confirmar hito",
+                                      systemImage: "checkmark.circle")
+                            }
+                            .font(.headline).foregroundStyle(.white)
+                            .frame(maxWidth: .infinity).padding(.vertical, 8)
+                        }
+                        .buttonStyle(.borderedProminent).tint(Brand.red)
+                        .disabled(model.savingMilestoneID != nil)
+                    }
                 }
             }
-            .padding(.bottom, 22)
-            .opacity(state == .locked ? 0.62 : 1)
+            .foregroundStyle(locked ? .secondary : .primary)
+            .padding(.top, 5).padding(.bottom, 32)
+            .frame(maxWidth: .infinity, minHeight: 108, alignment: .topLeading)
         }
-        .accessibilityElement(children: .contain)
-    }
-
-    private func milestoneIcon(state: ChecklistState, index: Int) -> some View {
-        Group {
-            switch state {
-            case .completed:
-                Image(systemName: "checkmark").foregroundStyle(.green)
-            case .current:
-                Text("\(index + 1)").foregroundStyle(.white).font(.headline)
-            case .locked:
-                Image(systemName: "lock").foregroundStyle(.secondary)
+        .background(alignment: .topLeading) {
+            if index < model.assignment.milestones.count - 1 {
+                GeometryReader { geometry in
+                    Rectangle().fill(Color(uiColor: .separator).opacity(0.5))
+                        .frame(width: 2, height: max(0, geometry.size.height - 20))
+                        .offset(x: 19, y: 20)
+                }
             }
         }
-        .frame(width: 36, height: 36)
-        .background(state == .current ? Brand.red : Color(uiColor: .tertiarySystemFill), in: Circle())
     }
 
-    private func state(for index: Int) -> ChecklistState {
-        let milestones = model.assignment.milestones
-        if milestones[index].isCompleted { return .completed }
-        let previousAreComplete = milestones[..<index].allSatisfy(\.isCompleted)
-        return previousAreComplete ? .current : .locked
+    private func timeLabel(_ milestone: Milestone) -> String {
+        if let date = AgendaDate.parse(milestone.fecha_programada) {
+            return date.formatted(date: .omitted, time: .shortened)
+        }
+        return AgendaDate.label(milestone.scheduleValue)
     }
 
-    private var allCompleted: Bool {
-        !model.assignment.milestones.isEmpty && model.assignment.milestones.allSatisfy(\.isCompleted)
-    }
-
-    private var isExpired: Bool {
-        model.assignment.overdue(at: now)
-    }
-
-    private var alertBinding: Binding<Bool> {
-        Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })
-    }
-
-    private func confirm(_ milestone: Milestone) async {
-        notesFocused = false
-        do {
-            try await model.complete(milestone, notes: notes)
-            notes = ""
-        } catch {
-            alertMessage = error.localizedDescription
-            model.clearError()
+    private func evaluationLabel(_ evaluation: String) -> String {
+        switch evaluation {
+        case "temprano": "Confirmación temprana"
+        case "a_tiempo": "A tiempo"
+        default: "Confirmación tardía"
         }
     }
-}
 
-private enum ChecklistState {
-    case completed
-    case current
-    case locked
+    private func evaluationColor(_ evaluation: String) -> Color {
+        switch evaluation {
+        case "temprano": .blue
+        case "a_tiempo": .green
+        default: .orange
+        }
+    }
 }

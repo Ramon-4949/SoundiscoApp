@@ -1,14 +1,18 @@
 import Foundation
 
 struct AdminDashboardMetrics: Equatable, Sendable {
+    var total: Int
     var unidadesAsignadas: Int
     var unidadesActivas: Int
     var tasaEntrega: Double
+    var creadasUltimos7Dias: [Int]
 
     static let empty = AdminDashboardMetrics(
+        total: 0,
         unidadesAsignadas: 0,
         unidadesActivas: 0,
-        tasaEntrega: 0
+        tasaEntrega: 0,
+        creadasUltimos7Dias: Array(repeating: 0, count: 7)
     )
 }
 

@@ -8,7 +8,7 @@ final class AssignmentsViewModel: ObservableObject {
     @Published private(set) var loading = false
     @Published private(set) var error: String?
 
-    @Published var filter = AssignmentFilter.all
+    @Published var filter = AssignmentFilter.pending
     @Published var search = ""
     private let client: SupabaseClient
     private var loadGeneration = 0

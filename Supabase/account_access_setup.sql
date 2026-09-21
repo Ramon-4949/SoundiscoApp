@@ -42,9 +42,10 @@ for each row execute function account_private.new_profile();
 create or replace function account_private.new_auth_user()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
-  insert into public.perfiles(id,nombre_completo,rol,telefono)
-  values(new.id, nullif(new.raw_user_meta_data->>'nombre_completo',''), 'tecnico',
-    nullif(new.raw_user_meta_data->>'telefono','')) on conflict(id) do nothing;
+  insert into public.perfiles(id,nombre_completo,rol,telefono,cargo)
+  values(new.id, nullif(new.raw_user_meta_data->>'nombre_completo',''), 'empleado',
+    nullif(new.raw_user_meta_data->>'telefono',''),
+    nullif(new.raw_user_meta_data->>'cargo','')) on conflict(id) do nothing;
   return new;
 end;
 $$;
@@ -53,9 +54,9 @@ create trigger zz_account_profile_created after insert on auth.users
 for each row execute function account_private.new_auth_user();
 
 -- Auth accounts that previously lacked an employee profile enter review too.
-insert into public.perfiles(id,nombre_completo,rol,telefono)
-select u.id,nullif(u.raw_user_meta_data->>'nombre_completo',''),'tecnico',
-  nullif(u.raw_user_meta_data->>'telefono','') from auth.users u
+insert into public.perfiles(id,nombre_completo,rol,telefono,cargo)
+select u.id,nullif(u.raw_user_meta_data->>'nombre_completo',''),'empleado',
+  nullif(u.raw_user_meta_data->>'telefono',''),nullif(u.raw_user_meta_data->>'cargo','') from auth.users u
 where not exists(select 1 from public.perfiles p where p.id=u.id);
 
 create or replace function public.my_account_access()
@@ -121,7 +122,7 @@ language plpgsql stable security definer set search_path = '' as $$
 begin
   if not public.es_admin() then raise exception 'Solo administradores pueden gestionar accesos' using errcode = '42501'; end if;
   return query select p.id,p.nombre_completo,u.email::text,p.telefono,
-    coalesce(nullif(u.raw_user_meta_data->>'cargo',''),p.rol),a.estado,a.created_at
+    coalesce(nullif(p.cargo,''),nullif(u.raw_user_meta_data->>'cargo',''),'Sin cargo'),a.estado,a.created_at
     from account_private.access a join public.perfiles p on p.id=a.user_id
     join auth.users u on u.id=p.id order by a.created_at desc,p.id
     limit 200 offset greatest(p_offset,0);

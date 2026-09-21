@@ -9,12 +9,23 @@ final class RegistrationViewModel: ObservableObject {
     @Published var fullName = ""
     @Published var email = ""
     @Published var phone = ""
-    @Published var position = "Técnico de pantallas"
+    @Published var position = "Técnico de sonido"
     @Published var password = ""
     @Published var confirmation = ""
     @Published var acceptedTerms = false
     @Published var notice: AuthNotice?
-    let positions = ["Técnico de pantallas", "Técnico de sonido", "Técnico de iluminación", "Técnico de estructuras", "Administración", "Jefe de cuadrilla"]
+    let positions = [
+        "Técnico de sonido",
+        "Técnico audiovisuales",
+        "Técnico de iluminación",
+        "Encargado de estructura",
+        "Encargado de almacén",
+        "Supervisor",
+        "Administrativo",
+        "Contabilidad",
+        "Recursos Humanos",
+        "Marketing Digital"
+    ]
 
     func legalNotice(_ title: String) {
         notice = AuthNotice(title: title, message: "El documento corporativo aún no está disponible. Solicítalo a administración antes de crear tu cuenta.")

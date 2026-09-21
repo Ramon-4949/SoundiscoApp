@@ -39,14 +39,17 @@ try {
   for (const file of ['admin_creation_setup.sql','assignment_checklist_setup.sql','admin_crud_completion.sql',
     'administrative_assignment_location_fix.sql','notifications_setup.sql','notification_reminders.sql',
     'notifications_dynamic.sql','employee_availability.sql','account_access_setup.sql',
-    'account_approval_auth_fix.sql']) await apply(file);
+    'account_approval_auth_fix.sql','profile_roles_and_jobs.sql']) await apply(file);
+  await apply('profile_roles_and_jobs.sql');
+  assert.equal((await run('select rol from perfiles where id=$1',[employee])).rows[0].rol,'empleado');
   assert.notEqual((await run('select email_confirmed_at from auth.users where id=$1',[admin])).rows[0].email_confirmed_at,null);
   assert.equal((await run('select account_is_approved() ok')).rows[0].ok, true);
   assert.equal((await run("select has_function_privilege('service_role','public.check_account_access()','execute') ok")).rows[0].ok,true);
   assert.equal((await run("select has_function_privilege('anon','public.check_account_access()','execute') ok")).rows[0].ok,true);
   await run('insert into auth.users(id,email,raw_user_meta_data) values ($1,$2,$3)', [pending,'pending@example.test',
-    JSON.stringify({nombre_completo:'New Employee',cargo:'Sonido',rol:'admin'})]);
-  assert.equal((await run('select rol from perfiles where id=$1',[pending])).rows[0].rol,'tecnico');
+    JSON.stringify({nombre_completo:'New Employee',cargo:'Técnico de sonido',rol:'admin'})]);
+  const pendingProfile = (await run('select rol,cargo from perfiles where id=$1',[pending])).rows[0];
+  assert.deepEqual(pendingProfile,{rol:'empleado',cargo:'Técnico de sonido'});
   await apply('account_access_setup.sql');
   await as(pending);
   assert.equal((await run('select my_account_access() s')).rows[0].s.estado,'pendiente');

@@ -5,6 +5,9 @@ export async function testDynamicNotifications(db, { admin, alice, bob, otherAdm
   const migration = readFileSync(new URL('../notifications_dynamic.sql', import.meta.url), 'utf8');
   await db.exec(migration);
   await db.exec(migration);
+  const adminOnlyMilestones = readFileSync(new URL('../milestone_notifications_admin_only.sql', import.meta.url), 'utf8');
+  await db.exec(adminOnlyMilestones);
+  await db.exec(adminOnlyMilestones);
   const aid = '10000000-0000-0000-0000-000000000099';
   const hid = '20000000-0000-0000-0000-000000000099';
   const clear = () => db.exec('delete from notificaciones_app');

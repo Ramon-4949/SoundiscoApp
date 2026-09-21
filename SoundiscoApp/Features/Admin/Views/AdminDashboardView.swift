@@ -39,7 +39,7 @@ struct AdminDashboardView: View {
                     }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
-                            ForEach(FiltroAsignacionAdmin.allCases, id: \.self) { filter in
+                            ForEach(FiltroAsignacionAdmin.homeOptions, id: \.self) { filter in
                                 AgendaFilterPill(title: filter.title, selected: model.filtro == filter) { model.filtro = filter }
                             }
                         }

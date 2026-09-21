@@ -19,7 +19,7 @@ struct AssignmentListView: View {
                     }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
-                            ForEach(AssignmentFilter.allCases, id: \.self) { option in
+                            ForEach(AssignmentFilter.homeOptions, id: \.self) { option in
                                 AgendaFilterPill(title: option.rawValue, selected: agenda.filter == option) {
                                     agenda.filter = option
                                 }

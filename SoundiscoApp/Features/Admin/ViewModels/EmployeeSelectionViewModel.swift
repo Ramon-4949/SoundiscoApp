@@ -12,7 +12,7 @@ struct EmployeeAvailability: Decodable, Identifiable {
     let ocupadoHasta: Date?
 
     var displayName: String { nombre?.isEmpty == false ? nombre! : "Empleado sin nombre" }
-    var jobTitle: String { cargo?.isEmpty == false ? cargo! : rol == "admin" ? "Administración" : "Técnico" }
+    var jobTitle: String { cargo?.isEmpty == false ? cargo! : rol == "admin" ? "Administración" : "Empleado sin cargo" }
     var initials: String { displayName.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined() }
 
     enum CodingKeys: String, CodingKey {

@@ -30,6 +30,7 @@ enum AdminDataError: LocalizedError, Sendable {
     case secuenciaHitosInvalida
     case hitosFueraPeriodo
     case mensajeInvalido
+    case campoInvalido(String)
     case respuestaInvalida
 
     var errorDescription: String? {
@@ -50,6 +51,8 @@ enum AdminDataError: LocalizedError, Sendable {
             return "Los hitos administrativos no pueden programarse antes de crear la asignación."
         case .mensajeInvalido:
             return "El comunicado necesita asunto y contenido."
+        case .campoInvalido(let message):
+            return message
         case .respuestaInvalida:
             return "Supabase devolvió una respuesta inesperada."
         }

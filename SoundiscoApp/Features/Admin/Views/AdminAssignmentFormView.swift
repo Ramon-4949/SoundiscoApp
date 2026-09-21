@@ -11,6 +11,7 @@ struct AdminAssignmentFormView: View {
     @State private var responsables = Set<UUID>()
     @State private var hitos = [HitoEditorItem(fecha: Date().addingTimeInterval(3_600))]
     @State private var alertMessage: String?
+    @State private var validationAttempted = false
     @FocusState private var focusedField: Field?
 
     let tipo: TipoFlujo
@@ -44,19 +45,25 @@ struct AdminAssignmentFormView: View {
         ScrollView {
           VStack(alignment: .leading, spacing: 28) {
             formSection("TÍTULO DE LA ASIGNACIÓN") {
-                HStack(spacing: 12) {
-                    Image(systemName: "doc.text").foregroundStyle(Brand.red)
-                    TextField("Ej. Montaje de Sonido Principal", text: $titulo)
-                        .focused($focusedField, equals: .titulo)
-                }.inputSurface()
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "doc.text").foregroundStyle(Brand.red)
+                        TextField("Ej. Montaje de Sonido Principal", text: $titulo)
+                            .focused($focusedField, equals: .titulo)
+                    }.inputSurface(error: titleError)
+                    FieldValidationMessage(message: titleError)
+                }
             }
                 if tipo == .operacionesCampo {
                     formSection("UBICACIÓN DEL EVENTO") {
-                        HStack(spacing: 12) {
-                            Image(systemName: "mappin.and.ellipse").foregroundStyle(Brand.red)
-                            TextField("Ej. Auditorio Central - Piso 2", text: $ubicacion)
-                                .focused($focusedField, equals: .ubicacion)
-                        }.inputSurface()
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "mappin.and.ellipse").foregroundStyle(Brand.red)
+                                TextField("Ej. Auditorio Central - Piso 2", text: $ubicacion)
+                                    .focused($focusedField, equals: .ubicacion)
+                            }.inputSurface(error: locationError)
+                            FieldValidationMessage(message: locationError)
+                        }
                     }
                 }
 
@@ -87,14 +94,17 @@ struct AdminAssignmentFormView: View {
                                 Text("Selecciona la fecha del hito").font(.caption).foregroundStyle(.red)
                             }
                         }
-                        .inputSurface()
+                        .inputSurface(error: milestoneTitleError(hito))
                         .contextMenu {
                             if !hasProgress {
                                 Button("Mover arriba", systemImage: "arrow.up") { moveHito(hito.id, direction: -1) }
                                 Button("Mover abajo", systemImage: "arrow.down") { moveHito(hito.id, direction: 1) }
                             }
                         }
+                        FieldValidationMessage(message: milestoneTitleError(hito))
                     }
+
+                    FieldValidationMessage(message: itineraryError)
 
                     Button {
                         hitos.append(HitoEditorItem(fecha: suggestedMilestoneDate))
@@ -123,7 +133,7 @@ struct AdminAssignmentFormView: View {
                             }
                             Image(systemName: "chevron.right").foregroundStyle(.secondary)
                         }
-                        .inputSurface()
+                        .inputSurface(error: responsibleError)
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -132,9 +142,10 @@ struct AdminAssignmentFormView: View {
                         .frame(maxWidth: .infinity, alignment: .leading).inputSurface()
                 }
                 if bookingWindow == nil {
-                    Text("Define un período válido para consultar disponibilidad.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(itineraryError ?? "Define un período válido para consultar disponibilidad.")
+                        .font(.caption).foregroundStyle(validationAttempted ? .red : .secondary)
                 }
+                FieldValidationMessage(message: responsibleError)
             }
 
             formSection("NIVEL DE PRIORIDAD") {
@@ -147,12 +158,19 @@ struct AdminAssignmentFormView: View {
             }
 
             formSection("INSTRUCCIONES LOGÍSTICAS (OPCIONAL)") {
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "text.bubble").foregroundStyle(Brand.red)
-                    TextField("Ej. Revisar balance de cableado multipar y consolas auxiliares.", text: $instrucciones, axis: .vertical)
-                        .lineLimit(3...7)
-                        .focused($focusedField, equals: .instrucciones)
-                }.inputSurface()
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "text.bubble").foregroundStyle(Brand.red)
+                        TextField("Ej. Revisar balance de cableado multipar y consolas auxiliares.", text: $instrucciones, axis: .vertical)
+                            .lineLimit(3...7)
+                            .focused($focusedField, equals: .instrucciones)
+                    }.inputSurface(error: instructionsError)
+                    HStack {
+                        FieldValidationMessage(message: instructionsError)
+                        Spacer()
+                        Text("\(instrucciones.count) / 2000").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
             }
 
                 Button {
@@ -166,11 +184,11 @@ struct AdminAssignmentFormView: View {
                         Spacer()
                     }
                     .padding(.vertical, 18)
-                    .background(canSave ? Brand.red : Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+                    .background(Brand.red, in: RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
-                .disabled(!canSave || model.isSaving)
-                .foregroundStyle(canSave ? Color.white : Color.secondary)
+                .disabled(model.isSaving)
+                .foregroundStyle(.white)
           }.padding(20)
         }
         .background(Color(uiColor: .systemGroupedBackground))
@@ -239,7 +257,7 @@ struct AdminAssignmentFormView: View {
     }
 
     private var canSave: Bool {
-        guard !titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        guard rawTitleError == nil, rawLocationError == nil, rawInstructionsError == nil,
               !responsables.isEmpty, bookingWindow != nil else { return false }
         guard validMilestones else { return false }
         if tipo == .operacionesCampo {
@@ -258,8 +276,47 @@ struct AdminAssignmentFormView: View {
     private var validMilestones: Bool {
         let dates = hitos.compactMap(\.fecha)
         return !hitos.isEmpty && dates.count == hitos.count &&
-            hitos.allSatisfy { !$0.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } &&
+            hitos.allSatisfy { FormValidation.text($0.titulo, field: "El título del hito", minimum: 2, maximum: 100) == nil } &&
             zip(dates, dates.dropFirst()).allSatisfy { $0 <= $1 }
+    }
+
+    private var rawTitleError: String? {
+        FormValidation.text(titulo, field: "El título", minimum: 3, maximum: 120)
+    }
+
+    private var rawLocationError: String? {
+        guard tipo == .operacionesCampo else { return nil }
+        return FormValidation.text(ubicacion, field: "La ubicación", minimum: 3, maximum: 180)
+    }
+
+    private var rawInstructionsError: String? {
+        FormValidation.text(instrucciones, field: "Las instrucciones", minimum: 1, maximum: 2000, required: false)
+    }
+
+    private var titleError: String? { validationAttempted ? rawTitleError : nil }
+    private var locationError: String? { validationAttempted ? rawLocationError : nil }
+    private var instructionsError: String? { validationAttempted ? rawInstructionsError : nil }
+    private var responsibleError: String? {
+        validationAttempted && responsables.isEmpty ? "Selecciona al menos un responsable disponible." : nil
+    }
+
+    private func milestoneTitleError(_ item: HitoEditorItem) -> String? {
+        guard validationAttempted else { return nil }
+        return FormValidation.text(item.titulo, field: "El título del hito", minimum: 2, maximum: 100)
+    }
+
+    private var itineraryError: String? {
+        guard validationAttempted else { return nil }
+        guard !hitos.isEmpty else { return "Añade al menos un hito." }
+        let dates = hitos.compactMap(\.fecha)
+        guard dates.count == hitos.count else { return "Todos los hitos necesitan fecha y hora." }
+        guard zip(dates, dates.dropFirst()).allSatisfy({ $0 <= $1 }) else {
+            return "Las fechas de los hitos deben mantener el orden del itinerario."
+        }
+        if tipo == .tareaAdministrativa, dates.contains(where: { $0 < fechaCreacion }) {
+            return "Los hitos administrativos no pueden ser anteriores a la creación de la asignación."
+        }
+        return nil
     }
 
     private var hasProgress: Bool { editing?.hitos.contains { $0.estado == .completado } == true }
@@ -273,7 +330,13 @@ struct AdminAssignmentFormView: View {
     }
 
     private func save() async {
-        guard canSave, !model.isSaving else { return }
+        validationAttempted = true
+        guard canSave, !model.isSaving else {
+            if rawTitleError != nil { focusedField = .titulo }
+            else if rawLocationError != nil { focusedField = .ubicacion }
+            else if rawInstructionsError != nil { focusedField = .instrucciones }
+            return
+        }
         focusedField = nil
         let itinerary = hitos.enumerated().map { index, item in
                 HitoDraft(
@@ -327,10 +390,11 @@ private extension String {
 }
 
 private extension View {
-    func inputSurface() -> some View {
+    func inputSurface(error: String? = nil) -> some View {
         padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+            .validationBorder(error)
     }
 }
 

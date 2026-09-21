@@ -11,9 +11,9 @@ struct PasswordRecoveryView: View {
             Form {
                 Section {
                     Text("Introduce tu correo corporativo para recuperar el acceso.")
-                    TextField("Correo electrónico", text: $model.email)
-                        .textContentType(.emailAddress).keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    AuthField(title: "Correo electrónico", icon: "envelope", placeholder: "nombre@soundisco.com",
+                              text: $model.email, keyboard: .emailAddress, contentType: .emailAddress,
+                              error: model.emailError)
                 }
                 Button("Enviar enlace") { Task { await model.send() } }.disabled(model.busy)
                 if model.busy { ProgressView("Enviando…") }

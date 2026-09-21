@@ -6,6 +6,7 @@ struct AdminMessageComposerView: View {
     @State private var asunto = ""
     @State private var cuerpo = ""
     @State private var alertMessage: String?
+    @State private var validationAttempted = false
     @FocusState private var focused: Field?
     let onComplete: () -> Void
     private let editing: Bulletin?
@@ -26,13 +27,20 @@ struct AdminMessageComposerView: View {
             Section("Asunto del comunicado") {
                 TextField("Asunto", text: $asunto)
                     .focused($focused, equals: .asunto)
+                    .padding(10)
+                    .validationBorder(subjectError)
+                FieldValidationMessage(message: subjectError)
+                Text("\(asunto.count) / 140").font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
                 TextEditor(text: $cuerpo)
                     .frame(minHeight: 180)
                     .focused($focused, equals: .cuerpo)
-                Text("\(cuerpo.count) caracteres")
+                    .padding(6)
+                    .validationBorder(bodyError)
+                FieldValidationMessage(message: bodyError)
+                Text("\(cuerpo.count) / 4000 caracteres")
                     .font(.caption).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             } header: {
@@ -53,9 +61,9 @@ struct AdminMessageComposerView: View {
                         Spacer()
                     }
                 }
-                .disabled(!canPublish || model.isLoading)
-                .listRowBackground(canPublish ? Brand.red : Color(uiColor: .tertiarySystemFill))
-                .foregroundStyle(canPublish ? Color.white : Color.secondary)
+                .disabled(model.isLoading)
+                .listRowBackground(Brand.red)
+                .foregroundStyle(.white)
             }
         }
         .disabled(model.isLoading)
@@ -77,16 +85,30 @@ struct AdminMessageComposerView: View {
     }
 
     private var canPublish: Bool {
-        !asunto.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !cuerpo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        rawSubjectError == nil && rawBodyError == nil
     }
+
+    private var rawSubjectError: String? {
+        FormValidation.text(asunto, field: "El asunto", minimum: 3, maximum: 140)
+    }
+
+    private var rawBodyError: String? {
+        FormValidation.text(cuerpo, field: "El mensaje", minimum: 10, maximum: 4000)
+    }
+
+    private var subjectError: String? { validationAttempted ? rawSubjectError : nil }
+    private var bodyError: String? { validationAttempted ? rawBodyError : nil }
 
     private var alertBinding: Binding<Bool> {
         Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })
     }
 
     private func publish() async {
-        guard canPublish, !model.isLoading else { return }
+        validationAttempted = true
+        guard canPublish, !model.isLoading else {
+            focused = rawSubjectError != nil ? .asunto : .cuerpo
+            return
+        }
         focused = nil
         do {
             let draft = MensajeDraft(asunto: asunto, cuerpoMensaje: cuerpo)

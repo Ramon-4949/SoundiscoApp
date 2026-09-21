@@ -7,9 +7,13 @@ struct NewPasswordView: View {
         NavigationStack {
             Form {
                 Section("Nueva contraseña") {
-                    SecureField("Contraseña", text: $model.password).textContentType(.newPassword)
-                    SecureField("Confirmar contraseña", text: $model.confirmation).textContentType(.newPassword)
-                    Text("Mínimo 8 caracteres, letras, números y un símbolo.").font(.caption)
+                    AuthField(title: "Contraseña", icon: "lock", placeholder: "Nueva contraseña",
+                              text: $model.password, secure: true, contentType: .newPassword,
+                              error: model.passwordError)
+                    AuthField(title: "Confirmar contraseña", icon: "lock", placeholder: "Repite la contraseña",
+                              text: $model.confirmation, secure: true, contentType: .newPassword,
+                              error: model.confirmationError)
+                    Text("Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo; sin espacios.").font(.caption)
                 }
                 Button("Guardar contraseña") {
                     Task { if await model.save() { auth.recoveringPassword = false } }

@@ -12,13 +12,13 @@ struct RegistrationView: View {
                     Text("Únete al equipo de SounDisco.").foregroundStyle(.secondary)
                 }
                 AuthField(title: "Nombre de usuario", icon: "person", placeholder: "juanperez",
-                          text: $model.username, contentType: .username)
+                          text: $model.username, contentType: .username, error: model.usernameError)
                 AuthField(title: "Nombre completo", icon: "person.text.rectangle", placeholder: "Juan Pérez",
-                          text: $model.fullName, contentType: .name, capitalization: .words)
+                          text: $model.fullName, contentType: .name, capitalization: .words, error: model.fullNameError)
                 AuthField(title: "Correo electrónico", icon: "envelope", placeholder: "nombre@soundisco.com",
-                          text: $model.email, keyboard: .emailAddress, contentType: .emailAddress)
+                          text: $model.email, keyboard: .emailAddress, contentType: .emailAddress, error: model.emailError)
                 AuthField(title: "Número de teléfono", icon: "phone", placeholder: "829-588-0000",
-                          text: $model.phone, keyboard: .phonePad, contentType: .telephoneNumber)
+                          text: $model.phone, keyboard: .phonePad, contentType: .telephoneNumber, error: model.phoneError)
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Cargo en la empresa").font(.subheadline.weight(.medium))
                     Picker("Cargo", selection: $model.position) {
@@ -29,19 +29,22 @@ struct RegistrationView: View {
                     .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
                     .overlay {
                         RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(Color(uiColor: .separator).opacity(0.55), lineWidth: 1)
+                            .strokeBorder(model.positionError == nil ? Color(uiColor: .separator).opacity(0.55) : .red,
+                                          lineWidth: model.positionError == nil ? 1 : 1.5)
                     }
+                    FieldValidationMessage(message: model.positionError)
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     AuthField(title: "Contraseña", icon: "lock", placeholder: "Crea una contraseña",
-                              text: $model.password, secure: true, contentType: .newPassword)
+                              text: $model.password, secure: true, contentType: .newPassword, error: model.passwordError)
                     PasswordRequirements(password: model.password)
                 }
                 AuthField(title: "Confirmar contraseña", icon: "lock", placeholder: "Repite tu contraseña",
-                          text: $model.confirmation, secure: true, contentType: .newPassword)
+                          text: $model.confirmation, secure: true, contentType: .newPassword, error: model.confirmationError)
                 Toggle(isOn: $model.acceptedTerms) {
                     Text("Acepto los términos de servicio y la política de privacidad.").font(.subheadline)
                 }
+                FieldValidationMessage(message: model.termsError)
                 HStack {
                     Button("Términos") { model.legalNotice("Términos de servicio") }
                     Spacer()
@@ -76,7 +79,7 @@ private struct PasswordRequirements: View {
                         .frame(height: 4)
                 }
             }.accessibilityHidden(true)
-            Text("Mínimo 8 caracteres, letras, números y un símbolo.")
+            Text("Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo; sin espacios.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

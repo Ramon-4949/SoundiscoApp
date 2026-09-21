@@ -130,8 +130,12 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
     }
 
     private func validate(_ draft: AsignacionDraft) throws {
-        guard !draft.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw AdminDataError.tituloRequerido
+        if let error = FormValidation.text(draft.titulo, field: "El título", minimum: 3, maximum: 120) {
+            throw AdminDataError.campoInvalido(error)
+        }
+        if let instructions = draft.instruccionesOpcionales,
+           let error = FormValidation.text(instructions, field: "Las instrucciones", minimum: 1, maximum: 2000, required: false) {
+            throw AdminDataError.campoInvalido(error)
         }
         guard !draft.empleadosIDs.isEmpty else {
             throw AdminDataError.responsableRequerido
@@ -139,8 +143,11 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
 
         switch draft.tipoFlujo {
         case .operacionesCampo:
-            guard draft.ubicacion?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else {
+            guard let location = draft.ubicacion else {
                 throw AdminDataError.ubicacionRequerida
+            }
+            if let error = FormValidation.text(location, field: "La ubicación", minimum: 3, maximum: 180) {
+                throw AdminDataError.campoInvalido(error)
             }
             guard !draft.hitos.isEmpty else { throw AdminDataError.itinerarioRequerido }
             try validateMilestones(draft.hitos)
@@ -165,8 +172,8 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
         var foundIncomplete = false
         var previousDate: Date?
         for milestone in ordered {
-            guard !milestone.titulo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw AdminDataError.itinerarioRequerido
+            if let error = FormValidation.text(milestone.titulo, field: "El título del hito", minimum: 2, maximum: 100) {
+                throw AdminDataError.campoInvalido(error)
             }
             if foundIncomplete && milestone.estado != .bloqueado {
                 throw AdminDataError.secuenciaHitosInvalida

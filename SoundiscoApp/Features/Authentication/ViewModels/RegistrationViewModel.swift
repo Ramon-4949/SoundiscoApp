@@ -14,6 +14,7 @@ final class RegistrationViewModel: ObservableObject {
     @Published var confirmation = ""
     @Published var acceptedTerms = false
     @Published var notice: AuthNotice?
+    @Published private(set) var validationAttempted = false
     let positions = [
         "Técnico de sonido",
         "Técnico audiovisuales",
@@ -27,33 +28,35 @@ final class RegistrationViewModel: ObservableObject {
         "Marketing Digital"
     ]
 
+    var usernameError: String? { visible(FormValidation.username(username)) }
+    var fullNameError: String? { visible(FormValidation.fullName(fullName)) }
+    var emailError: String? { visible(FormValidation.email(email)) }
+    var phoneError: String? { visible(FormValidation.phone(phone)) }
+    var passwordError: String? {
+        visible(FormValidation.password(password, personalValues: [username, fullName, email.components(separatedBy: "@").first ?? ""]))
+    }
+    var confirmationError: String? { visible(FormValidation.confirmation(confirmation, password: password)) }
+    var positionError: String? { visible(positions.contains(position) ? nil : "Selecciona un cargo válido.") }
+    var termsError: String? { visible(acceptedTerms ? nil : "Debes aceptar los términos y la política de privacidad.") }
+
+    private var formIsValid: Bool {
+        FormValidation.username(username) == nil && FormValidation.fullName(fullName) == nil &&
+        FormValidation.email(email) == nil && FormValidation.phone(phone) == nil &&
+        FormValidation.password(password, personalValues: [username, fullName, email.components(separatedBy: "@").first ?? ""]) == nil &&
+        FormValidation.confirmation(confirmation, password: password) == nil &&
+        positions.contains(position) && acceptedTerms
+    }
+
+    private func visible(_ error: String?) -> String? { validationAttempted ? error : nil }
+
     func legalNotice(_ title: String) {
         notice = AuthNotice(title: title, message: "El documento corporativo aún no está disponible. Solicítalo a administración antes de crear tu cuenta.")
     }
 
     func register(using auth: SessionViewModel) {
+        validationAttempted = true
+        guard formIsValid else { return }
         let trimmed = [username, fullName, phone].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-        guard trimmed.allSatisfy({ !$0.isEmpty }),
-              AuthValidation.validEmail(email.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            notice = AuthNotice(title: "Revisa tus datos", message: "Completa todos los campos e introduce un correo válido.")
-            return
-        }
-        guard phone.filter(\.isNumber).count >= 7 else {
-            notice = AuthNotice(title: "Teléfono inválido", message: "Introduce un número de teléfono válido.")
-            return
-        }
-        guard AuthValidation.passwordScore(password) == 4 else {
-            notice = AuthNotice(title: "Revisa tu contraseña", message: "Usa al menos 8 caracteres, letras, números y un símbolo.")
-            return
-        }
-        guard password == confirmation else {
-            notice = AuthNotice(title: "Las contraseñas no coinciden", message: "Repite la misma contraseña en ambos campos.")
-            return
-        }
-        guard acceptedTerms else {
-            notice = AuthNotice(title: "Aceptación pendiente", message: "Debes leer y aceptar los términos y la política de privacidad.")
-            return
-        }
         guard !busy else { return }
         busy = true
         Task {

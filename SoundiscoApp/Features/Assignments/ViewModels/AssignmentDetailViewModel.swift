@@ -106,6 +106,9 @@ final class AssignmentDetailViewModel: ObservableObject {
     }
 
     func addNote(id: UUID, content: String) async throws {
+        if let error = FormValidation.text(content, field: "La nota", minimum: 3, maximum: 4000) {
+            throw AdminDataError.campoInvalido(error)
+        }
         try await client.rpc("add_assignment_note", params: [
             "p_id": id.uuidString,
             "p_asignacion_id": assignment.id.uuidString,

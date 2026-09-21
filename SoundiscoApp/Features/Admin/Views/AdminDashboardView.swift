@@ -40,7 +40,9 @@ struct AdminDashboardView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
                             ForEach(FiltroAsignacionAdmin.homeOptions, id: \.self) { filter in
-                                AgendaFilterPill(title: filter.title, selected: model.filtro == filter) { model.filtro = filter }
+                                AgendaFilterPill(title: filter.title, selected: model.filtro == filter) {
+                                    Task { await model.aplicarFiltro(filter) }
+                                }
                             }
                         }
                     }
@@ -64,7 +66,12 @@ struct AdminDashboardView: View {
                                     .toolbar(.visible, for: .navigationBar)
                             } label: {
                                 AssignmentCard(assignment: Assignment(assignment), now: context.date)
-                            }.buttonStyle(.plain)
+                            }
+                            .buttonStyle(.plain)
+                            .task { await model.cargarSiguientePaginaIfNeeded(current: assignment) }
+                        }
+                        if model.isLoadingMore {
+                            ProgressView("Cargando más…").padding(.vertical, 12)
                         }
                     }
                 }.padding(20).frame(maxWidth: 680).frame(maxWidth: .infinity)
@@ -74,7 +81,15 @@ struct AdminDashboardView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .tint(Brand.red)
-        .onChange(of: searching) { _, visible in if !visible { model.busqueda = "" } }
+        .onChange(of: searching) { _, visible in
+            if !visible {
+                model.busqueda = ""
+                model.programarBusqueda()
+            }
+        }
+        .onChange(of: model.busqueda) { _, _ in
+            if searching { model.programarBusqueda() }
+        }
         .task { await model.cargarMetricas() }
         .sheet(isPresented: $showingCreation) {
             NavigationStack {
@@ -93,9 +108,9 @@ struct AdminDashboardView: View {
 
     private var sectionTitle: some View { Text("Asignaciones Actuales").font(.title3.bold()) }
     private var showAll: some View {
-        Button("Ver todas (\(model.asignaciones.count))") {
-            model.filtro = .todas
+        Button("Ver todas (\(model.metricas.total))") {
             model.busqueda = ""
+            Task { await model.aplicarFiltro(.todas) }
         }.font(.subheadline.weight(.medium))
     }
 
@@ -130,8 +145,8 @@ struct AdminDashboardView: View {
                     VStack(alignment: .leading) { Text("Tasa de entrega"); deliveryRate }
                 }.font(.caption).frame(minHeight: 28)
             } else {
-                Chart(0..<7, id: \.self) { day in
-                    LineMark(x: .value("Día", day), y: .value("Asignaciones", count(daysAgo: 6 - day)))
+                Chart(Array(model.metricas.creadasUltimos7Dias.enumerated()), id: \.offset) { day, count in
+                    LineMark(x: .value("Día", day), y: .value("Asignaciones", count))
                         .foregroundStyle(Brand.red.opacity(0.35)).lineStyle(StrokeStyle(lineWidth: 2))
                 }
                 .chartXAxis(.hidden).chartYAxis(.hidden).frame(height: 28)
@@ -149,8 +164,9 @@ struct AdminDashboardView: View {
     }
 
     private func count(daysAgo: Int) -> Int {
-        guard let date = Calendar.current.date(byAdding: .day, value: -daysAgo, to: .now) else { return 0 }
-        return model.asignaciones.filter { Calendar.current.isDate($0.fechaCreacion, inSameDayAs: date) }.count
+        let index = model.metricas.creadasUltimos7Dias.count - 1 - daysAgo
+        guard model.metricas.creadasUltimos7Dias.indices.contains(index) else { return 0 }
+        return model.metricas.creadasUltimos7Dias[index]
     }
 }
 

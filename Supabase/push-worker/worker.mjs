@@ -110,6 +110,10 @@ export async function runBatch(config, key, dependencies = {}) {
       let result;
       try { result = await send(job, config, jwt); }
       catch { result = { success: false, error: 'Transport error', invalid: false }; }
+      if (!result.success) {
+        console.warn(JSON.stringify({ service: 'apns', environment: job.environment,
+          status: 'failed', reason: result.error }));
+      }
       await call(config, 'finish_notification_push', {
         p_job: job.job_id, p_lease: job.lease, p_success: result.success,
         p_error: result.error, p_invalid: result.invalid,

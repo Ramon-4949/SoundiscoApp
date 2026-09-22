@@ -80,6 +80,9 @@ test('production uses production host', async () => {
 
 test('batch acknowledges successes and failures without skipping other jobs', async () => {
   const acknowledgments = [];
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
   const count = await runBatch(config, privateKey, {
     rpc: async (_, name, params) => {
       if (name === 'claim_notification_pushes_v2') return [job, { ...job, job_id: 'second' }];
@@ -94,6 +97,27 @@ test('batch acknowledges successes and failures without skipping other jobs', as
   assert.deepEqual(acknowledgments.map(a => a.p_success), [true,false]);
   assert.equal(acknowledgments[1].p_error, 'Transport error');
   assert.equal(acknowledgments[0].p_lease, job.lease);
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test('batch logs only APNs environment and reason on delivery failure', async () => {
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = value => warnings.push(JSON.parse(value));
+  try {
+    await runBatch(config, privateKey, {
+      rpc: async (_, name) => name === 'claim_notification_pushes_v2' ? [job] : undefined,
+      sendPush: async () => ({ success: false, error: 'BadDeviceToken', invalid: false }),
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.deepEqual(warnings, [{ service: 'apns', environment: 'sandbox',
+    status: 'failed', reason: 'BadDeviceToken' }]);
+  assert.equal(JSON.stringify(warnings).includes(job.token), false);
+  assert.equal(JSON.stringify(warnings).includes(job.recipient), false);
 });
 
 test('RPC errors do not disclose credentials or server responses', async () => {

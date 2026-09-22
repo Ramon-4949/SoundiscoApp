@@ -11,11 +11,18 @@ Configurar secretos del servicio:
 - SUPABASE_URL: https://gsrwfgpyflwozxzizmnv.supabase.co
 - SUPABASE_SERVICE_ROLE_KEY: clave secreta `sb_secret_...` o `service_role` heredada;
   nunca la publishable.
-- APNS_KEY_ID: identificador de la clave APNs.
 - APNS_TEAM_ID: identificador del equipo Apple Developer.
-- APPLE_P8_KEY: contenido completo y multilinea del archivo .p8.
 - APNS_BUNDLE_ID: hola.SoundiscoApp.
+- APNS_SANDBOX_KEY_ID: identificador de una clave APNs restringida a Sandbox.
+- APPLE_SANDBOX_P8_KEY: contenido completo y multilinea de esa clave Sandbox.
+- APNS_PRODUCTION_KEY_ID: identificador de una clave APNs restringida a Production.
+- APPLE_PRODUCTION_P8_KEY: contenido completo y multilinea de esa clave Production.
 - PORT: lo asigna Render automáticamente; no es necesario configurarlo.
+
+`APNS_KEY_ID` y `APPLE_P8_KEY` siguen aceptándose como alias de las dos variables
+Sandbox para no interrumpir el entorno de desarrollo existente. Production siempre
+requiere sus propias variables; una llave restringida a Sandbox produce
+`BadEnvironmentKeyInToken` al enviar a un dispositivo instalado desde TestFlight.
 
 Instalación: `npm install`.
 Arranque continuo: `npm start`.

@@ -5,7 +5,11 @@ import { EventEmitter } from 'node:events';
 import { providerToken, payload, rpc, sendPush, runBatch, configuration } from './worker.mjs';
 
 const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
-const config = { url: 'https://example.invalid', serviceKey: 'SECRET', keyID: 'KEY', teamID: 'TEAM', bundleID: 'hola.SoundiscoApp' };
+const config = { url: 'https://example.invalid', serviceKey: 'SECRET', teamID: 'TEAM', bundleID: 'hola.SoundiscoApp' };
+const credentials = {
+  sandbox: { key: privateKey, keyID: 'SANDBOX_KEY' },
+  production: { key: privateKey, keyID: 'PRODUCTION_KEY' },
+};
 const job = { job_id: 'job', lease: 'lease', notification_id: 'notification', recipient: 'recipient',
   token: 'a'.repeat(64), environment: 'sandbox', titulo: 'PRIVATE TITLE', ubicacion: 'PRIVATE LOCATION' };
 
@@ -83,7 +87,7 @@ test('batch acknowledges successes and failures without skipping other jobs', as
   const originalWarn = console.warn;
   console.warn = () => {};
   try {
-  const count = await runBatch(config, privateKey, {
+  const count = await runBatch(config, credentials, {
     rpc: async (_, name, params) => {
       if (name === 'claim_notification_pushes_v2') return [job, { ...job, job_id: 'second' }];
       if (name === 'finish_notification_push') acknowledgments.push(params);
@@ -107,7 +111,7 @@ test('batch logs only APNs environment and reason on delivery failure', async ()
   const originalWarn = console.warn;
   console.warn = value => warnings.push(JSON.parse(value));
   try {
-    await runBatch(config, privateKey, {
+    await runBatch(config, credentials, {
       rpc: async (_, name) => name === 'claim_notification_pushes_v2' ? [job] : undefined,
       sendPush: async () => ({ success: false, error: 'BadDeviceToken', invalid: false }),
     });
@@ -118,6 +122,20 @@ test('batch logs only APNs environment and reason on delivery failure', async ()
     status: 'failed', reason: 'BadDeviceToken' }]);
   assert.equal(JSON.stringify(warnings).includes(job.token), false);
   assert.equal(JSON.stringify(warnings).includes(job.recipient), false);
+});
+
+test('batch signs sandbox and production jobs with their matching APNs keys', async () => {
+  const keyIDs = [];
+  const productionJob = { ...job, job_id: 'production-job', environment: 'production' };
+  await runBatch(config, credentials, {
+    rpc: async (_, name) => name === 'claim_notification_pushes_v2'
+      ? [job, productionJob] : undefined,
+    sendPush: async (_current, _config, jwt) => {
+      keyIDs.push(JSON.parse(Buffer.from(jwt.split('.')[0], 'base64url')).kid);
+      return { success: true, error: null, invalid: false };
+    },
+  });
+  assert.deepEqual(keyIDs, ['SANDBOX_KEY', 'PRODUCTION_KEY']);
 });
 
 test('RPC errors do not disclose credentials or server responses', async () => {
@@ -151,6 +169,7 @@ test('configuration requires secrets and rejects non-HTTPS origins', () => {
   assert.throws(() => configuration({
     SUPABASE_URL: 'http://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
     APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team', APPLE_P8_KEY: 'private-key', APNS_BUNDLE_ID: 'bundle',
+    APNS_PRODUCTION_KEY_ID: 'production-key', APPLE_PRODUCTION_P8_KEY: 'production-private-key',
   }), /HTTPS/);
 });
 
@@ -159,13 +178,28 @@ test('configuration reads the APNs key from the environment and normalizes escap
     SUPABASE_URL: 'https://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
     APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team',
     APPLE_P8_KEY: '-----BEGIN PRIVATE KEY-----\\nvalue\\n-----END PRIVATE KEY-----',
+    APNS_PRODUCTION_KEY_ID: 'production-key',
+    APPLE_PRODUCTION_P8_KEY: '-----BEGIN PRIVATE KEY-----\\nproduction\\n-----END PRIVATE KEY-----',
     APNS_BUNDLE_ID: 'hola.SoundiscoApp', PORT: '10000',
   });
-  assert.equal(result.privateKey, '-----BEGIN PRIVATE KEY-----\nvalue\n-----END PRIVATE KEY-----');
+  assert.equal(result.credentials.sandbox.privateKey, '-----BEGIN PRIVATE KEY-----\nvalue\n-----END PRIVATE KEY-----');
+  assert.equal(result.credentials.sandbox.keyID, 'key');
+  assert.equal(result.credentials.production.privateKey,
+    '-----BEGIN PRIVATE KEY-----\nproduction\n-----END PRIVATE KEY-----');
+  assert.equal(result.credentials.production.keyID, 'production-key');
   assert.equal(result.port, 10000);
   assert.throws(() => configuration({
     SUPABASE_URL: 'https://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
     APNS_KEY_ID: 'key', APNS_TEAM_ID: 'team', APPLE_P8_KEY: 'private-key',
+    APNS_PRODUCTION_KEY_ID: 'production-key', APPLE_PRODUCTION_P8_KEY: 'production-private-key',
     APNS_BUNDLE_ID: 'hola.SoundiscoApp', PORT: 'invalid',
   }), /PORT/);
+});
+
+test('configuration requires separate production credentials', () => {
+  assert.throws(() => configuration({
+    SUPABASE_URL: 'https://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'secret',
+    APNS_KEY_ID: 'sandbox-key', APNS_TEAM_ID: 'team', APPLE_P8_KEY: 'sandbox-private-key',
+    APNS_BUNDLE_ID: 'hola.SoundiscoApp',
+  }), /APNS_PRODUCTION_KEY_ID/);
 });

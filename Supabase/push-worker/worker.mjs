@@ -98,17 +98,25 @@ export function sendPush(job, config, jwt, connect = http2.connect) {
   });
 }
 
-export async function runBatch(config, key, dependencies = {}) {
+export async function runBatch(config, credentials, dependencies = {}) {
   const call = dependencies.rpc ?? rpc;
   const send = dependencies.sendPush ?? sendPush;
   await call(config, 'generate_notification_reminders');
   const jobs = await call(config, 'claim_notification_pushes_v2');
-  const jwt = providerToken(key, config.keyID, config.teamID);
+  const tokens = new Map();
+  const tokenFor = environment => {
+    const credential = credentials[environment];
+    if (!credential) throw new Error('Missing APNs credentials for ' + environment);
+    if (!tokens.has(environment)) {
+      tokens.set(environment, providerToken(credential.key, credential.keyID, config.teamID));
+    }
+    return tokens.get(environment);
+  };
   let acknowledgmentFailures = 0;
   for (let offset = 0; offset < jobs.length; offset += 5) {
     const results = await Promise.allSettled(jobs.slice(offset, offset + 5).map(async job => {
       let result;
-      try { result = await send(job, config, jwt); }
+      try { result = await send(job, config, tokenFor(job.environment)); }
       catch { result = { success: false, error: 'Transport error', invalid: false }; }
       if (!result.success) {
         console.warn(JSON.stringify({ service: 'apns', environment: job.environment,
@@ -126,8 +134,18 @@ export async function runBatch(config, key, dependencies = {}) {
 }
 
 export function configuration(env = process.env) {
-  for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','APNS_KEY_ID','APNS_TEAM_ID','APPLE_P8_KEY','APNS_BUNDLE_ID']) {
+  for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','APNS_TEAM_ID','APNS_BUNDLE_ID']) {
     if (!env[name]?.trim()) throw new Error('Missing configuration: ' + name);
+  }
+  const sandboxKeyID = env.APNS_SANDBOX_KEY_ID ?? env.APNS_KEY_ID;
+  const sandboxPrivateKey = env.APPLE_SANDBOX_P8_KEY ?? env.APPLE_P8_KEY;
+  for (const [name, value] of [
+    ['APNS_SANDBOX_KEY_ID (or APNS_KEY_ID)', sandboxKeyID],
+    ['APPLE_SANDBOX_P8_KEY (or APPLE_P8_KEY)', sandboxPrivateKey],
+    ['APNS_PRODUCTION_KEY_ID', env.APNS_PRODUCTION_KEY_ID],
+    ['APPLE_PRODUCTION_P8_KEY', env.APPLE_PRODUCTION_P8_KEY],
+  ]) {
+    if (!value?.trim()) throw new Error('Missing configuration: ' + name);
   }
   const url = new URL(env.SUPABASE_URL);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
@@ -139,9 +157,17 @@ export function configuration(env = process.env) {
   }
   return {
     url: url.origin, serviceKey: env.SUPABASE_SERVICE_ROLE_KEY,
-    keyID: env.APNS_KEY_ID, teamID: env.APNS_TEAM_ID,
-    bundleID: env.APNS_BUNDLE_ID,
-    privateKey: env.APPLE_P8_KEY.replace(/\\n/g, '\n').trim(),
+    teamID: env.APNS_TEAM_ID, bundleID: env.APNS_BUNDLE_ID,
+    credentials: {
+      sandbox: {
+        keyID: sandboxKeyID.trim(),
+        privateKey: sandboxPrivateKey.replace(/\\n/g, '\n').trim(),
+      },
+      production: {
+        keyID: env.APNS_PRODUCTION_KEY_ID.trim(),
+        privateKey: env.APPLE_PRODUCTION_P8_KEY.replace(/\\n/g, '\n').trim(),
+      },
+    },
     port,
   };
 }
@@ -158,9 +184,13 @@ export function startHealthServer(port) {
 
 async function main() {
   const config = configuration();
-  const key = createPrivateKey(config.privateKey);
-  if (key.asymmetricKeyType !== 'ec' || key.asymmetricKeyDetails?.namedCurve !== 'prime256v1') {
-    throw new Error('APNs requires a P-256 signing key');
+  const credentials = {};
+  for (const [environment, credential] of Object.entries(config.credentials)) {
+    const key = createPrivateKey(credential.privateKey);
+    if (key.asymmetricKeyType !== 'ec' || key.asymmetricKeyDetails?.namedCurve !== 'prime256v1') {
+      throw new Error('APNs requires a P-256 signing key for ' + environment);
+    }
+    credentials[environment] = { key, keyID: credential.keyID };
   }
   const once = process.argv.includes('--once');
   const server = once ? null : startHealthServer(config.port);
@@ -169,7 +199,7 @@ async function main() {
   try {
     while (!shutdown.signal.aborted) {
       try {
-        const count = await runBatch(config, key);
+        const count = await runBatch(config, credentials);
         console.info(JSON.stringify({ processed: count, at: new Date().toISOString() }));
       } catch {
         // No tokens, user IDs, request headers or remote response contents in logs.

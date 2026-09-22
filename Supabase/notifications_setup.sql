@@ -49,6 +49,12 @@ begin
   if p_token !~ '^[0-9a-f]{64,200}$' or p_environment not in ('sandbox','production') then
     raise exception 'Dispositivo invalido' using errcode = '22023';
   end if;
+  -- APNs can return the same token after a reinstall while the app has a new
+  -- installation UUID. Remove that stale registration before the upsert.
+  perform pg_advisory_xact_lock(hashtextextended(p_environment || ':' || p_token, 0));
+  delete from notification_private.devices
+  where token = p_token and environment = p_environment
+    and installation <> p_installation;
   -- An installation ID is a randomly generated local secret, never exposed in API reads.
   insert into notification_private.devices(installation,perfil_id,token,environment)
   values(p_installation,auth.uid(),p_token,p_environment)

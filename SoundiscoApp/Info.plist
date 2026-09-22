@@ -3,6 +3,8 @@
 <plist version="1.0"><dict>
     <key>NSFaceIDUsageDescription</key>
     <string>SounDisco usa Face ID para proteger el acceso a tu sesión.</string>
+    <key>APNSEnvironment</key>
+    <string>$(APNS_ENVIRONMENT)</string>
     <key>CFBundleURLTypes</key><array><dict>
         <key>CFBundleURLName</key><string>SoundiscoAuth</string>
         <key>CFBundleURLSchemes</key><array><string>soundisco</string></array>

@@ -60,11 +60,10 @@ final class PushNotificationService: ObservableObject {
             let p_token: String
             let p_environment: String
         }
-        #if DEBUG
-        let environment = "sandbox"
-        #else
-        let environment = "production"
-        #endif
+        guard let environment = pushEnvironment else {
+            failure = "La configuración de avisos de esta versión no es válida. Actualiza la app e inténtalo nuevamente."
+            return
+        }
         do {
             try await client.rpc("register_push_device", params: Registration(
                 p_installation: installation, p_token: token, p_environment: environment)).execute()
@@ -74,6 +73,14 @@ final class PushNotificationService: ObservableObject {
                 failure = nil
             }
         } catch { failure = "No se pudo registrar este dispositivo para avisos. \(AuthNotice.failure(error).message)" }
+    }
+
+    private var pushEnvironment: String? {
+        switch Bundle.main.object(forInfoDictionaryKey: "APNSEnvironment") as? String {
+        case "development": return "sandbox"
+        case "production": return "production"
+        default: return nil
+        }
     }
 
     // Called before a real sign-out, while the JWT can still authorize removal.

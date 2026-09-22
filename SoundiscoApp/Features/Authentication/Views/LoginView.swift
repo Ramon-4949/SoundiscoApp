@@ -3,7 +3,6 @@ import SwiftUI
 struct LoginView: View {
     @EnvironmentObject private var auth: SessionViewModel
     @StateObject private var model = LoginViewModel()
-    @State private var recoveryPresented = false
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { timeline in
             content(now: timeline.date)
@@ -44,10 +43,7 @@ struct LoginView: View {
                             .font(.caption).foregroundStyle(model.isLocked(at: now) ? .red : .secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 12) { rememberEmail; Spacer(minLength: 0); recoverPassword }
-                        VStack(alignment: .leading, spacing: 12) { rememberEmail; recoverPassword }
-                    }
+                    rememberEmail.frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(16)
                 .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
@@ -84,7 +80,6 @@ struct LoginView: View {
         }
         .onChange(of: model.email) { _, _ in model.refreshAttemptStatus(now: now) }
         .background(Color(uiColor: .systemGroupedBackground))
-        .sheet(isPresented: $recoveryPresented) { PasswordRecoveryView(initialEmail: model.email) }
         .alert(item: $model.notice) { item in
             Alert(title: Text(item.title), message: Text(item.message), dismissButton: .default(Text("Entendido")))
         }
@@ -95,11 +90,6 @@ struct LoginView: View {
             Toggle("Recordar correo", isOn: $model.rememberEmail).labelsHidden().fixedSize()
             Text("Recordarme").font(.caption).fixedSize()
         }
-    }
-
-    private var recoverPassword: some View {
-        Button("¿Olvidaste tu contraseña?") { recoveryPresented = true }
-            .font(.caption.weight(.medium)).fixedSize(horizontal: true, vertical: false)
     }
 
     @ViewBuilder private var registrationPrompt: some View {

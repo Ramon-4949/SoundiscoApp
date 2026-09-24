@@ -56,6 +56,8 @@ try {
   const milestones = [h(101, 1, -10, [2, 3]), h(102, 2, 20, [2]), h(103, 3, 30, [3])];
   const aid = await create(milestones);
   await db.exec(sql('milestone_collaborators.sql'));
+  await db.exec(sql('assignment_status_automation.sql'));
+  await db.exec(sql('assignment_status_automation.sql'));
   assert.equal((await db.query('select count(*)::int n from hitos_colaboradores')).rows[0].n, 4);
   await user(2);
   await assert.rejects(check(102), /primero/);
@@ -66,7 +68,7 @@ try {
   await check(102);
   assert.equal((await db.query('select count(*)::int n from confirmaciones_hitos where hito_id=$1',[id(102)])).rows[0].n, 1);
   assert.equal((await db.query('select estado from hitos_colaboradores where hito_id=$1',[id(102)])).rows[0].estado,'temprano');
-  await assert.rejects(check(103), /No estas asignado/);
+  await assert.rejects(check(103), /No est.s asignado/);
   const recipients = (await db.query("select distinct perfil_id from notificaciones_app where tipo='hito_completado'")).rows;
   assert.deepEqual(recipients.map(r => r.perfil_id),[id(1)]);
   console.log('PASS early and late, personal sequence, idempotency, no group wait');
@@ -90,7 +92,7 @@ try {
   await user(4);
   assert.equal((await db.query('select count(*)::int n from hitos_itinerario')).rows[0].n,3);
   assert.equal((await db.query('select count(*)::int n from hitos_colaboradores')).rows[0].n,4);
-  await assert.rejects(check(103),/No estas asignado/);
+  await assert.rejects(check(103),/No est.s asignado/);
   await user(5);
   assert.equal((await db.query('select count(*)::int n from hitos_itinerario')).rows[0].n,0);
   await user(1);
@@ -113,6 +115,20 @@ try {
   await db.query('select admin_update_assignment($1,$2,$3,$4)',[editableID,payload,[],JSON.stringify(changed)]);
   assert.equal((await db.query('select count(*)::int n from hitos_colaboradores where hito_id=$1',[id(502)])).rows[0].n,0);
   assert.equal((await db.query('select usuario_id from hitos_colaboradores where hito_id=$1',[id(503)])).rows[0].usuario_id,id(2));
+  const statusID = await create([h(601,1,30,[2,3])]);
+  const state = async () => (await db.query('select estado from asignaciones where id=$1',[statusID])).rows[0].estado;
+  assert.equal(await state(),'pendiente');
+  await user(2); await check(601);
+  assert.equal(await state(),'en_curso');
+  await user(3); await check(601);
+  assert.equal(await state(),'completada');
+  const adminMessages = (await db.query("select titulo,mensaje from notificaciones_app where perfil_id=$1 and tipo='hito_completado' order by fecha_creacion desc",[id(1)])).rows;
+  assert.ok(adminMessages.some(row => row.titulo === 'Confirmación de Hito' && row.mensaje.includes('confirmó')), JSON.stringify(adminMessages));
+  assert.equal((await db.query("select count(*)::int n from notificaciones_app where tipo='estado_actualizado'")).rows[0].n,0);
+  await user(1);
+  const overdueID = await create([h(602,1,-2,[5])]);
+  assert.equal((await db.query('select estado from asignaciones where id=$1',[overdueID])).rows[0].estado,'pendiente');
+  assert.equal((await db.query('select estado from asignaciones_estado_efectivo where id=$1',[overdueID])).rows[0].estado,'vencida');
   await db.query('select generate_notification_reminders()');
   await db.query('select admin_delete_assignment($1)',[aid]);
   assert.equal((await db.query('select count(*)::int n from hitos_colaboradores where hito_id=$1',[id(101)])).rows[0].n,0);

@@ -78,7 +78,7 @@ struct AssignmentCard: View {
     private var state: String {
         if assignment.completed { return "Completada" }
         if assignment.overdue(at: now) { return "Vencida" }
-        return assignment.estado == "en_curso" ? "En curso" : "Pendiente"
+        return assignment.inProgress ? "En curso" : "Pendiente"
     }
 
     private var stateColor: Color {

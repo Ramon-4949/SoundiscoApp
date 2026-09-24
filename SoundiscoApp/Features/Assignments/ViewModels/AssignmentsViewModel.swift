@@ -35,6 +35,12 @@ final class AssignmentsViewModel: ObservableObject {
             schema: "public",
             table: "hitos_itinerario"
         )
+        let checkInChanges = channel.postgresChange(
+            AnyAction.self,
+            schema: "public",
+            table: "hitos_colaboradores",
+            filter: .eq("usuario_id", value: userID.uuidString)
+        )
 
         await load(userID: userID)
         await withTaskGroup(of: Void.self) { group in
@@ -55,6 +61,12 @@ final class AssignmentsViewModel: ObservableObject {
             }
             group.addTask { [weak self] in
                 for await _ in milestoneChanges {
+                    guard !Task.isCancelled else { break }
+                    await self?.load(userID: userID)
+                }
+            }
+            group.addTask { [weak self] in
+                for await _ in checkInChanges {
                     guard !Task.isCancelled else { break }
                     await self?.load(userID: userID)
                 }

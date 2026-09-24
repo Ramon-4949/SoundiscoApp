@@ -1,43 +1,70 @@
 import SwiftUI
+import UIKit
 
 struct AdminAssignmentFormView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model = AdminAssignmentCRUDViewModel()
-    @State private var titulo = ""
-    @State private var ubicacion = ""
+    @SceneStorage private var titulo: String
+    @SceneStorage private var ubicacion: String
+    @SceneStorage private var instrucciones: String
+    @SceneStorage private var storedDraft: String
+    @SceneStorage private var draftIsActive: Bool
     @State private var prioridad: PrioridadAsignacion = .baja
-    @State private var instrucciones = ""
     @State private var fechaCreacion = Date()
     @State private var supervisores = Set<UUID>()
     @State private var hitos = [HitoEditorItem(fecha: Date().addingTimeInterval(3_600))]
     @State private var alertMessage: String?
+    @State private var showingDiscardConfirmation = false
     @State private var validationAttempted = false
     @FocusState private var focusedField: Field?
 
     let tipo: TipoFlujo
     let onComplete: () -> Void
     private let editing: Asignacion?
+    private let initialSnapshot: AssignmentFormSnapshot
 
     init(tipo: TipoFlujo, editing: Asignacion? = nil, onComplete: @escaping () -> Void) {
         self.tipo = tipo
         self.editing = editing
         self.onComplete = onComplete
+        let namespace = "admin.assignment.\(editing?.id.uuidString ?? tipo.rawValue)"
+        let initialTitle = editing?.titulo ?? ""
+        let initialLocation = editing?.ubicacion ?? ""
+        let initialInstructions = editing?.instruccionesOpcionales ?? ""
+        let initialPriority = editing?.prioridad ?? .baja
+        let initialDate = editing?.fechaCreacion ?? Date()
+        let initialSupervisors = Set(editing?.supervisores.map(\.usuario_id) ?? [])
+        let editorHitos: [HitoEditorItem]
         if let editing {
-            _titulo = State(initialValue: editing.titulo)
-            _ubicacion = State(initialValue: editing.ubicacion ?? "")
-            _prioridad = State(initialValue: editing.prioridad)
-            _instrucciones = State(initialValue: editing.instruccionesOpcionales ?? "")
-            _fechaCreacion = State(initialValue: editing.fechaCreacion)
-            _supervisores = State(initialValue: Set(editing.supervisores.map(\.usuario_id)))
-            let editorHitos = editing.hitos.sorted { $0.orden < $1.orden }.map {
+            let savedMilestones = editing.hitos.sorted { $0.orden < $1.orden }.map {
                 HitoEditorItem(id: $0.id, titulo: $0.titulo, fecha: $0.fechaProgramada,
                                estado: $0.estado, notas: $0.notasIncidencias,
                                colaboradores: Set(($0.colaboradores ?? []).map(\.usuario_id)))
             }
-            _hitos = State(initialValue: editorHitos.isEmpty
+            editorHitos = savedMilestones.isEmpty
                 ? [HitoEditorItem(fecha: editing.fechaLimite ?? Date().addingTimeInterval(3_600))]
-                : editorHitos)
+                : savedMilestones
+        } else {
+            editorHitos = [HitoEditorItem(fecha: Date().addingTimeInterval(3_600))]
         }
+        _titulo = SceneStorage(wrappedValue: initialTitle, "\(namespace).title")
+        _ubicacion = SceneStorage(wrappedValue: initialLocation, "\(namespace).location")
+        _instrucciones = SceneStorage(wrappedValue: initialInstructions, "\(namespace).instructions")
+        _storedDraft = SceneStorage(wrappedValue: "", "\(namespace).structuredDraft")
+        _draftIsActive = SceneStorage(wrappedValue: false, "\(namespace).active")
+        _prioridad = State(initialValue: initialPriority)
+        _fechaCreacion = State(initialValue: initialDate)
+        _supervisores = State(initialValue: initialSupervisors)
+        _hitos = State(initialValue: editorHitos)
+        initialSnapshot = AssignmentFormSnapshot(
+            titulo: initialTitle,
+            ubicacion: initialLocation,
+            instrucciones: initialInstructions,
+            prioridad: initialPriority,
+            fechaCreacion: initialDate,
+            supervisores: initialSupervisors,
+            hitos: editorHitos
+        )
     }
 
     private enum Field: Hashable { case titulo, ubicacion, instrucciones }
@@ -207,24 +234,40 @@ struct AdminAssignmentFormView: View {
           }.padding(20)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .dismissKeyboardOnBackgroundTap()
         .toolbar(.hidden, for: .tabBar)
         .disabled(model.isSaving)
-        .interactiveDismissDisabled(model.isSaving)
+        .interactiveDismissDisabled(model.isSaving || hasUnsavedChanges)
+        .observeInteractiveDismiss(isDisabled: model.isSaving || hasUnsavedChanges) {
+            guard !model.isSaving else { return }
+            requestDismiss()
+        }
         .navigationTitle(editing != nil ? "Editar asignación" : "Crear Asignación")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
-            if editing != nil {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }.disabled(model.isSaving)
+            ToolbarItem(placement: .cancellationAction) {
+                Button { requestDismiss() } label: {
+                    Label(editing == nil ? "Volver" : "Cerrar",
+                          systemImage: editing == nil ? "chevron.left" : "xmark")
                 }
+                .disabled(model.isSaving)
             }
         }
         .tint(Brand.red)
         .scrollDismissesKeyboard(.interactively)
+        .onAppear(perform: restoreDraft)
+        .onChange(of: structuredDraft) { _, draft in persist(draft) }
         .alert("No se pudo guardar", isPresented: alertBinding) {
             Button("Aceptar", role: .cancel) { alertMessage = nil }
         } message: {
             Text(alertMessage ?? "Error desconocido")
+        }
+        .alert("¿Estás seguro de que quieres salir?", isPresented: $showingDiscardConfirmation) {
+            Button("Continuar editando", role: .cancel) { }
+            Button("Salir y descartar", role: .destructive) { discardAndDismiss() }
+        } message: {
+            Text("Los datos ingresados se perderán.")
         }
     }
 
@@ -340,8 +383,86 @@ struct AdminAssignmentFormView: View {
 
     private var hasProgress: Bool { editing?.hitos.contains { $0.estado == .completado } == true }
 
+    private var structuredDraft: StructuredAssignmentDraft {
+        StructuredAssignmentDraft(
+            prioridad: prioridad,
+            fechaCreacion: fechaCreacion,
+            supervisores: supervisores,
+            hitos: hitos
+        )
+    }
+
+    private var currentSnapshot: AssignmentFormSnapshot {
+        AssignmentFormSnapshot(
+            titulo: titulo,
+            ubicacion: ubicacion,
+            instrucciones: instrucciones,
+            prioridad: prioridad,
+            fechaCreacion: fechaCreacion,
+            supervisores: supervisores,
+            hitos: hitos
+        )
+    }
+
+    private var hasUnsavedChanges: Bool {
+        draftIsActive && currentSnapshot != initialSnapshot
+    }
+
     private func canDelete(_ hito: HitoEditorItem) -> Bool {
         hitos.count > 1 && hito.estado != .completado
+    }
+
+    private func restoreDraft() {
+        guard draftIsActive else {
+            apply(initialSnapshot)
+            storedDraft = ""
+            draftIsActive = true
+            return
+        }
+        guard let data = storedDraft.data(using: .utf8),
+              let restored = try? JSONDecoder().decode(StructuredAssignmentDraft.self, from: data) else { return }
+        prioridad = restored.prioridad
+        fechaCreacion = restored.fechaCreacion
+        supervisores = restored.supervisores
+        hitos = restored.hitos
+    }
+
+    private func persist(_ draft: StructuredAssignmentDraft) {
+        guard draftIsActive,
+              let data = try? JSONEncoder().encode(draft),
+              let encoded = String(data: data, encoding: .utf8) else { return }
+        storedDraft = encoded
+    }
+
+    private func requestDismiss() {
+        focusedField = nil
+        if hasUnsavedChanges {
+            showingDiscardConfirmation = true
+        } else {
+            clearPersistedDraft()
+            dismiss()
+        }
+    }
+
+    private func discardAndDismiss() {
+        apply(initialSnapshot)
+        clearPersistedDraft()
+        dismiss()
+    }
+
+    private func apply(_ snapshot: AssignmentFormSnapshot) {
+        titulo = snapshot.titulo
+        ubicacion = snapshot.ubicacion
+        instrucciones = snapshot.instrucciones
+        prioridad = snapshot.prioridad
+        fechaCreacion = snapshot.fechaCreacion
+        supervisores = snapshot.supervisores
+        hitos = snapshot.hitos
+    }
+
+    private func clearPersistedDraft() {
+        storedDraft = ""
+        draftIsActive = false
     }
 
     private var alertBinding: Binding<Bool> {
@@ -387,6 +508,7 @@ struct AdminAssignmentFormView: View {
             } else {
                 _ = try await model.createAssignment(draft)
             }
+            clearPersistedDraft()
             onComplete()
             dismiss()
         } catch {
@@ -395,13 +517,30 @@ struct AdminAssignmentFormView: View {
     }
 }
 
-private struct HitoEditorItem: Identifiable {
+private struct HitoEditorItem: Identifiable, Codable, Equatable {
     var id = UUID()
     var titulo = ""
     var fecha: Date?
     var estado: EstadoHito = .bloqueado
     var notas: String?
     var colaboradores = Set<UUID>()
+}
+
+private struct StructuredAssignmentDraft: Codable, Equatable {
+    var prioridad: PrioridadAsignacion
+    var fechaCreacion: Date
+    var supervisores: Set<UUID>
+    var hitos: [HitoEditorItem]
+}
+
+private struct AssignmentFormSnapshot: Equatable {
+    var titulo: String
+    var ubicacion: String
+    var instrucciones: String
+    var prioridad: PrioridadAsignacion
+    var fechaCreacion: Date
+    var supervisores: Set<UUID>
+    var hitos: [HitoEditorItem]
 }
 
 private extension String {
@@ -417,6 +556,68 @@ private extension View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
             .validationBorder(error)
+    }
+
+    func dismissKeyboardOnBackgroundTap() -> some View {
+        modifier(BackgroundKeyboardDismissModifier())
+    }
+
+    func observeInteractiveDismiss(isDisabled: Bool, onAttempt: @escaping () -> Void) -> some View {
+        background(InteractiveDismissObserver(isDisabled: isDisabled, onAttempt: onAttempt))
+    }
+}
+
+private struct BackgroundKeyboardDismissModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content.onTapGesture {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil,
+                from: nil,
+                for: nil
+            )
+        }
+    }
+}
+
+private struct InteractiveDismissObserver: UIViewControllerRepresentable {
+    let isDisabled: Bool
+    let onAttempt: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(onAttempt: onAttempt) }
+
+    func makeUIViewController(context: Context) -> UIViewController {
+        UIViewController()
+    }
+
+    func updateUIViewController(_ controller: UIViewController, context: Context) {
+        context.coordinator.isDisabled = isDisabled
+        context.coordinator.onAttempt = onAttempt
+        DispatchQueue.main.async {
+            var hostingController = controller
+            while let parent = hostingController.parent { hostingController = parent }
+            hostingController.presentationController?.delegate = context.coordinator
+            hostingController.isModalInPresentation = isDisabled
+        }
+    }
+
+    final class Coordinator: NSObject, UIAdaptivePresentationControllerDelegate {
+        var isDisabled: Bool
+        var onAttempt: () -> Void
+
+        init(isDisabled: Bool = false, onAttempt: @escaping () -> Void) {
+            self.isDisabled = isDisabled
+            self.onAttempt = onAttempt
+        }
+
+        func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
+            !isDisabled
+        }
+
+        func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+            guard isDisabled else { return }
+            onAttempt()
+        }
     }
 }
 

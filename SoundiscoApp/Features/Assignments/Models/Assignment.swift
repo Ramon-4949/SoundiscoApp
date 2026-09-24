@@ -22,8 +22,8 @@ struct Assignment: Decodable, Identifiable {
     var personalMilestones: [Milestone]? {
         guard let viewingUserID,
               asignacion_supervisores?.contains(where: { $0.usuario_id == viewingUserID }) != true else { return nil }
-        let mine = milestones.filter { ($0.hitos_colaboradores ?? []).contains { $0.usuario_id == viewingUserID } }
-        return mine.isEmpty ? nil : mine
+        guard !milestones.isEmpty else { return nil }
+        return milestones.filter { ($0.hitos_colaboradores ?? []).contains { $0.usuario_id == viewingUserID } }
     }
 
     var isField: Bool { tipo_flujo?.lowercased().contains("campo") == true }
@@ -46,13 +46,25 @@ struct Assignment: Decodable, Identifiable {
     }
     var completed: Bool {
         if let personalMilestones {
-            return personalMilestones.allSatisfy { ($0.hitos_colaboradores ?? []).contains { $0.usuario_id == viewingUserID && $0.confirmado } }
+            return !personalMilestones.isEmpty && personalMilestones.allSatisfy {
+                ($0.hitos_colaboradores ?? []).contains { $0.usuario_id == viewingUserID && $0.confirmado }
+            }
         }
         if let estado { return ["completada", "completado", "finalizada", "finalizado"].contains(estado.lowercased()) }
         return isField && !milestones.isEmpty && milestones.allSatisfy { $0.completado == true }
     }
     func overdue(at date: Date) -> Bool {
         !completed && ((personalMilestones == nil && estado == "vencida") || deadline.map { $0 < date } == true)
+    }
+    var inProgress: Bool {
+        if let personalMilestones {
+            return personalMilestones.contains { milestone in
+                (milestone.hitos_colaboradores ?? []).contains {
+                    $0.usuario_id == viewingUserID && $0.confirmado
+                }
+            }
+        }
+        return estado == "en_curso"
     }
     func status(at date: Date) -> String { completed ? "Completada" : overdue(at: date) ? "Vencida" : "Pendiente" }
 

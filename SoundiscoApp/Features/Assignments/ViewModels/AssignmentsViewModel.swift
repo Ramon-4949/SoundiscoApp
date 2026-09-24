@@ -86,11 +86,15 @@ final class AssignmentsViewModel: ObservableObject {
             var offset = 0
             while true {
                 let rows: [AssignmentLink] = try await client.from("asignacion_equipo")
-                    .select("asignacion_id,asignaciones(*,hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol)))")
+                    .select("asignacion_id,asignaciones(*,hitos_itinerario(*,hitos_colaboradores(*,perfiles(id,nombre_completo,rol))),asignacion_supervisores(usuario_id),asignacion_equipo(perfiles(id,nombre_completo,rol)))")
                     .eq("perfil_id", value: userID).order("asignacion_id")
                     .range(from: offset, to: offset + 199).execute().value
                 guard !Task.isCancelled, loadGeneration == generation else { return }
-                result.append(contentsOf: rows.compactMap(\.asignaciones))
+                result.append(contentsOf: rows.compactMap(\.asignaciones).map { item in
+                    var personal = item
+                    personal.viewingUserID = userID
+                    return personal
+                })
                 if rows.count < 200 { break }
                 offset += 200
             }

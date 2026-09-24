@@ -43,6 +43,7 @@ function fakeTransport(status, reason, capture) {
       const stream = new EventEmitter();
       stream.setEncoding = () => {};
       stream.end = body => {
+        capture.rawBody = body;
         capture.payload = JSON.parse(body);
         queueMicrotask(() => {
           stream.emit('response', { ':status': status });
@@ -65,6 +66,14 @@ test('HTTP2 request carries correct APNs headers, host and generic body', async 
   assert.equal(capture.headers['apns-collapse-id'], job.notification_id);
   assert.deepEqual(capture.payload, payload(job));
   assert.equal(capture.closed, true);
+});
+
+test('APNs request preserves accented Spanish as UTF-8 bytes', async () => {
+  const capture = {};
+  const message = { ...job, title: 'Confirmación de Hito', body: 'Ana confirmó la asignación' };
+  await sendPush(message, config, 'JWT', fakeTransport(200, null, capture));
+  assert.equal(Buffer.isBuffer(capture.rawBody), true);
+  assert.equal(capture.rawBody.toString('utf8'), JSON.stringify(payload(message)));
 });
 
 test('APNs transient and configuration failures preserve device registration', async () => {

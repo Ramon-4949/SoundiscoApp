@@ -73,6 +73,7 @@ export function sendPush(job, config, jwt, connect = http2.connect) {
         ':method': 'POST', ':path': '/3/device/' + job.token,
         authorization: 'bearer ' + jwt, 'apns-topic': config.bundleID,
         'apns-push-type': 'alert', 'apns-priority': '10',
+        'content-type': 'application/json',
         'apns-collapse-id': job.notification_id,
         'apns-expiration': String(Math.floor(Date.now() / 1000) + 3600),
       });
@@ -94,7 +95,7 @@ export function sendPush(job, config, jwt, connect = http2.connect) {
         error: status === 200 ? null : String(reason ?? 'HTTP ' + status).slice(0, 100),
         invalid: status === 410 && reason === 'Unregistered' });
     });
-    request.end(JSON.stringify(payload(job)));
+    request.end(Buffer.from(JSON.stringify(payload(job)), 'utf8'));
   });
 }
 

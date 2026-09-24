@@ -121,7 +121,7 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
             .from("asignaciones")
             .select(
                 "id,tipo_flujo,titulo,ubicacion,nivel_prioridad,instrucciones,estado,fecha_creacion,fecha_limite," +
-                "hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol))"
+                "hitos_itinerario(*,hitos_colaboradores(*,perfiles(id,nombre_completo,rol))),asignacion_supervisores(usuario_id),asignacion_equipo(perfiles(id,nombre_completo,rol))"
             )
             .eq("id", value: id)
             .single()
@@ -169,22 +169,16 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
             throw AdminDataError.secuenciaHitosInvalida
         }
 
-        var foundIncomplete = false
         var previousDate: Date?
         for milestone in ordered {
+            guard !milestone.colaboradoresIDs.isEmpty else { throw AdminDataError.responsableRequerido }
             if let error = FormValidation.text(milestone.titulo, field: "El título del hito", minimum: 2, maximum: 100) {
                 throw AdminDataError.campoInvalido(error)
-            }
-            if foundIncomplete && milestone.estado != .bloqueado {
-                throw AdminDataError.secuenciaHitosInvalida
             }
             if let previousDate, milestone.fechaProgramada < previousDate {
                 throw AdminDataError.secuenciaHitosInvalida
             }
             previousDate = milestone.fechaProgramada
-            if milestone.estado != .completado {
-                foundIncomplete = true
-            }
         }
     }
 
@@ -194,6 +188,7 @@ final class AdminAssignmentCRUDViewModel: ObservableObject {
 }
 
 private struct AssignmentMutationPayload: Encodable {
+    let supervisores: [UUID]
     let tipoFlujo: TipoFlujo
     let titulo: String
     let ubicacion: String?
@@ -204,6 +199,7 @@ private struct AssignmentMutationPayload: Encodable {
     let fechaLimite: Date?
 
     init(_ draft: AsignacionDraft) {
+        supervisores = draft.supervisoresIDs
         tipoFlujo = draft.tipoFlujo
         titulo = draft.titulo.trimmingCharacters(in: .whitespacesAndNewlines)
         ubicacion = draft.ubicacion
@@ -215,6 +211,7 @@ private struct AssignmentMutationPayload: Encodable {
     }
 
     enum CodingKeys: String, CodingKey {
+        case supervisores
         case tipoFlujo = "tipo_flujo"
         case titulo
         case ubicacion
@@ -227,6 +224,7 @@ private struct AssignmentMutationPayload: Encodable {
 }
 
 private struct MilestoneMutationPayload: Encodable {
+    let colaboradores: [UUID]
     let id: UUID
     let orden: Int
     let titulo: String
@@ -236,6 +234,7 @@ private struct MilestoneMutationPayload: Encodable {
     let notasIncidencias: String?
 
     init(_ draft: HitoDraft) {
+        colaboradores = draft.colaboradoresIDs
         id = draft.id
         orden = draft.orden
         titulo = draft.titulo.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -246,6 +245,7 @@ private struct MilestoneMutationPayload: Encodable {
     }
 
     enum CodingKeys: String, CodingKey {
+        case colaboradores
         case id
         case orden
         case titulo = "descripcion"

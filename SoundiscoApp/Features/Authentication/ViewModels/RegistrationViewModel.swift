@@ -25,7 +25,12 @@ final class RegistrationViewModel: ObservableObject {
         "Administrativo",
         "Contabilidad",
         "Recursos Humanos",
-        "Marketing Digital"
+        "Marketing Digital",
+        "Chofer/Técnico de sonido",
+        "Chofer/Técnico de audiovisuales",
+        "Chofer/Técnico de iluminación",
+        "Chofer/Encargado de estructura",
+        "Chofer/Encargado de almacén"
     ]
 
     var usernameError: String? { visible(FormValidation.username(username)) }

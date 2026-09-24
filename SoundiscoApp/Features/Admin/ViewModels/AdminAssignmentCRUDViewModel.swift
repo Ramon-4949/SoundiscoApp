@@ -194,7 +194,6 @@ private struct AssignmentMutationPayload: Encodable {
     let ubicacion: String?
     let prioridad: PrioridadAsignacion
     let instrucciones: String?
-    let estado: EstadoAsignacion
     let fechaCreacion: Date
     let fechaLimite: Date?
 
@@ -205,7 +204,6 @@ private struct AssignmentMutationPayload: Encodable {
         ubicacion = draft.ubicacion
         prioridad = draft.prioridad
         instrucciones = draft.instruccionesOpcionales
-        estado = draft.estado
         fechaCreacion = draft.fechaCreacion
         fechaLimite = draft.hitos.sorted { $0.orden < $1.orden }.last?.fechaProgramada
     }
@@ -217,7 +215,6 @@ private struct AssignmentMutationPayload: Encodable {
         case ubicacion
         case prioridad = "nivel_prioridad"
         case instrucciones
-        case estado
         case fechaCreacion = "fecha_creacion"
         case fechaLimite = "fecha_limite"
     }

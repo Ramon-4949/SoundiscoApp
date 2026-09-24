@@ -8,12 +8,14 @@ struct EmployeeSelectionView: View {
     @Binding private var confirmed: Set<UUID>
     let window: AssignmentBookingWindow
     let excluding: UUID?
+    let allowsEmpty: Bool
 
-    init(selected: Binding<Set<UUID>>, window: AssignmentBookingWindow, excluding: UUID?) {
+    init(selected: Binding<Set<UUID>>, window: AssignmentBookingWindow, excluding: UUID?, allowsEmpty: Bool = false) {
         _confirmed = selected
         _selected = State(initialValue: selected.wrappedValue)
         self.window = window
         self.excluding = excluding
+        self.allowsEmpty = allowsEmpty
     }
 
     var body: some View {
@@ -83,7 +85,7 @@ struct EmployeeSelectionView: View {
             Button {
                 Task {
                     await reload()
-                    guard model.canConfirm(selected) else { return }
+                    guard canConfirmSelection else { return }
                     confirmed = selected
                     dismiss()
                 }
@@ -93,11 +95,15 @@ struct EmployeeSelectionView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.white)
-            .background(model.canConfirm(selected) ? Brand.red : Color.gray, in: RoundedRectangle(cornerRadius: 8))
-            .disabled(!model.canConfirm(selected))
+            .background(canConfirmSelection ? Brand.red : Color.gray, in: RoundedRectangle(cornerRadius: 8))
+            .disabled(!canConfirmSelection)
             .padding(.horizontal, 24).padding(.vertical, 12)
             .background(.bar)
         }
+    }
+
+    private var canConfirmSelection: Bool {
+        model.canConfirm(selected) || (allowsEmpty && selected.isEmpty && !model.isLoading && model.errorMessage == nil)
     }
 
     private var searchField: some View {

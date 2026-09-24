@@ -15,6 +15,7 @@ struct Hito: Codable, Identifiable, Hashable, Sendable {
     var fechaProgramada: Date?
     var estado: EstadoHito
     var notasIncidencias: String?
+    var colaboradores: [HitoColaborador]? = nil
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -25,6 +26,7 @@ struct Hito: Codable, Identifiable, Hashable, Sendable {
         case fechaProgramada = "fecha_programada"
         case estado = "estado_hito"
         case notasIncidencias = "notas_incidencias"
+        case colaboradores = "hitos_colaboradores"
     }
 
     func estaHabilitado(en itinerario: [Hito]) -> Bool {
@@ -35,6 +37,7 @@ struct Hito: Codable, Identifiable, Hashable, Sendable {
 }
 
 struct HitoDraft: Codable, Hashable, Sendable {
+    var colaboradoresIDs: [UUID] = []
     var id: UUID
     var orden: Int
     var titulo: String
@@ -49,7 +52,8 @@ struct HitoDraft: Codable, Hashable, Sendable {
         titulo: String,
         fechaProgramada: Date,
         estado: EstadoHito = .bloqueado,
-        notasIncidencias: String? = nil
+        notasIncidencias: String? = nil,
+        colaboradoresIDs: [UUID] = []
     ) {
         self.id = id
         self.orden = orden
@@ -58,6 +62,7 @@ struct HitoDraft: Codable, Hashable, Sendable {
         self.horaEstimada = Self.sqlTime(from: fechaProgramada)
         self.estado = estado
         self.notasIncidencias = notasIncidencias
+        self.colaboradoresIDs = colaboradoresIDs
     }
 
     private static func sqlTime(from date: Date) -> String {
@@ -67,4 +72,29 @@ struct HitoDraft: Codable, Hashable, Sendable {
         formatter.dateFormat = "HH:mm:ss"
         return formatter.string(from: date)
     }
+}
+
+struct HitoColaborador: Codable, Hashable, Identifiable, Sendable {
+    var id: UUID { usuario_id }
+    let hito_id: UUID
+    let usuario_id: UUID
+    let estado: String
+    let confirmado_at: Date?
+    let hora_programada: Date?
+    let perfiles: Empleado?
+
+    var confirmado: Bool { confirmado_at != nil }
+    var etiqueta: String {
+        guard let confirmado_at, let hora_programada else { return "Sin confirmar" }
+        let minutos = Int(abs(confirmado_at.timeIntervalSince(hora_programada)) / 60)
+        switch estado {
+        case "temprano": return minutos > 0 ? "Temprano (-\(minutos) min)" : "Temprano (<1 min)"
+        case "tardio": return minutos > 0 ? "Tardío (+\(minutos) min)" : "Tardío (<1 min)"
+        default: return "A tiempo"
+        }
+    }
+}
+
+struct SupervisorAsignacion: Codable, Hashable, Sendable {
+    let usuario_id: UUID
 }

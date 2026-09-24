@@ -7,6 +7,7 @@ struct AssignmentChecklistView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 if let error = model.errorMessage {
@@ -16,21 +17,17 @@ struct AssignmentChecklistView: View {
                     }.padding(.bottom, 24)
                 }
                 ForEach(Array(model.assignment.milestones.enumerated()), id: \.element.id) { index, milestone in
-                    timelineRow(milestone, index: index)
+                    timelineRow(milestone, index: index, now: context.date)
                 }
             }
             .padding(.horizontal, 20).padding(.top, 32).padding(.bottom, 28)
             .frame(maxWidth: 680).frame(maxWidth: .infinity, alignment: .center)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        }
         .navigationTitle("Checklist").navigationBarTitleDisplayMode(.inline).tint(Brand.red)
         .refreshable { await model.reload() }
-        .task {
-            while !Task.isCancelled {
-                await model.reload()
-                do { try await Task.sleep(for: .seconds(10)) } catch { break }
-            }
-        }
+        .task { await model.observe() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.reload() } }
         }
@@ -39,12 +36,12 @@ struct AssignmentChecklistView: View {
         } message: { Text(failure ?? "") }
     }
 
-    private func timelineRow(_ milestone: Milestone, index: Int) -> some View {
-        let confirmation = model.confirmation(for: milestone)
-        let historical = milestone.isCompleted && milestone.sla_abierto != true
-        let confirmed = confirmation != nil || historical
-        let locked = !confirmed && !milestone.isCompleted
-            && !model.assignment.milestones[..<index].allSatisfy(\.isCompleted)
+    private func timelineRow(_ milestone: Milestone, index: Int, now: Date) -> some View {
+        let people = milestone.hitos_colaboradores ?? []
+        let own = people.first { $0.usuario_id == model.userID }
+        let confirmed = milestone.isCompleted
+        let block = model.checkInBlock(milestone, at: now)
+        let locked = own != nil && own?.confirmado != true && block != nil
         return HStack(alignment: .top, spacing: 16) {
             ZStack {
                 Circle().fill(confirmed || locked ? Color(uiColor: .tertiarySystemFill) : Brand.red)
@@ -72,22 +69,36 @@ struct AssignmentChecklistView: View {
                         Text(timeLabel(milestone)).font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                if let confirmation {
+                if !people.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(people.sorted { ($0.perfiles?.nombre ?? "") < ($1.perfiles?.nombre ?? "") }) { person in
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: person.confirmado ? "checkmark" : "clock")
+                                    .foregroundStyle(person.confirmado ? Color.green : Brand.red)
+                                Text(person.perfiles?.nombre ?? "Colaborador")
+                                    .font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
+                                Text(person.etiqueta).font(.caption2.weight(.medium))
+                                    .foregroundStyle(evaluationColor(person.estado))
+                                    .padding(.horizontal, 8).padding(.vertical, 4)
+                                    .background(evaluationColor(person.estado).opacity(0.1), in: Capsule())
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }.padding(12)
+                        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                }
+                if own?.confirmado == true {
                     Label("Confirmado", systemImage: "checkmark.circle")
                         .font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
-                    Text(evaluationLabel(confirmation.evaluacion))
-                        .font(.caption).foregroundStyle(evaluationColor(confirmation.evaluacion))
-                } else if historical {
-                    Text("Hito completado").font(.subheadline).foregroundStyle(.secondary)
-                } else if locked {
-                    Text("Disponible cuando avance el hito anterior.")
+                } else if own != nil, let block {
+                    Text(block)
                         .font(.subheadline).foregroundStyle(.secondary)
-                } else {
-                    Text(milestone.isCompleted ? "Tu confirmación está pendiente" : "En Curso")
+                } else if !confirmed {
+                    Text("En Curso")
                         .font(.caption.weight(.semibold)).foregroundStyle(Brand.red)
                         .padding(.horizontal, 10).padding(.vertical, 4)
                         .background(Brand.red.opacity(0.10), in: Capsule())
-                    if allowsUpdates {
+                    if allowsUpdates && own != nil {
                         Button {
                             Task {
                                 do { try await model.complete(milestone) }
@@ -103,7 +114,7 @@ struct AssignmentChecklistView: View {
                             .frame(maxWidth: .infinity).padding(.vertical, 8)
                         }
                         .buttonStyle(.borderedProminent).tint(Brand.red)
-                        .disabled(model.savingMilestoneID != nil)
+                        .disabled(model.savingMilestoneID != nil || block != nil)
                     }
                 }
             }
@@ -139,9 +150,10 @@ struct AssignmentChecklistView: View {
 
     private func evaluationColor(_ evaluation: String) -> Color {
         switch evaluation {
-        case "temprano": .blue
-        case "a_tiempo": .green
-        default: .orange
+        case "temprano": .green
+        case "a_tiempo": .secondary
+        case "tardio": .orange
+        default: .secondary
         }
     }
 }

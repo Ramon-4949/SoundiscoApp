@@ -30,6 +30,7 @@ struct Asignacion: Codable, Identifiable, Hashable, Sendable {
     var fechaCreacion: Date
     var fechaLimite: Date?
     var hitos: [Hito]
+    var supervisores: [SupervisorAsignacion] = []
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -44,6 +45,7 @@ struct Asignacion: Codable, Identifiable, Hashable, Sendable {
         case fechaLimite = "fecha_limite"
         case hitos = "hitos_itinerario"
         case equipo = "asignacion_equipo"
+        case supervisores = "asignacion_supervisores"
     }
 
     init(
@@ -84,6 +86,7 @@ struct Asignacion: Codable, Identifiable, Hashable, Sendable {
         fechaCreacion = try container.decode(Date.self, forKey: .fechaCreacion)
         fechaLimite = try container.decodeIfPresent(Date.self, forKey: .fechaLimite)
         hitos = try container.decodeIfPresent([Hito].self, forKey: .hitos)?.sorted { $0.orden < $1.orden } ?? []
+        supervisores = try container.decodeIfPresent([SupervisorAsignacion].self, forKey: .supervisores) ?? []
 
         if let empleados = try container.decodeIfPresent([Empleado].self, forKey: .asignadoA) {
             asignadoA = empleados
@@ -106,6 +109,7 @@ struct Asignacion: Codable, Identifiable, Hashable, Sendable {
         try container.encode(fechaCreacion, forKey: .fechaCreacion)
         try container.encodeIfPresent(fechaLimite, forKey: .fechaLimite)
         try container.encode(hitos, forKey: .hitos)
+        try container.encode(supervisores, forKey: .supervisores)
     }
 
     func estadoEfectivo(at date: Date = .now) -> EstadoAsignacion {
@@ -128,6 +132,7 @@ private struct AsignacionEquipo: Decodable {
 }
 
 struct AsignacionDraft: Sendable {
+    var supervisoresIDs: [UUID] = []
     var id: UUID?
     var tipoFlujo: TipoFlujo
     var titulo: String

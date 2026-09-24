@@ -8,7 +8,7 @@ struct AdminAssignmentFormView: View {
     @State private var prioridad: PrioridadAsignacion = .baja
     @State private var instrucciones = ""
     @State private var fechaCreacion = Date()
-    @State private var responsables = Set<UUID>()
+    @State private var supervisores = Set<UUID>()
     @State private var hitos = [HitoEditorItem(fecha: Date().addingTimeInterval(3_600))]
     @State private var alertMessage: String?
     @State private var validationAttempted = false
@@ -28,10 +28,11 @@ struct AdminAssignmentFormView: View {
             _prioridad = State(initialValue: editing.prioridad)
             _instrucciones = State(initialValue: editing.instruccionesOpcionales ?? "")
             _fechaCreacion = State(initialValue: editing.fechaCreacion)
-            _responsables = State(initialValue: Set(editing.asignadoA.map(\.id)))
+            _supervisores = State(initialValue: Set(editing.supervisores.map(\.usuario_id)))
             let editorHitos = editing.hitos.sorted { $0.orden < $1.orden }.map {
                 HitoEditorItem(id: $0.id, titulo: $0.titulo, fecha: $0.fechaProgramada,
-                               estado: $0.estado, notas: $0.notasIncidencias)
+                               estado: $0.estado, notas: $0.notasIncidencias,
+                               colaboradores: Set(($0.colaboradores ?? []).map(\.usuario_id)))
             }
             _hitos = State(initialValue: editorHitos.isEmpty
                 ? [HitoEditorItem(fecha: editing.fechaLimite ?? Date().addingTimeInterval(3_600))]
@@ -93,6 +94,21 @@ struct AdminAssignmentFormView: View {
                             if hito.fecha == nil {
                                 Text("Selecciona la fecha del hito").font(.caption).foregroundStyle(.red)
                             }
+                            if let window = collaboratorWindow(hito) {
+                                NavigationLink {
+                                    EmployeeSelectionView(selected: $hito.colaboradores, window: window, excluding: editing?.id)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "person.2").foregroundStyle(Brand.red)
+                                        Text("Colaboradores Asignados").foregroundStyle(.primary)
+                                        Spacer()
+                                        Text("\(hito.colaboradores.count)").foregroundStyle(.secondary)
+                                        Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                                    }.padding(.vertical, 8)
+                                }.buttonStyle(.plain)
+                            }
+                            FieldValidationMessage(message: validationAttempted && hito.colaboradores.isEmpty
+                                ? "Selecciona colaboradores para este hito." : nil)
                         }
                         .inputSurface(error: milestoneTitleError(hito))
                         .contextMenu {
@@ -119,25 +135,25 @@ struct AdminAssignmentFormView: View {
                     .buttonStyle(.plain).foregroundStyle(Brand.red)
             }
 
-            formSection("ASIGNAR RESPONSABLES") {
+            formSection("SUPERVISOR") {
                 if let bookingWindow {
                     NavigationLink {
-                        EmployeeSelectionView(selected: $responsables, window: bookingWindow, excluding: editing?.id)
+                        EmployeeSelectionView(selected: $supervisores, window: bookingWindow, excluding: editing?.id, allowsEmpty: true)
                     } label: {
                         HStack {
                             Image(systemName: "person.2").foregroundStyle(Brand.red)
-                            Text("Responsables Asignados").foregroundStyle(.primary)
+                            Text("Supervisores Asignados").foregroundStyle(.primary)
                             Spacer()
-                            if !responsables.isEmpty {
-                                Text("\(responsables.count)").foregroundStyle(.secondary)
+                            if !supervisores.isEmpty {
+                                Text("\(supervisores.count)").foregroundStyle(.secondary)
                             }
                             Image(systemName: "chevron.right").foregroundStyle(.secondary)
                         }
-                        .inputSurface(error: responsibleError)
+                        .inputSurface()
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Label("Responsables Asignados", systemImage: "person.2")
+                    Label("Supervisores Asignados", systemImage: "person.2")
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading).inputSurface()
                 }
@@ -145,7 +161,6 @@ struct AdminAssignmentFormView: View {
                     Text(itineraryError ?? "Define un período válido para consultar disponibilidad.")
                         .font(.caption).foregroundStyle(validationAttempted ? .red : .secondary)
                 }
-                FieldValidationMessage(message: responsibleError)
             }
 
             formSection("NIVEL DE PRIORIDAD") {
@@ -251,6 +266,13 @@ struct AdminAssignmentFormView: View {
         return AssignmentBookingWindow(start: start, end: end)
     }
 
+    private func collaboratorWindow(_ item: HitoEditorItem) -> AssignmentBookingWindow? {
+        guard let date = item.fecha else { return nil }
+        // Administrative work reserves time from creation; field work uses the
+        // selected collaborator's first-to-last milestone span on the server.
+        return AssignmentBookingWindow(start: tipo == .tareaAdministrativa ? fechaCreacion : date, end: date)
+    }
+
     private var saveTitle: String {
         if model.isSaving { return "Guardando…" }
         return editing == nil ? "Crear asignación" : "Guardar cambios"
@@ -258,7 +280,7 @@ struct AdminAssignmentFormView: View {
 
     private var canSave: Bool {
         guard rawTitleError == nil, rawLocationError == nil, rawInstructionsError == nil,
-              !responsables.isEmpty, bookingWindow != nil else { return false }
+              hitos.allSatisfy({ !$0.colaboradores.isEmpty }), bookingWindow != nil else { return false }
         guard validMilestones else { return false }
         if tipo == .operacionesCampo {
             return !ubicacion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -296,9 +318,6 @@ struct AdminAssignmentFormView: View {
     private var titleError: String? { validationAttempted ? rawTitleError : nil }
     private var locationError: String? { validationAttempted ? rawLocationError : nil }
     private var instructionsError: String? { validationAttempted ? rawInstructionsError : nil }
-    private var responsibleError: String? {
-        validationAttempted && responsables.isEmpty ? "Selecciona al menos un responsable disponible." : nil
-    }
 
     private func milestoneTitleError(_ item: HitoEditorItem) -> String? {
         guard validationAttempted else { return nil }
@@ -345,21 +364,23 @@ struct AdminAssignmentFormView: View {
                     titulo: item.titulo,
                     fechaProgramada: item.fecha!,
                     estado: hasProgress ? item.estado : index == 0 ? .enCurso : .bloqueado,
-                    notasIncidencias: item.notas
+                    notasIncidencias: item.notas,
+                    colaboradoresIDs: Array(item.colaboradores)
                 )
             }
-        let draft = AsignacionDraft(
+        var draft = AsignacionDraft(
             tipoFlujo: tipo,
             titulo: titulo,
             ubicacion: tipo == .operacionesCampo ? ubicacion : nil,
             prioridad: prioridad,
             instruccionesOpcionales: instrucciones.nilIfBlank,
             estado: editing?.estado ?? .pendiente,
-            empleadosIDs: Array(responsables),
+            empleadosIDs: Array(Set(hitos.flatMap { $0.colaboradores })),
             fechaCreacion: fechaCreacion,
             fechaLimite: tipo == .tareaAdministrativa ? itinerary.last?.fechaProgramada : nil,
             hitos: itinerary
         )
+        draft.supervisoresIDs = Array(supervisores)
         do {
             if let editing {
                 _ = try await model.updateAssignment(id: editing.id, with: draft)
@@ -380,6 +401,7 @@ private struct HitoEditorItem: Identifiable {
     var fecha: Date?
     var estado: EstadoHito = .bloqueado
     var notas: String?
+    var colaboradores = Set<UUID>()
 }
 
 private extension String {

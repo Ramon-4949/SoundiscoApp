@@ -29,7 +29,7 @@ final class AssignmentDetailViewModel: ObservableObject {
         do {
             let updated: Assignment = try await client
                 .from("asignaciones")
-                .select("*,hitos_itinerario(*),asignacion_equipo(perfiles(id,nombre_completo,rol))")
+                .select("*,hitos_itinerario(*,hitos_colaboradores(*,perfiles(id,nombre_completo,rol))),asignacion_supervisores(usuario_id),asignacion_equipo(perfiles(id,nombre_completo,rol))")
                 .eq("id", value: assignment.id)
                 .single()
                 .execute()
@@ -38,6 +38,7 @@ final class AssignmentDetailViewModel: ObservableObject {
             assignment = updated
             let currentUserID = try await client.auth.session.user.id
             userID = currentUserID
+            assignment.viewingUserID = currentUserID
             var checks: [MilestoneCheckIn] = []
             var offset = 0
             while true {
@@ -73,6 +74,9 @@ final class AssignmentDetailViewModel: ObservableObject {
 
     func complete(_ milestone: Milestone) async throws {
         guard savingMilestoneID == nil else { return }
+        if let reason = checkInBlock(milestone, at: .now) {
+            throw AdminDataError.campoInvalido(reason)
+        }
         savingMilestoneID = milestone.id
         errorMessage = nil
         defer { savingMilestoneID = nil }
@@ -100,6 +104,60 @@ final class AssignmentDetailViewModel: ObservableObject {
 
     func clearError() {
         errorMessage = nil
+    }
+
+    func checkInBlock(_ milestone: Milestone, at now: Date) -> String? {
+        guard activityLoaded, let userID else { return "Cargando tu participación…" }
+        let personal = assignment.milestones.filter {
+            ($0.hitos_colaboradores ?? []).contains { $0.usuario_id == userID }
+        }
+        guard let index = personal.firstIndex(where: { $0.id == milestone.id }) else {
+            return "No estás asignado a este hito."
+        }
+        if (milestone.hitos_colaboradores ?? []).contains(where: { $0.usuario_id == userID && $0.confirmado }) {
+            return "Confirmado"
+        }
+        guard let deadline = personal.last.flatMap({ AgendaDate.parse($0.fecha_programada) }) else {
+            return "El hito no tiene fecha límite."
+        }
+        if now > deadline { return "Tu plazo final venció. No puedes confirmar hitos pendientes." }
+        if personal[..<index].contains(where: { h in
+            !(h.hitos_colaboradores ?? []).contains { $0.usuario_id == userID && $0.confirmado }
+        }) { return "Confirma primero tu hito anterior." }
+        return nil
+    }
+
+    func observe() async {
+        let channel = client.channel("milestone-detail-\(assignment.id)-\(UUID())")
+        let changes = channel.postgresChange(AnyAction.self, schema: "public", table: "hitos_colaboradores")
+        let milestones = channel.postgresChange(AnyAction.self, schema: "public", table: "hitos_itinerario",
+            filter: .eq("asignacion_id", value: assignment.id.uuidString))
+        await reload()
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { [weak self] in
+                do {
+                    try await channel.subscribeWithError()
+                    for await _ in changes {
+                        guard !Task.isCancelled else { break }
+                        await self?.reload()
+                    }
+                } catch { /* Periodic reconciliation below also handles reconnects. */ }
+            }
+            group.addTask { [weak self] in
+                for await _ in milestones {
+                    guard !Task.isCancelled else { break }
+                    await self?.reload()
+                }
+            }
+            group.addTask { [weak self] in
+                while !Task.isCancelled {
+                    do { try await Task.sleep(for: .seconds(10)) } catch { break }
+                    await self?.reload()
+                }
+            }
+            await group.waitForAll()
+        }
+        await client.removeChannel(channel)
     }
     func confirmation(for milestone: Milestone) -> MilestoneCheckIn? {
         confirmations.first { $0.hito_id == milestone.id && $0.usuario_id == userID }

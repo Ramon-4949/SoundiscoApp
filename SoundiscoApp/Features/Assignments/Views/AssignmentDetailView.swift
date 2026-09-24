@@ -157,12 +157,7 @@ struct AssignmentDetailView: View {
     }
 
     private var responsiblePeople: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("Responsables asignados", systemImage: "person.2").font(.headline)
-            Text(model.assignment.responsibleNames.joined(separator: ", "))
-                .font(.subheadline).foregroundStyle(.secondary)
-        }
-        .detailSurface()
+        AssignmentCollaboratorsSummary(model: model)
     }
 
     @ViewBuilder

@@ -25,6 +25,8 @@ try {
     insert into account_private.access values('${id(1)}','aprobada',now());
   `);
   await apply('profile_roles_and_jobs.sql');
+  await apply('driver_jobs_setup.sql');
+  await apply('driver_jobs_setup.sql');
   await apply('input_validation_setup.sql');
   await apply('input_validation_setup.sql');
 
@@ -36,6 +38,13 @@ try {
   })]);
   assert.deepEqual((await run('select rol,cargo from perfiles where id=$1',[id(2)])).rows[0],
     {rol:'empleado',cargo:'Recursos Humanos'});
+
+  await run('insert into auth.users values($1,$2,$3)', [id(4),'driver@example.test', JSON.stringify({
+    nombre_usuario:'chofer.01',nombre_completo:'José Pérez',telefono:'809-555-0188',
+    cargo:'Chofer/Tecnico de iluminacion'
+  })]);
+  assert.deepEqual((await run('select rol,cargo from perfiles where id=$1',[id(4)])).rows[0],
+    {rol:'empleado',cargo:'Chofer/Técnico de iluminación'});
 
   await assert.rejects(run('insert into auth.users values($1,$2,$3)', [id(3),'bad@example.test', JSON.stringify({
     nombre_usuario:'x!',nombre_completo:'Usuario 3',telefono:'123',cargo:'Cargo inventado'

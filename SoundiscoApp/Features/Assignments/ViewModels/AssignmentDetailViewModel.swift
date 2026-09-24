@@ -12,6 +12,9 @@ final class AssignmentDetailViewModel: ObservableObject {
     @Published private(set) var notes: [AssignmentNote] = []
     @Published private(set) var userID: UUID?
     @Published private(set) var activityLoaded = false
+    @Published private(set) var collaborators: [AssignmentCollaborator] = []
+    @Published private(set) var collaboratorsLoading = false
+    @Published private(set) var collaboratorsError: String?
 
     private let client: SupabaseClient
 
@@ -39,6 +42,7 @@ final class AssignmentDetailViewModel: ObservableObject {
             let currentUserID = try await client.auth.session.user.id
             userID = currentUserID
             assignment.viewingUserID = currentUserID
+            await loadCollaborators()
             var checks: [MilestoneCheckIn] = []
             var offset = 0
             while true {
@@ -104,6 +108,20 @@ final class AssignmentDetailViewModel: ObservableObject {
 
     func clearError() {
         errorMessage = nil
+    }
+
+    func loadCollaborators() async {
+        guard !collaboratorsLoading else { return }
+        collaboratorsLoading = true
+        collaboratorsError = nil
+        defer { collaboratorsLoading = false }
+        do {
+            collaborators = try await client.rpc("assignment_collaborators",
+                params: ["p_assignment": assignment.id.uuidString]).execute().value
+        } catch {
+            guard !Task.isCancelled else { return }
+            collaboratorsError = AuthNotice.failure(error).message
+        }
     }
 
     func checkInBlock(_ milestone: Milestone, at now: Date) -> String? {

@@ -58,6 +58,16 @@ try {
   await db.exec(sql('milestone_collaborators.sql'));
   await db.exec(sql('assignment_status_automation.sql'));
   await db.exec(sql('assignment_status_automation.sql'));
+  await db.exec(sql('assignment_collaborators_list.sql'));
+  await user(2);
+  const roster = (await db.query('select * from assignment_collaborators($1)',[aid])).rows;
+  assert.equal(roster.length,3);
+  assert.equal(roster[0].id,id(4));
+  assert.equal(roster[0].es_supervisor,true);
+  assert.deepEqual(Object.keys(roster[0]).sort(),['cargo','es_supervisor','id','nombre']);
+  await user(5);
+  await assert.rejects(db.query('select * from assignment_collaborators($1)',[aid]),/acceso/);
+  await user(1);
   assert.equal((await db.query('select count(*)::int n from hitos_colaboradores')).rows[0].n, 4);
   await user(2);
   await assert.rejects(check(102), /primero/);

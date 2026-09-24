@@ -20,7 +20,12 @@ insert into public.cargos_empresa(nombre, orden, activo) values
   ('Administrativo', 7, true),
   ('Contabilidad', 8, true),
   ('Recursos Humanos', 9, true),
-  ('Marketing Digital', 10, true)
+  ('Marketing Digital', 10, true),
+  ('Chofer/Técnico de sonido', 11, true),
+  ('Chofer/Técnico de audiovisuales', 12, true),
+  ('Chofer/Técnico de iluminación', 13, true),
+  ('Chofer/Encargado de estructura', 14, true),
+  ('Chofer/Encargado de almacén', 15, true)
 on conflict(nombre) do update set orden = excluded.orden, activo = true;
 
 alter table public.cargos_empresa enable row level security;
@@ -56,6 +61,16 @@ returns text language sql immutable set search_path = '' as $$
     when 'contabilidad' then 'Contabilidad'
     when 'recursos humanos' then 'Recursos Humanos'
     when 'marketing digital' then 'Marketing Digital'
+    when 'chofer/técnico de sonido' then 'Chofer/Técnico de sonido'
+    when 'chofer/tecnico de sonido' then 'Chofer/Técnico de sonido'
+    when 'chofer/técnico de audiovisuales' then 'Chofer/Técnico de audiovisuales'
+    when 'chofer/tecnico de audiovisuales' then 'Chofer/Técnico de audiovisuales'
+    when 'chofer/técnico de iluminación' then 'Chofer/Técnico de iluminación'
+    when 'chofer/tecnico de iluminación' then 'Chofer/Técnico de iluminación'
+    when 'chofer/tecnico de iluminacion' then 'Chofer/Técnico de iluminación'
+    when 'chofer/encargado de estructura' then 'Chofer/Encargado de estructura'
+    when 'chofer/encargado de almacén' then 'Chofer/Encargado de almacén'
+    when 'chofer/encargado de almacen' then 'Chofer/Encargado de almacén'
     else null
   end;
 $$;

@@ -6,6 +6,7 @@ struct ProfileView: View {
     @State private var confirmSignOut = false
     @State private var confirmDeletion = false
     @State private var deletionFailure: String?
+    @State private var showsEditor = false
     @Environment(\.isAdministrator) private var isAdministrator
 
     var body: some View {
@@ -61,6 +62,9 @@ struct ProfileView: View {
             }
 
             Section("Preferencias y seguridad") {
+                NavigationLink { ChangePasswordView() } label: {
+                    Label("Cambiar contraseña", systemImage: "lock.rotation")
+                }
                 Toggle(isOn: Binding(get: { auth.biometricEnabled }, set: { value in
                     Task { await auth.setBiometricEnabled(value) }
                 })) {
@@ -113,6 +117,16 @@ struct ProfileView: View {
         .navigationTitle("Mi perfil")
         .navigationBarTitleDisplayMode(.inline)
         .tint(Brand.red)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Editar") { showsEditor = true }.disabled(model.profile == nil)
+            }
+        }
+        .sheet(isPresented: $showsEditor, onDismiss: { Task { await load() } }) {
+            if let profile = model.profile {
+                EditProfileView(profile: profile, username: auth.displayName)
+            }
+        }
         .task(id: auth.userID) { await load() }
         .refreshable { await load() }
         .confirmationDialog("¿Eliminar tu cuenta definitivamente?", isPresented: $confirmDeletion, titleVisibility: .visible) {

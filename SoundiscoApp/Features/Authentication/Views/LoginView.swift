@@ -3,6 +3,7 @@ import SwiftUI
 struct LoginView: View {
     @EnvironmentObject private var auth: SessionViewModel
     @StateObject private var model = LoginViewModel()
+    @State private var showsRecovery = false
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { timeline in
             content(now: timeline.date)
@@ -44,6 +45,7 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     rememberEmail.frame(maxWidth: .infinity, alignment: .leading)
+                    Button("¿Olvidaste tu contraseña?") { showsRecovery = true }
                 }
                 .padding(16)
                 .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
@@ -80,6 +82,7 @@ struct LoginView: View {
         }
         .onChange(of: model.email) { _, _ in model.refreshAttemptStatus(now: now) }
         .background(Color(uiColor: .systemGroupedBackground))
+        .sheet(isPresented: $showsRecovery) { PasswordRecoveryView(initialEmail: model.email) }
         .alert(item: $model.notice) { item in
             Alert(title: Text(item.title), message: Text(item.message), dismissButton: .default(Text("Entendido")))
         }

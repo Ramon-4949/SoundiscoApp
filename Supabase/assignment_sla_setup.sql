@@ -55,7 +55,7 @@ create index if not exists notes_assignment_time on public.notas_asignacion(asig
 alter table public.confirmaciones_hitos enable row level security;
 alter table public.notas_asignacion enable row level security;
 revoke all on public.confirmaciones_hitos, public.notas_asignacion from anon, authenticated;
-grant select on public.confirmaciones_hitos, public.notas_asignacion to authenticated;
+grant select on public.confirmaciones_hitos to authenticated;
 drop policy if exists sla_read on public.confirmaciones_hitos;
 create policy sla_read on public.confirmaciones_hitos for select to authenticated
  using(public.account_is_approved() and (public.es_admin() or usuario_id = auth.uid())

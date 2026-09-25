@@ -31,7 +31,7 @@ struct AssignmentDetailView: View {
                     if model.notes.isEmpty { Text("Sin notas registradas").foregroundStyle(.secondary) }
                     ForEach(model.notes) { note in
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(note.usuario_id == model.userID ? "Tú" : "Colaborador").font(.caption.bold())
+                            Text(note.authorLabel(for: model.userID)).font(.caption.bold())
                             Text(note.contenido).textSelection(.enabled)
                             Text(AgendaDate.label(note.created_at)).font(.caption).foregroundStyle(.secondary)
                         }

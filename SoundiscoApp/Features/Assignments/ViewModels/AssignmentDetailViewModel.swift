@@ -59,10 +59,15 @@ final class AssignmentDetailViewModel: ObservableObject {
             activityLoaded = true
             offset = 0
             while true {
-                let page: [AssignmentNote] = try await client.from("notas_asignacion")
-                    .select().eq("asignacion_id", value: assignment.id)
-                    .order("created_at", ascending: false).order("id")
-                    .range(from: offset, to: offset + 199).execute().value
+                let request = AssignmentNotesRequest(
+                    p_assignment: assignment.id,
+                    p_offset: offset,
+                    p_limit: 200
+                )
+                let page: [AssignmentNote] = try await client
+                    .rpc("assignment_notes", params: request)
+                    .execute()
+                    .value
                 loadedNotes.append(contentsOf: page)
                 if page.count < 200 { break }
                 offset += 200
@@ -192,4 +197,10 @@ final class AssignmentDetailViewModel: ObservableObject {
         ]).execute()
         await reload()
     }
+}
+
+private struct AssignmentNotesRequest: Encodable {
+    let p_assignment: UUID
+    let p_offset: Int
+    let p_limit: Int
 }

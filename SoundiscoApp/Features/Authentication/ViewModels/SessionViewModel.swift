@@ -121,6 +121,11 @@ final class SessionViewModel: ObservableObject {
         biometricEnabled = UserDefaults.standard.bool(forKey: "biometric.\(session.user.id.uuidString)")
     }
 
+    func refreshProfileIdentity() async {
+        do { user = try await client.auth.user() }
+        catch { notice = .failure(error) }
+    }
+
     func signUp(email: String, password: String, username: String, name: String, phone: String, job: String) async throws {
         let response = try await client.auth.signUp(
             email: email, password: password,

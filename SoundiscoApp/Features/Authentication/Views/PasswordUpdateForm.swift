@@ -19,7 +19,6 @@ struct PasswordHeading: View {
 struct PasswordUpdateForm: View {
     @StateObject private var model: NewPasswordViewModel
     let onSuccess: () async -> Void
-    @State private var showsRecovery = false
 
     init(client: SupabaseClient? = nil, requiresCurrentPassword: Bool, onSuccess: @escaping () async -> Void) {
         _model = StateObject(wrappedValue: NewPasswordViewModel(client: client, requiresCurrentPassword: requiresCurrentPassword))
@@ -28,6 +27,12 @@ struct PasswordUpdateForm: View {
 
     var body: some View {
         ScrollView {
+            if model.completed {
+                PasswordHeading(title: "Contraseña actualizada",
+                                subtitle: "Tu nueva contraseña ya está activa.",
+                                symbol: "checkmark.shield.fill")
+                    .padding(24).frame(maxWidth: .infinity)
+            } else {
             VStack(spacing: 24) {
                 PasswordHeading(title: model.requiresCurrentPassword ? "Nueva contraseña" : "Restablecer contraseña",
                                 subtitle: "Establece una nueva clave segura para tu cuenta SounDisco.")
@@ -36,7 +41,6 @@ struct PasswordUpdateForm: View {
                         AuthField(title: "Contraseña actual", icon: "key", placeholder: "Tu contraseña actual",
                                   text: $model.currentPassword, secure: true, contentType: .password,
                                   error: model.currentPasswordError)
-                        Button("¿La olvidaste?") { showsRecovery = true }
                         Divider()
                     }
                     AuthField(title: "Nueva contraseña", icon: "lock", placeholder: "Nueva contraseña",
@@ -57,11 +61,11 @@ struct PasswordUpdateForm: View {
                     Task { if await model.save() { await onSuccess() } }
                 }
             }.padding(24).frame(maxWidth: 480).frame(maxWidth: .infinity)
+            }
         }
         .background(Color(uiColor: .systemGroupedBackground)).tint(Brand.red)
         .scrollDismissesKeyboard(.interactively).disabled(model.busy)
         .interactiveDismissDisabled(model.busy)
-        .sheet(isPresented: $showsRecovery) { PasswordRecoveryView(initialEmail: "") }
         .alert(item: $model.notice) {
             Alert(title: Text($0.title), message: Text($0.message), dismissButton: .default(Text("Entendido")))
         }
@@ -88,4 +92,3 @@ struct ChangePasswordView: View {
             } message: { Text("Tu nueva contraseña ya está activa.") }
     }
 }
-

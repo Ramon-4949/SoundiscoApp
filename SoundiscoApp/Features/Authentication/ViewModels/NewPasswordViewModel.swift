@@ -9,6 +9,7 @@ final class NewPasswordViewModel: ObservableObject {
     @Published var currentPassword = ""
     let requiresCurrentPassword: Bool
     @Published private(set) var busy = false
+    @Published private(set) var completed = false
     @Published var notice: AuthNotice?
     @Published private(set) var validationAttempted = false
     private let client: SupabaseClient
@@ -27,7 +28,7 @@ final class NewPasswordViewModel: ObservableObject {
     }
 
     func save() async -> Bool {
-        guard !busy else { return false }
+        guard !busy, !completed else { return false }
         validationAttempted = true
         if let message = currentPasswordError ?? FormValidation.password(password)
             ?? FormValidation.confirmation(confirmation, password: password) {
@@ -65,6 +66,8 @@ final class NewPasswordViewModel: ObservableObject {
             } else {
                 try await client.auth.update(user: UserAttributes(password: password))
             }
+            completed = true
+            validationAttempted = false
             currentPassword = ""
             password = ""
             confirmation = ""

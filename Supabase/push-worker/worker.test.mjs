@@ -28,6 +28,7 @@ test('payload uses only server-generated text and routing identifiers', () => {
   assert.equal(JSON.stringify(payload(job)).includes(job.token), false);
   assert.ok(Buffer.byteLength(JSON.stringify(payload(job))) < 4096);
   const dynamic = payload({ ...job, title: 'Confirmación de Hito', body: 'Alice confirmó Montaje' });
+  assert.equal(dynamic.aps.sound, 'default');
   assert.deepEqual(dynamic.aps.alert, { title: 'Confirmación de Hito', body: 'Alice confirmó Montaje' });
   const long = payload({ ...job, title: '😀'.repeat(9000), body: '\\"😀'.repeat(9000) });
   assert.ok(Buffer.byteLength(JSON.stringify(long)) < 4096);
@@ -80,6 +81,7 @@ test('APNs transient and configuration failures preserve device registration', a
   for (const [status,reason] of [[429,'TooManyRequests'],[500,'InternalServerError'],[400,'BadDeviceToken'],[403,'InvalidProviderToken']]) {
     const result = await sendPush(job, config, 'JWT', fakeTransport(status, reason, {}));
     assert.equal(result.success, false);
+    assert.equal(result.statusCode, status);
     assert.equal(result.invalid, false);
   }
   assert.equal((await sendPush(job, config, 'JWT', fakeTransport(410, 'Unregistered', {}))).invalid, true);
@@ -93,8 +95,8 @@ test('production uses production host', async () => {
 
 test('batch acknowledges successes and failures without skipping other jobs', async () => {
   const acknowledgments = [];
-  const originalWarn = console.warn;
-  console.warn = () => {};
+  const originalWarn = console.error;
+  console.error = () => {};
   try {
   const count = await runBatch(config, credentials, {
     rpc: async (_, name, params) => {
@@ -111,24 +113,24 @@ test('batch acknowledges successes and failures without skipping other jobs', as
   assert.equal(acknowledgments[1].p_error, 'Transport error');
   assert.equal(acknowledgments[0].p_lease, job.lease);
   } finally {
-    console.warn = originalWarn;
+    console.error = originalWarn;
   }
 });
 
-test('batch logs only APNs environment and reason on delivery failure', async () => {
+test('batch logs APNs diagnostics without device tokens or recipient data', async () => {
   const warnings = [];
-  const originalWarn = console.warn;
-  console.warn = value => warnings.push(JSON.parse(value));
+  const originalWarn = console.error;
+  console.error = value => warnings.push(JSON.parse(value));
   try {
     await runBatch(config, credentials, {
       rpc: async (_, name) => name === 'claim_notification_pushes_v2' ? [job] : undefined,
       sendPush: async () => ({ success: false, error: 'BadDeviceToken', invalid: false }),
     });
   } finally {
-    console.warn = originalWarn;
+    console.error = originalWarn;
   }
   assert.deepEqual(warnings, [{ service: 'apns', environment: 'sandbox',
-    status: 'failed', reason: 'BadDeviceToken' }]);
+    status: 'failed', reason: 'BadDeviceToken', statusCode: null, apnsID: null, bundleID: config.bundleID }]);
   assert.equal(JSON.stringify(warnings).includes(job.token), false);
   assert.equal(JSON.stringify(warnings).includes(job.recipient), false);
 });

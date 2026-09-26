@@ -82,8 +82,12 @@ export function sendPush(job, config, jwt, connect = http2.connect) {
       return;
     }
     let status = 0;
+    let apnsID = null;
     let body = '';
-    request.on('response', headers => { status = Number(headers[':status']); });
+    request.on('response', headers => {
+      status = Number(headers[':status']);
+      apnsID = headers['apns-id'] ?? null;
+    });
     request.setEncoding('utf8');
     request.on('data', chunk => { body += chunk; });
     request.on('error', () => finish(new Error('APNs stream error')));
@@ -91,7 +95,7 @@ export function sendPush(job, config, jwt, connect = http2.connect) {
       let reason;
       try { reason = JSON.parse(body).reason; } catch { reason = 'HTTP ' + status; }
       // Only Unregistered invalidates a device. Topic/environment mistakes do not.
-      finish(null, { success: status === 200,
+      finish(null, { success: status === 200, statusCode: status, apnsID,
         error: status === 200 ? null : String(reason ?? 'HTTP ' + status).slice(0, 100),
         invalid: status === 410 && reason === 'Unregistered' });
     });
@@ -118,10 +122,17 @@ export async function runBatch(config, credentials, dependencies = {}) {
     const results = await Promise.allSettled(jobs.slice(offset, offset + 5).map(async job => {
       let result;
       try { result = await send(job, config, tokenFor(job.environment)); }
-      catch { result = { success: false, error: 'Transport error', invalid: false }; }
+      catch (error) {
+        const safeReasons = ['APNs timeout', 'APNs connection error', 'APNs request error',
+          'APNs stream error', 'Invalid APNs environment',
+          'Missing APNs credentials for sandbox', 'Missing APNs credentials for production'];
+        result = { success: false,
+          error: safeReasons.includes(error?.message) ? error.message : 'Transport error', invalid: false };
+      }
       if (!result.success) {
-        console.warn(JSON.stringify({ service: 'apns', environment: job.environment,
-          status: 'failed', reason: result.error }));
+        console.error(JSON.stringify({ service: 'apns', environment: job.environment,
+          status: 'failed', reason: result.error, statusCode: result.statusCode ?? null,
+          apnsID: result.apnsID ?? null, bundleID: config.bundleID }));
       }
       await call(config, 'finish_notification_push', {
         p_job: job.job_id, p_lease: job.lease, p_success: result.success,

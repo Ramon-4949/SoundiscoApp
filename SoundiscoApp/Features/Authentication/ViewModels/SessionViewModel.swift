@@ -19,6 +19,7 @@ final class SessionViewModel: ObservableObject {
     @Published private(set) var biometricLoginBusy = false
     private var biometricContext: LAContext?
     private var biometricRevision = 0
+    private var pushSyncTask: Task<Void, Never>?
 
     var jobTitle: String? { user?.userMetadata["cargo"]?.stringValue }
 
@@ -111,6 +112,15 @@ final class SessionViewModel: ObservableObject {
                 isLocked = false
             }
             initializing = false
+            if !recoveringPassword, !signingOut, let id = userID,
+               event == .initialSession || event == .signedIn || event == .tokenRefreshed || event == .userUpdated {
+                pushSyncTask?.cancel()
+                pushSyncTask = Task { await PushNotificationService.shared.connect(userID: id) }
+            }
+            if event == .signedOut {
+                pushSyncTask?.cancel()
+                await PushNotificationService.shared.clearLocalRegistration()
+            }
         }
     }
 
@@ -184,6 +194,7 @@ final class SessionViewModel: ObservableObject {
     }
 
     private func performRemoteSignOut() async {
+        pushSyncTask?.cancel()
         do {
             try await PushNotificationService.shared.disconnect()
             try await client.auth.signOut(scope: .local)

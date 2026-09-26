@@ -2,6 +2,7 @@ import UIKit
 import UserNotifications
 import Combine
 import Supabase
+import OSLog
 
 struct NotificationRoute: Identifiable {
     let id: UUID
@@ -18,6 +19,7 @@ final class PushNotificationService: ObservableObject {
     private var userID: UUID?
     private var registered = UserDefaults.standard.bool(forKey: "push.registered")
     private let client = SupabaseService.client
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "SoundiscoApp", category: "Push")
     private let installation: UUID = {
         let defaults = UserDefaults.standard
         if let value = defaults.string(forKey: "push.installation"), let id = UUID(uuidString: value) { return id }
@@ -27,6 +29,9 @@ final class PushNotificationService: ObservableObject {
     }()
 
     func connect(userID: UUID) async {
+        guard !Task.isCancelled,
+              let session = try? await client.auth.session,
+              session.user.id == userID else { return }
         self.userID = userID
         if let route, route.recipient != userID { self.route = nil }
         await requestPermission()
@@ -42,6 +47,7 @@ final class PushNotificationService: ObservableObject {
                 settings = await center.notificationSettings()
             }
             permissionDenied = settings.authorizationStatus == .denied
+            logger.info("Push permission=\(settings.authorizationStatus.rawValue) sound=\(settings.soundSetting.rawValue)")
             if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional {
                 UIApplication.shared.registerForRemoteNotifications()
             }
@@ -50,6 +56,7 @@ final class PushNotificationService: ObservableObject {
 
     func receivedToken(_ data: Data) async {
         token = data.map { String(format: "%02x", $0) }.joined()
+        logger.info("APNs device token received")
         await registerToken()
     }
 
@@ -65,14 +72,22 @@ final class PushNotificationService: ObservableObject {
             return
         }
         do {
+            guard !Task.isCancelled,
+                  try await client.auth.session.user.id == userID,
+                  self.userID == userID else { return }
             try await client.rpc("register_push_device", params: Registration(
                 p_installation: installation, p_token: token, p_environment: environment)).execute()
             if self.userID == userID {
                 registered = true
                 UserDefaults.standard.set(true, forKey: "push.registered")
                 failure = nil
+                logger.info("Push device registered environment=\(environment, privacy: .public)")
             }
-        } catch { failure = "No se pudo registrar este dispositivo para avisos. \(AuthNotice.failure(error).message)" }
+        } catch {
+            guard !Task.isCancelled, self.userID == userID else { return }
+            failure = "No se pudo registrar este dispositivo para avisos. \(AuthNotice.failure(error).message)"
+            logger.error("register_push_device failed: \(error.localizedDescription, privacy: .private)")
+        }
     }
 
     private var pushEnvironment: String? {

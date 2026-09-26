@@ -44,8 +44,15 @@ struct LoginView: View {
                             .font(.caption).foregroundStyle(model.isLocked(at: now) ? .red : .secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    rememberEmail.frame(maxWidth: .infinity, alignment: .leading)
-                    Button("¿Olvidaste tu contraseña?") { showsRecovery = true }
+                    HStack(alignment: .center, spacing: 12) {
+                        rememberEmail
+                        Spacer(minLength: 0)
+                        Button("¿Olvidaste tu contraseña?") { showsRecovery = true }
+                            .font(.caption.weight(.semibold))
+                            .multilineTextAlignment(.trailing)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(minHeight: 44)
+                    }
                 }
                 .padding(16)
                 .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))

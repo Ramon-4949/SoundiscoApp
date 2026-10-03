@@ -123,13 +123,11 @@ create or replace function milestone_private.save_members(p_assignment uuid,p_hi
 returns void language plpgsql security definer set search_path='' as $$
 declare v_hito jsonb;
 begin
-  -- Confirmed records cannot be silently removed or have their schedule rewritten.
-  if exists(select 1 from public.hitos_colaboradores c join public.hitos_itinerario h on h.id=c.hito_id
-    where h.asignacion_id=p_assignment and c.confirmado_at is not null and not exists(
+  delete from public.confirmaciones_hitos c using public.hitos_itinerario h
+    where h.id=c.hito_id and h.asignacion_id=p_assignment and not exists(
       select 1 from jsonb_array_elements(p_hitos) j
       cross join lateral jsonb_array_elements_text(j->'colaboradores') u
-      where (j->>'id')::uuid=h.id and u.value::uuid=c.usuario_id)) then
-    raise exception 'No puedes retirar colaboradores que ya confirmaron'; end if;
+      where (j->>'id')::uuid=h.id and u.value::uuid=c.usuario_id);
   delete from public.hitos_colaboradores c using public.hitos_itinerario h
     where h.id=c.hito_id and h.asignacion_id=p_assignment and not exists(
       select 1 from jsonb_array_elements(p_hitos) j

@@ -102,8 +102,16 @@ try {
   assert.equal((await db.query('select completado from hitos_itinerario where id=$1',[id(101)])).rows[0].completado,true);
   await user(1);
   const removeConfirmed = milestones.map((m,i) => i === 0 ? {...m,colaboradores:[id(3)]} : m);
-  await assert.rejects(db.query('select admin_update_assignment($1,$2,$3,$4)',
-    [aid,payload,[],JSON.stringify(removeConfirmed)]),/retirar colaboradores/);
+  await db.query('select admin_update_assignment($1,$2,$3,$4)',
+    [aid,payload,[],JSON.stringify(removeConfirmed)]);
+  assert.equal((await db.query('select count(*)::int n from hitos_colaboradores where hito_id=$1 and usuario_id=$2',
+    [id(101),id(2)])).rows[0].n,0);
+  assert.equal((await db.query('select count(*)::int n from confirmaciones_hitos where hito_id=$1 and usuario_id=$2',
+    [id(101),id(2)])).rows[0].n,0);
+  await db.query('select admin_update_assignment($1,$2,$3,$4)',
+    [aid,payload,[],JSON.stringify(milestones)]);
+  assert.deepEqual((await db.query('select estado,confirmado_at from hitos_colaboradores where hito_id=$1 and usuario_id=$2',
+    [id(101),id(2)])).rows[0],{estado:'sin_confirmar',confirmado_at:null});
   await user(3);
   await db.exec("update hitos_itinerario set fecha_programada=clock_timestamp()-interval '1 minute' where id='"+id(103)+"'");
   await assert.rejects(check(103), /plazo final/);

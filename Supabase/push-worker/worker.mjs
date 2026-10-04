@@ -3,6 +3,8 @@ import { createPrivateKey, sign } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import express from 'express';
+import { applicationDefault, initializeApp, deleteApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 
 export function providerToken(key, keyID, teamID, now = Date.now()) {
   const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -145,6 +147,91 @@ export async function runBatch(config, credentials, dependencies = {}) {
   return jobs.length;
 }
 
+export function androidPayload(job) {
+  return {
+    token: job.token,
+    notification: payload(job).aps.alert,
+    data: { notification_id: job.notification_id, recipient_id: job.recipient },
+    android: {
+      priority: 'high', ttl: 3600000,
+      notification: { sound: 'default', channelId: 'soundisco_notifications', tag: job.notification_id },
+    },
+  };
+}
+
+export async function sendAndroidPush(job, messaging, timeoutMs = 20000) {
+  let timer;
+  try {
+    await Promise.race([
+      messaging.send(androidPayload(job)),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject({ code: 'messaging/timeout' }), timeoutMs);
+      }),
+    ]);
+    return { success: true, error: null, invalid: false };
+  } catch (error) {
+    const code = typeof error?.code === 'string' && /^messaging\/[a-z-]{1,80}$/.test(error.code)
+      ? error.code : 'messaging/transport-error';
+    return { success: false, error: code,
+      invalid: ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'].includes(code) };
+  } finally { clearTimeout(timer); }
+}
+
+export async function runAndroidBatch(config, messaging, dependencies = {}) {
+  const call = dependencies.rpc ?? rpc;
+  const send = dependencies.sendPush ?? sendAndroidPush;
+  const jobs = await call(config, 'claim_android_pushes');
+  let failures = 0;
+  for (let offset = 0; offset < jobs.length; offset += 5) {
+    const results = await Promise.allSettled(jobs.slice(offset, offset + 5).map(async job => {
+      const result = await send(job, messaging);
+      if (!result.success) console.error(JSON.stringify({ service: 'fcm', status: 'failed', reason: result.error }));
+      await call(config, 'finish_android_push', {
+        p_job: job.job_id, p_lease: job.lease, p_success: result.success,
+        p_error: result.error, p_invalid: result.invalid,
+      });
+    }));
+    failures += results.filter(result => result.status === 'rejected').length;
+  }
+  if (failures) throw new Error('Android push acknowledgments failed: ' + failures);
+  return jobs.length;
+}
+
+export function createWorkerState() {
+  return { active: false, healthy: false, lastProgress: null, lastSuccess: null };
+}
+
+export function healthStatus(states, now = Date.now()) {
+  const processes = Object.fromEntries(['apns', 'fcm'].map(name => {
+    const state = states[name];
+    const active = Boolean(state?.active && state.lastProgress !== null && now - state.lastProgress < 300000);
+    return [name, { active, healthy: active && state.healthy, lastSuccess: state?.lastSuccess ?? null }];
+  }));
+  return { status: Object.values(processes).every(value => value.healthy) ? 'ok' : 'degraded', processes };
+}
+
+export async function runLoop(name, batch, state, signal, once = false, intervalMs = 10000) {
+  state.active = true;
+  try {
+    while (!signal.aborted) {
+      state.lastProgress = Date.now();
+      try {
+        const count = await batch();
+        state.healthy = true;
+        state.lastSuccess = Date.now();
+        console.info(JSON.stringify({ service: name, processed: count, at: new Date().toISOString() }));
+      } catch {
+        state.healthy = false;
+        console.error(JSON.stringify({ service: name, status: 'cycle_failed' }));
+        if (once) process.exitCode = 1;
+      }
+      state.lastProgress = Date.now();
+      if (once) break;
+      try { await delay(intervalMs, undefined, { signal }); } catch { break; }
+    }
+  } finally { state.active = false; }
+}
+
 export function configuration(env = process.env) {
   for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','APNS_TEAM_ID','APNS_BUNDLE_ID']) {
     if (!env[name]?.trim()) throw new Error('Missing configuration: ' + name);
@@ -184,11 +271,14 @@ export function configuration(env = process.env) {
   };
 }
 
-export function startHealthServer(port) {
+export function startHealthServer(port, states) {
   const app = express();
   app.disable('x-powered-by');
   app.get('/', (_request, response) => response.status(200).json({ service: 'soundisco-push-worker', status: 'ok' }));
-  app.get('/health', (_request, response) => response.status(200).json({ status: 'ok' }));
+  app.get('/health', (_request, response) => {
+    const health = healthStatus(states);
+    response.status(health.status === 'ok' ? 200 : 503).json(health);
+  });
   return app.listen(port, '0.0.0.0', () => {
     console.info(JSON.stringify({ service: 'health', status: 'listening', port }));
   });
@@ -205,27 +295,32 @@ async function main() {
     credentials[environment] = { key, keyID: credential.keyID };
   }
   const once = process.argv.includes('--once');
-  const server = once ? null : startHealthServer(config.port);
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()) {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS must point to a Firebase service account JSON file');
+  }
+  const firebase = initializeApp({ credential: applicationDefault() });
+  const messaging = getMessaging(firebase);
+  const states = { apns: createWorkerState(), fcm: createWorkerState() };
+  const server = once ? null : startHealthServer(config.port, states);
   const shutdown = new AbortController();
   for (const signal of ['SIGTERM','SIGINT']) process.on(signal, () => shutdown.abort());
+  const supabase = { rpc: (name, params) => rpc(config, name, params) };
+  const dependencies = name => ({ rpc: async (_config, method, params) => {
+    const result = await supabase.rpc(method, params);
+    states[name].lastProgress = Date.now();
+    return result;
+  } });
   try {
-    while (!shutdown.signal.aborted) {
-      try {
-        const count = await runBatch(config, credentials);
-        console.info(JSON.stringify({ processed: count, at: new Date().toISOString() }));
-      } catch {
-        // No tokens, user IDs, request headers or remote response contents in logs.
-        console.error('Push cycle failed. Check server configuration and private outbox status.');
-        if (once) { process.exitCode = 1; return; }
-      }
-      if (once) return;
-      try { await delay(10000, undefined, { signal: shutdown.signal }); } catch { break; }
-    }
+    await Promise.all([
+      runLoop('apns', () => runBatch(config, credentials, dependencies('apns')), states.apns, shutdown.signal, once),
+      runLoop('fcm', () => runAndroidBatch(config, messaging, dependencies('fcm')), states.fcm, shutdown.signal, once),
+    ]);
   } finally {
     server?.close();
+    await deleteApp(firebase);
   }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch(() => { console.error('Worker startup failed. Check required configuration and APNs key.'); process.exitCode = 1; });
+  main().catch(() => { console.error('Worker startup failed. Check APNs keys, Firebase credentials file and required configuration.'); process.exitCode = 1; });
 }

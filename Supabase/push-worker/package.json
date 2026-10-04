@@ -3,15 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Worker APNs segmentado para SounDisco",
+  "description": "Worker APNs y FCM para SounDisco",
   "engines": {
     "node": ">=22 <23"
   },
   "scripts": {
     "start": "node worker.mjs",
-    "test": "node --test worker.test.mjs"
+    "test": "node --test worker.test.mjs android.test.mjs",
+    "test:sql": "node --test android.sql.test.mjs"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "firebase-admin": "^13.6.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8"
   }
 }

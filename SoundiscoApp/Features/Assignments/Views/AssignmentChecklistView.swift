@@ -4,6 +4,7 @@ struct AssignmentChecklistView: View {
     @ObservedObject var model: AssignmentDetailViewModel
     let allowsUpdates: Bool
     @State private var failure: String?
+    @State private var undoTarget: Milestone?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -31,7 +32,19 @@ struct AssignmentChecklistView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.reload() } }
         }
-        .alert("No se pudo confirmar", isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
+        .confirmationDialog("¿Deshacer tu confirmación?", isPresented: Binding(
+            get: { undoTarget != nil }, set: { if !$0 { undoTarget = nil } }), titleVisibility: .visible) {
+            if let milestone = undoTarget {
+                Button("Deshacer confirmación", role: .destructive) {
+                    Task {
+                        do { try await model.undoConfirmation(milestone) }
+                        catch { failure = AuthNotice.failure(error).message }
+                    }
+                }
+            }
+            Button("Cancelar", role: .cancel) { undoTarget = nil }
+        } message: { Text("Este hito volverá a estar sin confirmar para ti.") }
+        .alert("No se pudo completar", isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
             Button("Aceptar", role: .cancel) {}
         } message: { Text(failure ?? "") }
     }
@@ -90,6 +103,13 @@ struct AssignmentChecklistView: View {
                 if own?.confirmado == true {
                     Label("Confirmado", systemImage: "checkmark.circle")
                         .font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    if allowsUpdates {
+                        Button { undoTarget = milestone } label: {
+                            Label(model.savingMilestoneID == milestone.id ? "Deshaciendo…" : "Deshacer confirmación",
+                                  systemImage: "arrow.uturn.backward")
+                        }
+                        .font(.subheadline).disabled(model.savingMilestoneID != nil)
+                    }
                 } else if own != nil, let block {
                     Text(block)
                         .font(.subheadline).foregroundStyle(.secondary)

@@ -35,6 +35,7 @@ struct HomeView: View {
                 .tabItem { Label("Inicio", systemImage: "house") }.tag(0)
             NavigationStack { BulletinsView() }
                 .tabItem { Label("Mensajes", systemImage: "bubble.left") }.tag(1)
+                .badge(notifications.unreadMessageCount)
             NavigationStack { AgendaCalendarView(agenda: agenda) }
                 .tabItem { Label("Calendario", systemImage: "calendar") }.tag(2)
             NavigationStack { ProfileView() }
@@ -64,6 +65,10 @@ struct HomeView: View {
         .onChange(of: notifications.items.map(\.id)) { oldIDs, newIDs in
             guard oldIDs != newIDs, let id = auth.userID else { return }
             Task { await agenda.load(userID: id) }
+        }
+        .onChange(of: push.receivedNotificationID) { _, _ in
+            guard let id = auth.userID else { return }
+            Task { await notifications.load(userID: id) }
         }
         .sheet(item: $push.route) { route in
             NavigationStack {

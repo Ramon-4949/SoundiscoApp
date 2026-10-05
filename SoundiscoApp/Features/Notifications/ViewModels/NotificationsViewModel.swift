@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import Supabase
+import UserNotifications
 
 enum NotificationFilter: String, CaseIterable, Identifiable {
     case all = "Todas", unread = "Sin leer", assignments = "Asignaciones", bulletins = "Comunicados"
@@ -19,6 +20,14 @@ final class NotificationsViewModel: ObservableObject {
     private var generation = UUID()
     init(client: SupabaseClient? = nil) { self.client = client ?? SupabaseService.client }
     var unreadCount: Int { items.filter(\.unread).count }
+    var unreadBulletinIDs: Set<UUID> {
+        let deleted = Set(items.filter { $0.destino_tipo == "comunicado" && $0.tipo == "comunicado_eliminado" }
+            .compactMap(\.destino_id))
+        return Set(items.filter { $0.unread && $0.destino_tipo == "comunicado" && $0.tipo != "comunicado_eliminado" }
+            .compactMap(\.destino_id))
+            .subtracting(deleted)
+    }
+    var unreadMessageCount: Int { unreadBulletinIDs.count }
     var filtered: [EmployeeNotification] {
         items.filter {
             switch filter {
@@ -77,6 +86,7 @@ final class NotificationsViewModel: ObservableObject {
                 offset += 200
             }
             items = result
+            try? await UNUserNotificationCenter.current().setBadgeCount(unreadCount)
             failure = nil
         } catch { if !Task.isCancelled, generation == run { failure = AuthNotice.failure(error).message } }
         if generation == run { loading = false }
@@ -89,6 +99,15 @@ final class NotificationsViewModel: ObservableObject {
             try await client.rpc("notifications_mark_read", params: Params(p_id: id)).execute()
             guard self.owner == owner else { return }
             for index in items.indices where id == nil || items[index].id == id { items[index].leida = true }
+            try? await UNUserNotificationCenter.current().setBadgeCount(unreadCount)
         } catch { failure = AuthNotice.failure(error).message }
+    }
+
+    func markBulletinRead(_ id: UUID) async {
+        let notificationIDs = items.filter { $0.unread && $0.destino_tipo == "comunicado" && $0.destino_id == id }.map(\.id)
+        for notificationID in notificationIDs {
+            guard !Task.isCancelled else { return }
+            await markRead(notificationID)
+        }
     }
 }

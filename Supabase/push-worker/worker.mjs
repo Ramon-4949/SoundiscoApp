@@ -24,6 +24,7 @@ export function payload(job) {
         body: text(job.body, 'Tienes una actualización. Abre la app para ver los detalles.', 500),
       },
       sound: 'default', 'thread-id': 'soundisco-notifications',
+      ...(Number.isInteger(job.badge) && job.badge >= 0 ? { badge: job.badge } : {}),
     },
     notification_id: job.notification_id,
     recipient_id: job.recipient,
@@ -109,7 +110,7 @@ export async function runBatch(config, credentials, dependencies = {}) {
   const call = dependencies.rpc ?? rpc;
   const send = dependencies.sendPush ?? sendPush;
   await call(config, 'generate_notification_reminders');
-  const jobs = await call(config, 'claim_notification_pushes_v2');
+  const jobs = await call(config, 'claim_notification_pushes_v3');
   const tokens = new Map();
   const tokenFor = environment => {
     const credential = credentials[environment];
@@ -135,6 +136,9 @@ export async function runBatch(config, credentials, dependencies = {}) {
         console.error(JSON.stringify({ service: 'apns', environment: job.environment,
           status: 'failed', reason: result.error, statusCode: result.statusCode ?? null,
           apnsID: result.apnsID ?? null, bundleID: config.bundleID }));
+      } else {
+        console.info(JSON.stringify({ service: 'apns', status: 'accepted',
+          environment: job.environment, badge: job.badge ?? null }));
       }
       await call(config, 'finish_notification_push', {
         p_job: job.job_id, p_lease: job.lease, p_success: result.success,
@@ -207,7 +211,8 @@ export function healthStatus(states, now = Date.now()) {
     const active = Boolean(state?.active && state.lastProgress !== null && now - state.lastProgress < 300000);
     return [name, { active, healthy: active && state.healthy, lastSuccess: state?.lastSuccess ?? null }];
   }));
-  return { status: Object.values(processes).every(value => value.healthy) ? 'ok' : 'degraded', processes };
+  return { status: Object.values(processes).every(value => value.healthy) ? 'ok' : 'degraded',
+    capabilities: { apnsBadge: true, apnsQueueRPC: 'claim_notification_pushes_v3' }, processes };
 }
 
 export async function runLoop(name, batch, state, signal, once = false, intervalMs = 10000) {

@@ -105,13 +105,15 @@ struct AssignmentCollaboratorsView: View {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField("Buscar por nombre o cargo…", text: $search)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .foregroundStyle(Color.primary)
                     if !search.isEmpty {
                         Button { search = "" } label: { Image(systemName: "xmark.circle.fill") }
                             .foregroundStyle(.secondary).accessibilityLabel("Limpiar búsqueda")
                     }
                 }
                 .padding(14)
-                .background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(uiColor: .separator), lineWidth: 1))
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BulletinDetailView: View {
+    @EnvironmentObject private var notifications: NotificationsViewModel
     @Environment(\.isAdministrator) private var isAdministrator
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model = AdminMessageViewModel()
@@ -49,6 +50,9 @@ struct BulletinDetailView: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Detalle del comunicado")
         .navigationBarTitleDisplayMode(.inline)
+        .task(id: notifications.items.filter { $0.unread && $0.destino_tipo == "comunicado" && $0.destino_id == bulletin.id }.map(\.id)) {
+            await notifications.markBulletinRead(bulletin.id)
+        }
         .tint(Brand.red)
         .toolbar {
             if isAdministrator {

@@ -4,8 +4,27 @@ Node.js 22. Ejecutar en un servidor con salida HTTPS a Supabase, Google y HTTP/2
 No se ejecuta dentro de la app iOS. En Render se despliega como Web Service;
 Express escucha en `0.0.0.0:$PORT` y expone `/health`.
 
+### Comprobar el contador del icono en iOS
+
+Ejecutar SQL no actualiza el servicio de Render: hay que desplegar este worker.
+`/health` debe incluir `capabilities.apnsBadge: true` y
+`capabilities.apnsQueueRPC: "claim_notification_pushes_v3"`.
+Cada push aceptado por Apple genera un log con `status: "accepted"`,
+`environment` y `badge` (sin tokens ni datos personales).
+El badge es el total absoluto de avisos sin leer, no un incremento local.
+Un HTTP 200 de Apple confirma aceptación, no entrega al teléfono.
+
+Para probar: dejar la app en segundo plano, enviar un aviso desde otra cuenta
+y comprobar el icono sin abrir la app. En Ajustes de iOS, Notificaciones,
+SounDisco debe tener los globos/insignias habilitados.
+La campanita muestra avisos sin leer; Mensajes cuenta comunicados distintos
+pendientes de revisar. Abrir el detalle de un comunicado marca sus avisos
+como leídos; entrar a la lista de mensajes no los marca todos.
+
 Aplicar primero notifications_setup.sql y notification_reminders.sql, y después
 notifications_dynamic.sql ANTES de desplegar esta versión del worker.
+Aplicar también `../milestone_notification_ux.sql`: el worker utiliza
+`claim_notification_pushes_v3` para incluir el total de avisos sin leer en `aps.badge`.
 Para Android, ejecutar también `android_push.sql` de este directorio en el SQL
 Editor de Supabase. Es transaccional e idempotente. Añade su propio trigger sin
 reemplazar el de iOS ni los textos de las notificaciones. No reenvía el historial.
@@ -77,7 +96,7 @@ puede repetirse un envío. apns-collapse-id agrupa reintentos del mismo aviso.
 La bandeja conserva el historial aunque el dispositivo rechace notificaciones.
 
 El payload usa `title` y `body` generados por los triggers y devueltos por
-`claim_notification_pushes_v2`. Incluye los nombres de empleados, hitos,
+`claim_notification_pushes_v3`. Incluye los nombres de empleados, hitos,
 asignaciones y asuntos de comunicados que correspondan al evento autorizado.
 No incluye ubicaciones ni instrucciones. Conserva notification_id y recipient_id
 como metadatos de navegación; no se registran textos, tokens ni secretos en logs.

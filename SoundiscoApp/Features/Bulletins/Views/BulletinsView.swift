@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BulletinsView: View {
+    @EnvironmentObject private var notifications: NotificationsViewModel
     @Environment(\.isAdministrator) private var isAdministrator
     @StateObject private var model = BulletinsViewModel()
     @State private var creating = false
@@ -18,7 +19,13 @@ struct BulletinsView: View {
                         BulletinDetailView(bulletin: item)
                     } label: {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(item.asunto).font(.headline)
+                            HStack {
+                                Text(item.asunto).font(.headline)
+                                if notifications.unreadBulletinIDs.contains(item.id) {
+                                    Circle().fill(Brand.red).frame(width: 8, height: 8)
+                                        .accessibilityLabel("Sin revisar")
+                                }
+                            }
                             Text(item.mensaje).lineLimit(2).foregroundStyle(.secondary)
                         }.padding(.vertical, 8)
                     }

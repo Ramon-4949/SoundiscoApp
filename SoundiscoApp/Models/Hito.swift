@@ -86,10 +86,19 @@ struct HitoColaborador: Codable, Hashable, Identifiable, Sendable {
     var confirmado: Bool { confirmado_at != nil }
     var etiqueta: String {
         guard let confirmado_at, let hora_programada else { return "Sin confirmar" }
-        let minutos = Int(abs(confirmado_at.timeIntervalSince(hora_programada)) / 60)
+        let seconds = abs(confirmado_at.timeIntervalSince(hora_programada))
+        let formatter = DateComponentsFormatter()
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "es_DO")
+        formatter.calendar = calendar
+        formatter.allowedUnits = [.year, .month, .weekOfMonth, .day, .hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        formatter.maximumUnitCount = 2
+        formatter.zeroFormattingBehavior = .dropAll
+        let duration = formatter.string(from: seconds) ?? "<1 min"
         switch estado {
-        case "temprano": return minutos > 0 ? "Temprano (-\(minutos) min)" : "Temprano (<1 min)"
-        case "tardio": return minutos > 0 ? "Tardío (+\(minutos) min)" : "Tardío (<1 min)"
+        case "temprano": return seconds >= 60 ? "Temprano (-\(duration))" : "Temprano (<1 min)"
+        case "tardio": return seconds >= 60 ? "Tardío (+\(duration))" : "Tardío (<1 min)"
         default: return "A tiempo"
         }
     }

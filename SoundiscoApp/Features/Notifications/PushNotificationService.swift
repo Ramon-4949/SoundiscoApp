@@ -13,6 +13,7 @@ struct NotificationRoute: Identifiable {
 final class PushNotificationService: ObservableObject {
     static let shared = PushNotificationService()
     @Published var route: NotificationRoute?
+    @Published private(set) var receivedNotificationID: UUID?
     @Published private(set) var permissionDenied = false
     @Published var failure: String?
     private var token: String?
@@ -121,6 +122,11 @@ final class PushNotificationService: ObservableObject {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
     }
+
+    func receivedNotification(id: UUID, recipient: UUID) {
+        guard recipient == userID else { return }
+        receivedNotificationID = id
+    }
 }
 
 final class NotificationAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -140,7 +146,14 @@ final class NotificationAppDelegate: NSObject, UIApplicationDelegate, UNUserNoti
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound, .list])
+        let data = notification.request.content.userInfo
+        if let raw = data["notification_id"] as? String, let id = UUID(uuidString: raw),
+           let owner = data["recipient_id"] as? String, let recipient = UUID(uuidString: owner) {
+            Task { @MainActor in
+                PushNotificationService.shared.receivedNotification(id: id, recipient: recipient)
+            }
+        }
+        completionHandler([.banner, .sound, .list, .badge])
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,

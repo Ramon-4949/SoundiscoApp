@@ -60,6 +60,8 @@ try {
   await db.exec(sql('assignment_status_automation.sql'));
   await db.exec(sql('assignment_collaborators_list.sql'));
   await db.exec(sql('assignment_note_author_visibility.sql'));
+  await db.exec(sql('milestone_notification_ux.sql'));
+  await db.exec(sql('milestone_notification_ux.sql'));
   await user(2);
   const roster = (await db.query('select * from assignment_collaborators($1)',[aid])).rows;
   assert.equal(roster.length,3);
@@ -69,6 +71,9 @@ try {
   await db.query('select add_assignment_note($1,$2,$3)',[id(801),aid,'Nota de Ana']);
   await user(3);
   await db.query('select add_assignment_note($1,$2,$3)',[id(802),aid,'Nota de Bob']);
+  await db.query('select add_assignment_note($1,$2,$3)',[id(802),aid,'Nota de Bob']);
+  const noteRecipients = (await db.query("select perfil_id from notificaciones_app where evento_key=$1 order by perfil_id",['note:'+id(802)])).rows;
+  assert.deepEqual(noteRecipients.map(row => row.perfil_id),[id(1),id(2),id(3),id(4)]);
   let notes = (await db.query('select * from assignment_notes($1,0,200)',[aid])).rows;
   assert.equal(notes.length,2);
   assert.ok(notes.every(note => note.autor_nombre === null));
@@ -96,7 +101,7 @@ try {
   assert.equal((await db.query('select estado from hitos_colaboradores where hito_id=$1',[id(102)])).rows[0].estado,'temprano');
   await assert.rejects(check(103), /No est.s asignado/);
   const recipients = (await db.query("select distinct perfil_id from notificaciones_app where tipo='hito_completado'")).rows;
-  assert.deepEqual(recipients.map(r => r.perfil_id),[id(1)]);
+  assert.deepEqual(recipients.map(r => r.perfil_id).sort(),[id(1),id(4)]);
   console.log('PASS early and late, personal sequence, idempotency, no group wait');
   await user(3); await check(101);
   assert.equal((await db.query('select completado from hitos_itinerario where id=$1',[id(101)])).rows[0].completado,true);
@@ -114,10 +119,11 @@ try {
     [id(101),id(2)])).rows[0],{estado:'sin_confirmar',confirmado_at:null});
   await user(3);
   await db.exec("update hitos_itinerario set fecha_programada=clock_timestamp()-interval '1 minute' where id='"+id(103)+"'");
-  await assert.rejects(check(103), /plazo final/);
+  await check(103);
+  assert.equal((await db.query('select estado from hitos_colaboradores where hito_id=$1',[id(103)])).rows[0].estado,'tardio');
   await db.exec('select process_assignment_sla()');
-  assert.equal((await db.query('select completado from hitos_itinerario where id=$1',[id(103)])).rows[0].completado,false);
-  console.log('PASS all required for completion, hard stop enforced by RPC, cron never invents completion');
+  assert.equal((await db.query('select completado from hitos_itinerario where id=$1',[id(103)])).rows[0].completado,true);
+  console.log('PASS late final milestone confirmations');
   await db.exec('grant select on public.hitos_itinerario,public.perfiles,public.asignacion_equipo to authenticated; set role authenticated');
   await user(2);
   assert.equal((await db.query('select count(*)::int n from hitos_itinerario')).rows[0].n,2);
@@ -134,11 +140,11 @@ try {
   assert.equal((await db.query('select count(*)::int n from hitos_itinerario')).rows[0].n,3);
   await db.exec('reset role');
   console.log('PASS employee/supervisor/admin RLS and no direct confirmation writes');
-  // A later milestone for Bob must not extend Ana's personal deadline.
+  // Expired personal deadlines allow late confirmations in sequence.
   payload.supervisores = [];
   const next = [h(201,1,-20,[5]),h(202,2,-10,[5]),h(203,3,100,[3])];
   const second = await create(next);
-  await user(5); await assert.rejects(check(201),/plazo final/); await assert.rejects(check(202),/plazo final/);
+  await user(5); await check(201); await check(202);
   await user(1);
   // Existing confirmations are immutable even when edited by an administrator.
   const edited = [...milestones]; edited[0] = {...edited[0], colaboradores:[id(3)]};
@@ -157,6 +163,14 @@ try {
   assert.equal(await state(),'en_curso');
   await user(3); await check(601);
   assert.equal(await state(),'completada');
+  const undo = () => db.query('select undo_milestone_confirmation($1)',[id(601)]);
+  await user(5); await assert.rejects(undo(),/No est.s asignado/);
+  await user(3); await undo(); await undo();
+  assert.equal(await state(),'en_curso');
+  assert.equal((await db.query('select count(*)::int n from confirmaciones_hitos where hito_id=$1 and usuario_id=$2',[id(601),id(3)])).rows[0].n,0);
+  await check(601);
+  assert.equal(await state(),'completada');
+  assert.equal((await db.query("select count(*)::int n from notificaciones_app where tipo='hito_completado' and destino_id=$1 and perfil_id=$2",[statusID,id(1)])).rows[0].n,3);
   const adminMessages = (await db.query("select titulo,mensaje from notificaciones_app where perfil_id=$1 and tipo='hito_completado' order by fecha_creacion desc",[id(1)])).rows;
   assert.ok(adminMessages.some(row => row.titulo === 'Confirmación de Hito' && row.mensaje.includes('confirmó')), JSON.stringify(adminMessages));
   assert.equal((await db.query("select count(*)::int n from notificaciones_app where tipo='estado_actualizado'")).rows[0].n,0);
@@ -165,9 +179,17 @@ try {
   assert.equal((await db.query('select estado from asignaciones where id=$1',[overdueID])).rows[0].estado,'pendiente');
   assert.equal((await db.query('select estado from asignaciones_estado_efectivo where id=$1',[overdueID])).rows[0].estado,'vencida');
   await db.query('select generate_notification_reminders()');
+  await db.query('select register_push_device($1,$2,$3)',[id(900),'a'.repeat(64),'sandbox']);
+  await db.query('select add_assignment_note($1,$2,$3)',[id(899),aid,'Nueva nota']);
+  const pushes = (await db.query('select * from claim_notification_pushes_v3()')).rows;
+  const unread = (await db.query('select count(*)::int n from notificaciones_app where perfil_id=$1 and leida is not true',[id(1)])).rows[0].n;
+  assert.ok(pushes.length>0);
+  assert.equal(pushes[0].badge,unread);
+  await db.query('select notifications_mark_read()');
+  assert.equal((await db.query('select count(*)::int n from notificaciones_app where perfil_id=$1 and leida is not true',[id(1)])).rows[0].n,0);
   await db.query('select admin_delete_assignment($1)',[aid]);
   assert.equal((await db.query('select count(*)::int n from hitos_colaboradores where hito_id=$1',[id(101)])).rows[0].n,0);
-  console.log('PASS personal hard stop, idempotent migration, editing/add/remove, confirmed history protected, event deletion');
+  console.log('PASS late confirmations, undo/reconfirm, recipient isolation, badges and event deletion');
 } catch (error) {
   console.error(error.message, error.where ?? '', error.internalQuery ?? '', error.stack?.split('\n').slice(-4).join('\n'));
   process.exitCode = 1;

@@ -115,6 +115,16 @@ final class AssignmentDetailViewModel: ObservableObject {
         errorMessage = nil
     }
 
+    func undoConfirmation(_ milestone: Milestone) async throws {
+        guard savingMilestoneID == nil else { return }
+        savingMilestoneID = milestone.id
+        defer { savingMilestoneID = nil }
+        try await client.rpc("undo_milestone_confirmation",
+            params: ["p_hito_id": milestone.id.uuidString]).execute()
+        confirmations.removeAll { $0.hito_id == milestone.id && $0.usuario_id == userID }
+        await reload()
+    }
+
     func loadCollaborators() async {
         guard !collaboratorsLoading else { return }
         collaboratorsLoading = true
@@ -140,10 +150,9 @@ final class AssignmentDetailViewModel: ObservableObject {
         if (milestone.hitos_colaboradores ?? []).contains(where: { $0.usuario_id == userID && $0.confirmado }) {
             return "Confirmado"
         }
-        guard let deadline = personal.last.flatMap({ AgendaDate.parse($0.fecha_programada) }) else {
+        guard AgendaDate.parse(milestone.fecha_programada) != nil else {
             return "El hito no tiene fecha límite."
         }
-        if now > deadline { return "Tu plazo final venció. No puedes confirmar hitos pendientes." }
         if personal[..<index].contains(where: { h in
             !(h.hitos_colaboradores ?? []).contains { $0.usuario_id == userID && $0.confirmado }
         }) { return "Confirma primero tu hito anterior." }

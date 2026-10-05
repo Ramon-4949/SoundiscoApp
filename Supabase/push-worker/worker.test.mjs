@@ -29,6 +29,9 @@ test('payload uses only server-generated text and routing identifiers', () => {
   assert.ok(Buffer.byteLength(JSON.stringify(payload(job))) < 4096);
   const dynamic = payload({ ...job, title: 'Confirmación de Hito', body: 'Alice confirmó Montaje' });
   assert.equal(dynamic.aps.sound, 'default');
+  assert.equal(payload({ ...job, badge: 12 }).aps.badge, 12);
+  assert.equal(payload({ ...job, badge: 0 }).aps.badge, 0);
+  assert.equal(payload({ ...job, badge: -1 }).aps.badge, undefined);
   assert.deepEqual(dynamic.aps.alert, { title: 'Confirmación de Hito', body: 'Alice confirmó Montaje' });
   const long = payload({ ...job, title: '😀'.repeat(9000), body: '\\"😀'.repeat(9000) });
   assert.ok(Buffer.byteLength(JSON.stringify(long)) < 4096);
@@ -93,6 +96,23 @@ test('production uses production host', async () => {
   assert.equal(capture.origin, 'https://api.push.apple.com');
 });
 
+test('v3 unread count reaches the production APNs payload without opening the app', async () => {
+  const capture = {};
+  const logs = [];
+  const originalInfo = console.info;
+  console.info = value => logs.push(JSON.parse(value));
+  try {
+    await runBatch(config, credentials, {
+      rpc: async (_, name) => name === 'claim_notification_pushes_v3'
+        ? [{ ...job, environment: 'production', badge: 7 }] : undefined,
+      sendPush: (current, settings, jwt) => sendPush(current, settings, jwt, fakeTransport(200, null, capture)),
+    });
+  } finally { console.info = originalInfo; }
+  assert.equal(capture.origin, 'https://api.push.apple.com');
+  assert.equal(capture.payload.aps.badge, 7);
+  assert.deepEqual(logs, [{ service: 'apns', status: 'accepted', environment: 'production', badge: 7 }]);
+});
+
 test('batch acknowledges successes and failures without skipping other jobs', async () => {
   const acknowledgments = [];
   const originalWarn = console.error;
@@ -100,7 +120,7 @@ test('batch acknowledges successes and failures without skipping other jobs', as
   try {
   const count = await runBatch(config, credentials, {
     rpc: async (_, name, params) => {
-      if (name === 'claim_notification_pushes_v2') return [job, { ...job, job_id: 'second' }];
+      if (name === 'claim_notification_pushes_v3') return [job, { ...job, job_id: 'second' }];
       if (name === 'finish_notification_push') acknowledgments.push(params);
     },
     sendPush: async current => {
@@ -123,7 +143,7 @@ test('batch logs APNs diagnostics without device tokens or recipient data', asyn
   console.error = value => warnings.push(JSON.parse(value));
   try {
     await runBatch(config, credentials, {
-      rpc: async (_, name) => name === 'claim_notification_pushes_v2' ? [job] : undefined,
+      rpc: async (_, name) => name === 'claim_notification_pushes_v3' ? [job] : undefined,
       sendPush: async () => ({ success: false, error: 'BadDeviceToken', invalid: false }),
     });
   } finally {
@@ -139,7 +159,7 @@ test('batch signs sandbox and production jobs with their matching APNs keys', as
   const keyIDs = [];
   const productionJob = { ...job, job_id: 'production-job', environment: 'production' };
   await runBatch(config, credentials, {
-    rpc: async (_, name) => name === 'claim_notification_pushes_v2'
+    rpc: async (_, name) => name === 'claim_notification_pushes_v3'
       ? [job, productionJob] : undefined,
     sendPush: async (_current, _config, jwt) => {
       keyIDs.push(JSON.parse(Buffer.from(jwt.split('.')[0], 'base64url')).kid);

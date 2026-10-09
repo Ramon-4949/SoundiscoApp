@@ -8,7 +8,7 @@ Express escucha en `0.0.0.0:$PORT` y expone `/health`.
 
 Ejecutar SQL no actualiza el servicio de Render: hay que desplegar este worker.
 `/health` debe incluir `capabilities.apnsBadge: true` y
-`capabilities.apnsQueueRPC: "claim_notification_pushes_v3"`.
+`capabilities.apnsQueueRPC: "claim_notification_pushes_v4"`.
 Cada push aceptado por Apple genera un log con `status: "accepted"`,
 `environment` y `badge` (sin tokens ni datos personales).
 El badge es el total absoluto de avisos sin leer, no un incremento local.
@@ -21,10 +21,14 @@ La campanita muestra avisos sin leer; Mensajes cuenta comunicados distintos
 pendientes de revisar. Abrir el detalle de un comunicado marca sus avisos
 como leídos; entrar a la lista de mensajes no los marca todos.
 
-Aplicar primero notifications_setup.sql y notification_reminders.sql, y después
-notifications_dynamic.sql ANTES de desplegar esta versión del worker.
-Aplicar también `../milestone_notification_ux.sql`: el worker utiliza
-`claim_notification_pushes_v3` para incluir el total de avisos sin leer en `aps.badge`.
+Sobre las migraciones existentes de notificaciones y colaboradores por hito,
+aplicar `../milestone_notification_ux.sql`, luego `../notification_reminders.sql`
+y finalmente `../ios_alarm_notifications.sql` ANTES de desplegar esta versión.
+El worker utiliza `claim_notification_pushes_v4` para incluir el total de avisos
+sin leer y la etiqueta de alarma. No volver a ejecutar migraciones antiguas que
+reemplacen `generate_notification_reminders` despues de la nueva migracion.
+Las alarmas iOS usan el recurso `milestone_alarm.wav` y el nivel `time-sensitive`.
+Instalar primero la app actualizada. Ver `../IOS_ALARM_NOTIFICATIONS.md`.
 Para Android, ejecutar también `android_push.sql` de este directorio en el SQL
 Editor de Supabase. Es transaccional e idempotente. Añade su propio trigger sin
 reemplazar el de iOS ni los textos de las notificaciones. No reenvía el historial.

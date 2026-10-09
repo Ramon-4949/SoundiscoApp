@@ -10,10 +10,16 @@ struct EmployeeNotification: Decodable, Identifiable {
     let destino_id: UUID?
     let destino_tipo: String?
     let estado: String?
+    let payload: Metadata?
+
+    struct Metadata: Decodable {
+        let is_alarm: Bool?
+    }
 
     var unread: Bool { leida != true }
     var date: Date { AgendaDate.parse(fecha_creacion) ?? .distantPast }
     var symbol: String {
+        if payload?.is_alarm == true { return "alarm.fill" }
         if destino_tipo == "comunicado" { return "megaphone.fill" }
         if tipo == "asignacion_eliminada" { return "trash" }
         if tipo == "hito_completado" { return "checklist" }

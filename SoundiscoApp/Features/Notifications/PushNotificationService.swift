@@ -48,7 +48,7 @@ final class PushNotificationService: ObservableObject {
                 settings = await center.notificationSettings()
             }
             permissionDenied = settings.authorizationStatus == .denied
-            logger.info("Push permission=\(settings.authorizationStatus.rawValue) sound=\(settings.soundSetting.rawValue)")
+            logger.info("Push permission=\(settings.authorizationStatus.rawValue) sound=\(settings.soundSetting.rawValue) timeSensitive=\(settings.timeSensitiveSetting.rawValue)")
             if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional {
                 UIApplication.shared.registerForRemoteNotifications()
             }
@@ -132,6 +132,9 @@ final class PushNotificationService: ObservableObject {
 final class NotificationAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        let alarm = UNNotificationCategory(identifier: "MILESTONE_ALARM", actions: [],
+            intentIdentifiers: [], options: [])
+        UNUserNotificationCenter.current().setNotificationCategories([alarm])
         return true
     }
 

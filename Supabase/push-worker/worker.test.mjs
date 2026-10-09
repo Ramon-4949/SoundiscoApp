@@ -61,6 +61,22 @@ function fakeTransport(status, reason, capture) {
   };
 }
 
+test('iOS alarms use the bundled sound and time-sensitive interruption without critical privileges', async () => {
+  const capture = {};
+  await sendPush({ ...job, is_alarm: true, badge: 4 }, config, 'JWT', fakeTransport(200, null, capture));
+  assert.equal(capture.payload.is_alarm, true);
+  assert.equal(capture.payload.aps.sound, 'milestone_alarm.wav');
+  assert.equal(capture.payload.aps['interruption-level'], 'time-sensitive');
+  assert.equal(capture.payload.aps.category, 'MILESTONE_ALARM');
+  assert.equal(capture.payload.aps.badge, 4);
+  for (const flag of [false, undefined, 'true', 1]) {
+    const standard = payload({ ...job, is_alarm: flag });
+    assert.equal(standard.aps.sound, 'default');
+    assert.equal(standard.aps['interruption-level'], undefined);
+    assert.equal(standard.is_alarm, undefined);
+  }
+});
+
 test('HTTP2 request carries correct APNs headers, host and generic body', async () => {
   const capture = {};
   assert.equal((await sendPush(job, config, 'JWT', fakeTransport(200, null, capture))).success, true);
@@ -96,14 +112,14 @@ test('production uses production host', async () => {
   assert.equal(capture.origin, 'https://api.push.apple.com');
 });
 
-test('v3 unread count reaches the production APNs payload without opening the app', async () => {
+test('v4 unread count reaches the production APNs payload without opening the app', async () => {
   const capture = {};
   const logs = [];
   const originalInfo = console.info;
   console.info = value => logs.push(JSON.parse(value));
   try {
     await runBatch(config, credentials, {
-      rpc: async (_, name) => name === 'claim_notification_pushes_v3'
+      rpc: async (_, name) => name === 'claim_notification_pushes_v4'
         ? [{ ...job, environment: 'production', badge: 7 }] : undefined,
       sendPush: (current, settings, jwt) => sendPush(current, settings, jwt, fakeTransport(200, null, capture)),
     });
@@ -120,7 +136,7 @@ test('batch acknowledges successes and failures without skipping other jobs', as
   try {
   const count = await runBatch(config, credentials, {
     rpc: async (_, name, params) => {
-      if (name === 'claim_notification_pushes_v3') return [job, { ...job, job_id: 'second' }];
+      if (name === 'claim_notification_pushes_v4') return [job, { ...job, job_id: 'second' }];
       if (name === 'finish_notification_push') acknowledgments.push(params);
     },
     sendPush: async current => {
@@ -143,7 +159,7 @@ test('batch logs APNs diagnostics without device tokens or recipient data', asyn
   console.error = value => warnings.push(JSON.parse(value));
   try {
     await runBatch(config, credentials, {
-      rpc: async (_, name) => name === 'claim_notification_pushes_v3' ? [job] : undefined,
+      rpc: async (_, name) => name === 'claim_notification_pushes_v4' ? [job] : undefined,
       sendPush: async () => ({ success: false, error: 'BadDeviceToken', invalid: false }),
     });
   } finally {
@@ -159,7 +175,7 @@ test('batch signs sandbox and production jobs with their matching APNs keys', as
   const keyIDs = [];
   const productionJob = { ...job, job_id: 'production-job', environment: 'production' };
   await runBatch(config, credentials, {
-    rpc: async (_, name) => name === 'claim_notification_pushes_v3'
+    rpc: async (_, name) => name === 'claim_notification_pushes_v4'
       ? [job, productionJob] : undefined,
     sendPush: async (_current, _config, jwt) => {
       keyIDs.push(JSON.parse(Buffer.from(jwt.split('.')[0], 'base64url')).kid);

@@ -7,16 +7,24 @@ import { androidPayload, sendAndroidPush, runAndroidBatch, createWorkerState,
 const job = { job_id: 'job', lease: 'lease', token: 'PRIVATE_TOKEN',
   notification_id: 'notification', recipient: 'recipient', title: 'Confirmación', body: 'Ana confirmó el hito' };
 
-test('FCM payload preserves text, sound, channel and routing; sends to one token', async () => {
+test('FCM data payload preserves text and routing for foreground and background delivery', async () => {
   let captured;
   const result = await sendAndroidPush(job, { send: async value => { captured = value; return 'message'; } });
   assert.equal(result.success, true);
-  assert.deepEqual(captured.notification, { title: job.title, body: job.body });
-  assert.equal(captured.android.notification.sound, 'default');
-  assert.equal(captured.android.notification.channelId, 'soundisco_notifications');
-  assert.deepEqual(captured.data, { notification_id: job.notification_id, recipient_id: job.recipient });
+  assert.equal(captured.notification, undefined);
+  assert.equal(captured.android.priority, 'high');
+  assert.deepEqual(captured.data, { notification_id: job.notification_id, recipient_id: job.recipient,
+    title: job.title, body: job.body, is_alarm: 'false', channel_id: 'soundisco_notifications' });
   assert.equal(captured.token, job.token);
   assert.ok(Buffer.byteLength(JSON.stringify(androidPayload({ ...job, title: 'á'.repeat(9000), body: 'á'.repeat(9000) }))) < 4096);
+});
+
+test('FCM alarms carry the flag and dedicated Android channel', () => {
+  const result = androidPayload({ ...job, is_alarm: true });
+  assert.equal(result.data.is_alarm, 'true');
+  assert.equal(result.data.channel_id, 'soundisco_milestone_alarms');
+  assert.equal(result.notification, undefined);
+  assert.equal(result.android.notification, undefined);
 });
 
 test('only definitive token errors invalidate registration; timeouts are bounded', async () => {
@@ -37,7 +45,7 @@ test('FCM acknowledges each lease, logs safe error codes and surfaces RPC failur
   try {
     const count = await runAndroidBatch({}, {}, {
       rpc: async (_, name, params) => {
-        if (name === 'claim_android_pushes') return [job, { ...job, job_id: 'second' }];
+        if (name === 'claim_android_pushes_v2') return [job, { ...job, job_id: 'second' }];
         acknowledgments.push(params);
       },
       sendPush: async current => ({ success: current.job_id === 'job', invalid: false,
@@ -48,7 +56,7 @@ test('FCM acknowledges each lease, logs safe error codes and surfaces RPC failur
     assert.equal(acknowledgments[0].p_lease, job.lease);
     assert.equal(logs.join('').includes(job.token), false);
     await assert.rejects(runAndroidBatch({}, {}, {
-      rpc: async (_, name) => { if (name === 'claim_android_pushes') return [job]; throw new Error('RPC failed'); },
+      rpc: async (_, name) => { if (name === 'claim_android_pushes_v2') return [job]; throw new Error('RPC failed'); },
       sendPush: async () => ({ success: true, invalid: false, error: null }),
     }), /acknowledgments failed/);
   } finally { console.error = original; }

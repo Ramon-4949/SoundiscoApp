@@ -155,13 +155,17 @@ export async function runBatch(config, credentials, dependencies = {}) {
 }
 
 export function androidPayload(job) {
+  const alert = payload(job).aps.alert;
+  const alarm = job.is_alarm === true;
   return {
     token: job.token,
-    notification: payload(job).aps.alert,
-    data: { notification_id: job.notification_id, recipient_id: job.recipient },
+    data: {
+      notification_id: job.notification_id, recipient_id: job.recipient,
+      title: alert.title, body: alert.body, is_alarm: String(alarm),
+      channel_id: alarm ? 'soundisco_milestone_alarms' : 'soundisco_notifications',
+    },
     android: {
       priority: 'high', ttl: 3600000,
-      notification: { sound: 'default', channelId: 'soundisco_notifications', tag: job.notification_id },
     },
   };
 }
@@ -187,7 +191,7 @@ export async function sendAndroidPush(job, messaging, timeoutMs = 20000) {
 export async function runAndroidBatch(config, messaging, dependencies = {}) {
   const call = dependencies.rpc ?? rpc;
   const send = dependencies.sendPush ?? sendAndroidPush;
-  const jobs = await call(config, 'claim_android_pushes');
+  const jobs = await call(config, 'claim_android_pushes_v2');
   let failures = 0;
   for (let offset = 0; offset < jobs.length; offset += 5) {
     const results = await Promise.allSettled(jobs.slice(offset, offset + 5).map(async job => {
@@ -215,7 +219,8 @@ export function healthStatus(states, now = Date.now()) {
     return [name, { active, healthy: active && state.healthy, lastSuccess: state?.lastSuccess ?? null }];
   }));
   return { status: Object.values(processes).every(value => value.healthy) ? 'ok' : 'degraded',
-    capabilities: { apnsBadge: true, iosMilestoneAlarm: true, apnsQueueRPC: 'claim_notification_pushes_v4' }, processes };
+    capabilities: { apnsBadge: true, iosMilestoneAlarm: true, androidMilestoneAlarm: true,
+      apnsQueueRPC: 'claim_notification_pushes_v4', fcmQueueRPC: 'claim_android_pushes_v2' }, processes };
 }
 
 export async function runLoop(name, batch, state, signal, once = false, intervalMs = 10000) {

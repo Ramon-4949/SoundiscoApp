@@ -84,6 +84,7 @@ begin
     from notification_private.milestone_reminders s
     join public.hitos_colaboradores c on c.hito_id=s.hito_id and c.usuario_id=s.usuario_id
     join public.hitos_itinerario h on h.id=s.hito_id
+    join public.asignaciones a on a.id=h.asignacion_id
     where s.next_reminder_at<=tick and c.confirmado_at is null and h.fecha_programada=s.due_at
     order by s.next_reminder_at,s.hito_id,s.usuario_id
     limit 500 for update of h,c,s skip locked

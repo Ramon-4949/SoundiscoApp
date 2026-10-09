@@ -16,6 +16,8 @@ try {
   await db.exec(`
     create role anon; create role authenticated; create role service_role;
     create schema notification_private;
+    create table asignaciones(id uuid primary key);
+    insert into asignaciones values('${h}');
     create table hitos_itinerario(id uuid primary key,asignacion_id uuid,descripcion text,fecha_programada timestamptz);
     create table hitos_colaboradores(hito_id uuid references hitos_itinerario(id) on delete cascade,usuario_id uuid,
       confirmado_at timestamptz,primary key(hito_id,usuario_id));

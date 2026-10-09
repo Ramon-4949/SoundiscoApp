@@ -23,11 +23,14 @@ export function payload(job) {
         title: text(job.title, 'SounDisco', 120),
         body: text(job.body, 'Tienes una actualización. Abre la app para ver los detalles.', 500),
       },
-      sound: 'default', 'thread-id': 'soundisco-notifications',
+      sound: job.is_alarm === true ? 'milestone_alarm.wav' : 'default',
+      'thread-id': 'soundisco-notifications',
+      ...(job.is_alarm === true ? { 'interruption-level': 'time-sensitive', category: 'MILESTONE_ALARM' } : {}),
       ...(Number.isInteger(job.badge) && job.badge >= 0 ? { badge: job.badge } : {}),
     },
     notification_id: job.notification_id,
     recipient_id: job.recipient,
+    ...(job.is_alarm === true ? { is_alarm: true } : {}),
   };
 }
 
@@ -110,7 +113,7 @@ export async function runBatch(config, credentials, dependencies = {}) {
   const call = dependencies.rpc ?? rpc;
   const send = dependencies.sendPush ?? sendPush;
   await call(config, 'generate_notification_reminders');
-  const jobs = await call(config, 'claim_notification_pushes_v3');
+  const jobs = await call(config, 'claim_notification_pushes_v4');
   const tokens = new Map();
   const tokenFor = environment => {
     const credential = credentials[environment];
@@ -212,7 +215,7 @@ export function healthStatus(states, now = Date.now()) {
     return [name, { active, healthy: active && state.healthy, lastSuccess: state?.lastSuccess ?? null }];
   }));
   return { status: Object.values(processes).every(value => value.healthy) ? 'ok' : 'degraded',
-    capabilities: { apnsBadge: true, apnsQueueRPC: 'claim_notification_pushes_v3' }, processes };
+    capabilities: { apnsBadge: true, iosMilestoneAlarm: true, apnsQueueRPC: 'claim_notification_pushes_v4' }, processes };
 }
 
 export async function runLoop(name, batch, state, signal, once = false, intervalMs = 10000) {

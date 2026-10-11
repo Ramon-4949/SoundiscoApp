@@ -1,7 +1,15 @@
 begin;
 
+select pg_advisory_xact_lock(81420931);
+
 alter table public.notificaciones_app
   add column if not exists payload jsonb not null default '{}'::jsonb;
+
+update public.notificaciones_app
+set payload=jsonb_set(payload,'{is_alarm}','false'::jsonb),
+  titulo=case when titulo='Alarma de Hito' then 'Recordatorio de Hito' else titulo end
+where tipo='recordatorio' and destino_tipo='asignacion'
+  and (payload->'is_alarm'='true'::jsonb or titulo='Alarma de Hito');
 
 create table if not exists notification_private.milestone_reminders (
   hito_id uuid not null,
@@ -14,6 +22,33 @@ create table if not exists notification_private.milestone_reminders (
   primary key(hito_id,usuario_id),
   foreign key(hito_id,usuario_id) references public.hitos_colaboradores(hito_id,usuario_id) on delete cascade
 );
+
+alter table notification_private.milestone_reminders
+  add column if not exists schedule_version integer not null default 1;
+alter table notification_private.milestone_reminders alter column schedule_version set default 2;
+
+update notification_private.milestone_reminders
+set next_reminder_at=case
+    when now()<=due_at+interval '15 minutes' then due_at+interval '15 minutes'
+    when now()<=due_at+interval '30 minutes' then due_at+interval '30 minutes'
+    when now()<=due_at+interval '60 minutes' then due_at+interval '60 minutes'
+    else 'infinity'::timestamptz end,
+  last_phase=null,schedule_version=2
+where schedule_version<>2;
+
+do $$
+declare queue_schema text;
+begin
+  foreach queue_schema in array array['notification_private','android_push_private'] loop
+    if to_regclass(format('%I.outbox',queue_schema)) is not null then
+      execute format('delete from %I.outbox o using public.notificaciones_app n
+        where o.notification_id=n.id and o.sent_at is null
+          and n.tipo=''recordatorio'' and n.destino_tipo=''asignacion''
+          and n.payload->>''reminder_schedule'' is distinct from ''overdue-three-v2''',queue_schema);
+    end if;
+  end loop;
+end;
+$$;
 
 alter table notification_private.milestone_reminders enable row level security;
 revoke all on notification_private.milestone_reminders from public,anon,authenticated;
@@ -30,7 +65,7 @@ begin
       where hito_id=new.hito_id and usuario_id=new.usuario_id;
   else
     insert into notification_private.milestone_reminders(hito_id,usuario_id,due_at,next_reminder_at)
-      values(new.hito_id,new.usuario_id,due,due-interval '20 minutes')
+      values(new.hito_id,new.usuario_id,due,due+interval '15 minutes')
       on conflict(hito_id,usuario_id) do nothing;
   end if;
   return new;
@@ -44,7 +79,7 @@ begin
   delete from notification_private.milestone_reminders where hito_id=new.id;
   if new.fecha_programada is not null then
     insert into notification_private.milestone_reminders(hito_id,usuario_id,due_at,next_reminder_at)
-      select new.id,c.usuario_id,new.fecha_programada,new.fecha_programada-interval '20 minutes'
+      select new.id,c.usuario_id,new.fecha_programada,new.fecha_programada+interval '15 minutes'
       from public.hitos_colaboradores c where c.hito_id=new.id and c.confirmado_at is null;
   end if;
   return new;
@@ -62,7 +97,7 @@ create trigger notification_milestone_reminders after update of fecha_programada
   on public.hitos_itinerario for each row execute function notification_private.sync_milestone_reminders();
 
 insert into notification_private.milestone_reminders(hito_id,usuario_id,due_at,next_reminder_at)
-  select c.hito_id,c.usuario_id,h.fecha_programada,h.fecha_programada-interval '20 minutes'
+  select c.hito_id,c.usuario_id,h.fecha_programada,h.fecha_programada+interval '15 minutes'
   from public.hitos_colaboradores c join public.hitos_itinerario h on h.id=c.hito_id
   where c.confirmado_at is null and h.fecha_programada is not null
   on conflict(hito_id,usuario_id) do nothing;
@@ -73,10 +108,8 @@ declare
   r record;
   tick timestamptz := clock_timestamp();
   phase text;
-  minutes_before integer;
-  alarm boolean;
+  minutes_after integer;
   following timestamptz;
-  overdue_slot bigint;
 begin
   if not pg_try_advisory_xact_lock(81420931) then return; end if;
   for r in
@@ -89,31 +122,24 @@ begin
     order by s.next_reminder_at,s.hito_id,s.usuario_id
     limit 500 for update of h,c,s skip locked
   loop
-    if tick>=r.due_at then
-      overdue_slot:=floor(extract(epoch from (tick-r.due_at))/600)::bigint;
-      phase:='overdue:' || overdue_slot::text;
-      alarm:=true;
-      following:=r.due_at + (overdue_slot+1)*interval '10 minutes';
-    else
-      minutes_before:=case
-        when tick>=r.due_at-interval '5 minutes' then 5
-        when tick>=r.due_at-interval '10 minutes' then 10
-        when tick>=r.due_at-interval '15 minutes' then 15
-        else 20 end;
-      phase:='before:' || minutes_before::text;
-      alarm:=minutes_before=5;
-      following:=r.due_at-(minutes_before-5)*interval '1 minute';
-    end if;
+    minutes_after:=case
+      when tick>=r.due_at+interval '60 minutes' then 60
+      when tick>=r.due_at+interval '30 minutes' then 30
+      else 15 end;
+    phase:='after:' || minutes_after::text;
+    following:=case minutes_after
+      when 15 then r.due_at+interval '30 minutes'
+      when 30 then r.due_at+interval '60 minutes'
+      else 'infinity'::timestamptz end;
     insert into public.notificaciones_app(id,perfil_id,titulo,mensaje,leida,fecha_creacion,
       tipo,destino_tipo,destino_id,evento_key,payload)
       values(gen_random_uuid(),r.usuario_id,
-        case when alarm then 'Alarma de Hito' else 'Recordatorio de Hito' end,
-        case when tick>=r.due_at then 'El hito ' || coalesce(r.descripcion,'pendiente') || ' está vencido. Confírmalo cuanto antes.'
-          else 'Confirma el hito ' || coalesce(r.descripcion,'pendiente') || ' antes de su vencimiento: ' ||
-            to_char(r.due_at at time zone 'America/Santo_Domingo','DD/MM/YYYY HH24:MI') || '.' end,
+        'Recordatorio de Hito',
+        'El hito ' || coalesce(r.descripcion,'pendiente') || ' está vencido. Confírmalo cuanto antes.',
         false,tick,'recordatorio','asignacion',r.asignacion_id,
         'milestone-reminder:' || r.generation::text || ':' || phase,
-        jsonb_build_object('is_alarm',alarm,'hito_id',r.hito_id,'due_at',r.due_at,'reminder_phase',phase))
+        jsonb_build_object('is_alarm',false,'hito_id',r.hito_id,'due_at',r.due_at,
+          'reminder_phase',phase,'reminder_schedule','overdue-three-v2'))
       on conflict(perfil_id,evento_key) do nothing;
     update notification_private.milestone_reminders
       set next_reminder_at=following,last_reminder_sent_at=tick,last_phase=phase

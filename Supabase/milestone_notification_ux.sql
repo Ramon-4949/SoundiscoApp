@@ -3,7 +3,7 @@ begin;
 
 create or replace function public.check_in_milestone(p_hito_id uuid)
 returns void language plpgsql security definer set search_path='' as $$
-declare h public.hitos_itinerario%rowtype; aid uuid; checked timestamptz;
+declare h public.hitos_itinerario%rowtype; aid uuid; checked timestamptz:=statement_timestamp();
   evaluation text; recipient uuid; actor_name text; confirmation_id uuid;
 begin
   if auth.uid() is null or not coalesce(public.account_is_approved(),false) then
@@ -19,9 +19,8 @@ begin
   if exists(select 1 from public.hitos_itinerario m join public.hitos_colaboradores c on c.hito_id=m.id
     where m.asignacion_id=aid and m.orden<h.orden and c.usuario_id=auth.uid() and c.confirmado_at is null) then
     raise exception 'Confirma primero tu hito anterior' using errcode='23514'; end if;
-  checked:=clock_timestamp();
   evaluation:=case when checked<h.fecha_programada then 'temprano'
-    when checked=h.fecha_programada then 'a_tiempo' else 'tardio' end;
+    when checked<=h.fecha_programada+interval '15 minutes' then 'a_tiempo' else 'tardio' end;
   update public.hitos_colaboradores set confirmado_at=checked,hora_programada=h.fecha_programada,estado=evaluation
     where hito_id=h.id and usuario_id=auth.uid();
   insert into public.confirmaciones_hitos(asignacion_id,hito_id,usuario_id,created_at,hora_programada,evaluacion)

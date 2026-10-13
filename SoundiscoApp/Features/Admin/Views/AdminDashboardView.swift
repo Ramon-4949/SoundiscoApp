@@ -62,7 +62,7 @@ struct AdminDashboardView: View {
                     LazyVStack(spacing: 14) {
                         ForEach(model.asignacionesFiltradas) { assignment in
                             NavigationLink {
-                                AssignmentDetailView(assignment: Assignment(assignment), allowsChecklistUpdates: false)
+                                AssignmentDetailView(assignment: Assignment(assignment))
                                     .toolbar(.visible, for: .navigationBar)
                             } label: {
                                 AssignmentCard(assignment: Assignment(assignment), now: context.date)

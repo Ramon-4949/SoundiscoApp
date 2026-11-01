@@ -49,4 +49,14 @@ final class AdminUsersViewModel: ObservableObject {
             await load()
         } catch { self.error = AuthNotice.failure(error).message }
     }
+
+    func suspend(_ user: ManagedAccount) async {
+        guard savingID == nil else { return }
+        savingID = user.id
+        defer { savingID = nil }
+        do {
+            try await client.rpc("admin_suspend_account", params: ["p_user_id": user.id.uuidString]).execute()
+            await load()
+        } catch { self.error = AuthNotice.failure(error).message }
+    }
 }

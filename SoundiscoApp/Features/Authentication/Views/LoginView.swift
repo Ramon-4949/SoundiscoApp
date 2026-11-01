@@ -78,6 +78,12 @@ struct LoginView: View {
                     HStack(spacing: 6) { registrationPrompt }
                     VStack(spacing: 8) { registrationPrompt }
                 }.font(.subheadline).padding(.top, 32).padding(.bottom, 24)
+                HStack(spacing: 24) {
+                    NavigationLink("Privacidad") { LegalDocumentView(document: .privacy) }
+                    NavigationLink("Ayuda") { SupportView() }
+                }
+                .font(.footnote)
+                .padding(.bottom, 24)
             }
             .frame(maxWidth: 440).padding(.horizontal, 20).frame(maxWidth: .infinity)
         }

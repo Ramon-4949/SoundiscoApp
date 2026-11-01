@@ -3,6 +3,8 @@ import SwiftUI
 struct AdminUsersView: View {
     @StateObject private var model = AdminUsersViewModel()
     @State private var rejecting: ManagedAccount?
+    @State private var suspending: ManagedAccount?
+    @EnvironmentObject private var auth: SessionViewModel
 
     var body: some View {
         ScrollView {
@@ -44,6 +46,15 @@ struct AdminUsersView: View {
             }
         }
         .refreshable { await model.load() }
+        .confirmationDialog("¿Suspender el acceso?", isPresented: Binding(
+            get: { suspending != nil }, set: { if !$0 { suspending = nil } }), titleVisibility: .visible) {
+            if let user = suspending {
+                Button("Suspender acceso", role: .destructive) { Task { await model.suspend(user) } }
+            }
+            Button("Cancelar", role: .cancel) { suspending = nil }
+        } message: {
+            Text("El usuario dejará de tener acceso al contenido del equipo. Podrás volver a aprobarlo desde Rechazadas.")
+        }
         .confirmationDialog("¿Rechazar el acceso?", isPresented: Binding(get: { rejecting != nil }, set: { if !$0 { rejecting = nil } }), titleVisibility: .visible) {
             if let user = rejecting {
                 Button("Rechazar acceso", role: .destructive) {
@@ -71,7 +82,11 @@ struct AdminUsersView: View {
                 HStack { badge(user.cargo ?? "Sin cargo", icon: "person.badge.key"); badge(user.telefono ?? "Sin teléfono", icon: "phone") }
                 VStack(alignment: .leading) { badge(user.cargo ?? "Sin cargo", icon: "person.badge.key"); badge(user.telefono ?? "Sin teléfono", icon: "phone") }
             }
-            if user.estado != .aprobada {
+            if user.estado == .aprobada && user.id != auth.userID {
+                Button("Suspender acceso", systemImage: "person.crop.circle.badge.xmark", role: .destructive) {
+                    suspending = user
+                }.disabled(model.savingID != nil)
+            } else if user.estado != .aprobada {
                 HStack(spacing: 12) {
                     if user.estado == .pendiente {
                         Button { rejecting = user } label: {

@@ -54,10 +54,6 @@ final class RegistrationViewModel: ObservableObject {
 
     private func visible(_ error: String?) -> String? { validationAttempted ? error : nil }
 
-    func legalNotice(_ title: String) {
-        notice = AuthNotice(title: title, message: "El documento corporativo aún no está disponible. Solicítalo a administración antes de crear tu cuenta.")
-    }
-
     func register(using auth: SessionViewModel) {
         validationAttempted = true
         guard formIsValid else { return }

@@ -1,0 +1,46 @@
+POLÍTICA DE PRIVACIDAD DE SOUNDISCO
+Actualizada el 1 de noviembre de 2026
+
+Responsable y alcance
+
+SOUND DISCO FR EIRL es la empresa responsable de la aplicación SounDisco, utilizada para coordinar su equipo de trabajo, las asignaciones y los montajes audiovisuales. Esta política describe el tratamiento de información en la aplicación. Para consultas de privacidad o solicitudes sobre tus datos, escribe a soundiscomedia@gmail.com.
+
+Datos que tratamos
+
+Al crear una cuenta proporcionas nombre completo, nombre de usuario, correo electrónico, teléfono, cargo y credenciales de acceso. El servicio de autenticación gestiona tu contraseña; la app no la muestra a administradores ni colaboradores.
+
+Registramos las asignaciones, los hitos y colaboradores asociados, fechas y horas de confirmación, confirmaciones deshechas, notas e incidencias, reportes de contenido y lectura de avisos. Esta información permite coordinar el trabajo, moderar el contenido y elaborar métricas de puntualidad y cumplimiento visibles para administración.
+
+Cuando autorizas notificaciones, registramos un identificador de instalación y un token de notificaciones asociado a tu cuenta. Los servicios de infraestructura y autenticación también pueden procesar datos técnicos de conexión y seguridad necesarios para prestar el servicio.
+
+Finalidades y acceso
+
+Utilizamos los datos para crear y proteger tu cuenta, aprobar accesos, asignar trabajo, registrar avances, gestionar incidencias, entregar avisos y consultar estadísticas operativas. El acceso depende de tu rol y participación en las asignaciones. Administradores y supervisores autorizados pueden consultar información del equipo necesaria para sus tareas, incluida la autoría de notas e incidencias.
+
+Los nombres y cargos de los integrantes de una asignación pueden mostrarse al equipo autorizado. No incluyas datos personales sensibles de terceros en notas, incidencias o comunicados.
+
+Proveedores y notificaciones
+
+La aplicación utiliza Supabase para autenticación, base de datos y actualizaciones en tiempo real. El servicio de envío de notificaciones se ejecuta en Render. Para entregar avisos utilizamos Apple Push Notification service en iOS y Firebase Cloud Messaging en Android. Estos proveedores procesan la información necesaria para sus servicios y pueden hacerlo en infraestructura fuera de tu país.
+
+Los avisos pueden contener nombres de asignaciones, hitos o información operativa y aparecer en la pantalla bloqueada. Puedes ocultar sus previsualizaciones o desactivarlos desde los ajustes del dispositivo. Desactivar las notificaciones no impide utilizar las demás funciones de la cuenta.
+
+Permisos y almacenamiento local
+
+El acceso biométrico es opcional y se verifica mediante los mecanismos del sistema operativo. SounDisco no recibe ni almacena imágenes del rostro, huellas o plantillas biométricas. El dispositivo conserva información de sesión y preferencias como recordar el correo, biometría, estado de intentos de acceso y borradores de formularios.
+
+La app no solicita acceso al GPS, contactos, cámara o micrófono para sus funciones actuales. Las ubicaciones de los eventos son direcciones introducidas por administración, no la ubicación del teléfono.
+
+No utilizamos estos datos para publicidad ni para rastrearte entre aplicaciones o sitios de otras empresas.
+
+Conservación y eliminación
+
+Conservamos la información necesaria para prestar el servicio y consultar la actividad operativa mientras la cuenta permanezca activa. Puedes iniciar la eliminación permanente desde Mi perfil > Eliminar cuenta, sin solicitar aprobación previa a un administrador, incluso si tu acceso está en revisión.
+
+La eliminación retira las credenciales, el perfil, los dispositivos registrados, la participación en asignaciones y los registros personales vinculados a la cuenta, incluidas sus confirmaciones y notas. Las asignaciones y los comunicados compartidos pueden permanecer para los demás integrantes. Las copias de seguridad y los registros técnicos de los proveedores están sujetos a sus ciclos de conservación; escribe a soundiscomedia@gmail.com si necesitas información sobre un caso concreto.
+
+Puedes editar tu usuario, teléfono y cargo desde Cuenta > Editar perfil. Para corregir el nombre completo u otros datos bloqueados, solicitar información sobre tus registros o ejercer los derechos aplicables, escribe a soundiscomedia@gmail.com. No envíes contraseñas ni códigos de verificación.
+
+Cambios
+
+Publicaremos en la aplicación y en esta página una versión actualizada de esta política cuando cambie el tratamiento descrito. Revisa la fecha de actualización y escribe a soundiscomedia@gmail.com si tienes dudas.

@@ -5,6 +5,8 @@ struct AssignmentDetailView: View {
     @EnvironmentObject private var notifications: NotificationsViewModel
     @StateObject private var model: AssignmentDetailViewModel
     @State private var showsNoteEditor = false
+    @State private var removingNote: AssignmentNote?
+    @State private var noteNotice: AuthNotice?
     private let allowsChecklistUpdates: Bool
 
     init(assignment: Assignment, allowsChecklistUpdates: Bool = true) {
@@ -31,7 +33,24 @@ struct AssignmentDetailView: View {
                     if model.notes.isEmpty { Text("Sin notas registradas").foregroundStyle(.secondary) }
                     ForEach(model.notes) { note in
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(note.authorLabel(for: model.userID)).font(.caption.bold())
+                            HStack {
+                                Text(note.authorLabel(for: model.userID)).font(.caption.bold())
+                                Spacer()
+                                Menu {
+                                    Menu("Reportar contenido", systemImage: "flag") {
+                                        Button("Acoso") { report(note, reason: "acoso") }
+                                        Button("Contenido inapropiado") { report(note, reason: "contenido_inapropiado") }
+                                        Button("Datos personales") { report(note, reason: "datos_personales") }
+                                        Button("Otro motivo") { report(note, reason: "otro") }
+                                    }
+                                    if isAdministrator {
+                                        Button("Retirar nota", systemImage: "trash", role: .destructive) { removingNote = note }
+                                    }
+                                } label: {
+                                    Image(systemName: "ellipsis").frame(width: 44, height: 44)
+                                }
+                                .accessibilityLabel("Opciones de la nota")
+                            }
                             Text(note.contenido).textSelection(.enabled)
                             Text(AgendaDate.label(note.created_at)).font(.caption).foregroundStyle(.secondary)
                         }
@@ -72,6 +91,21 @@ struct AssignmentDetailView: View {
             }.buttonStyle(.borderedProminent).tint(Brand.red).padding().background(.bar)
         }
         .sheet(isPresented: $showsNoteEditor) { AssignmentNoteEditor(model: model) }
+        .confirmationDialog("¿Retirar esta nota?", isPresented: Binding(
+            get: { removingNote != nil }, set: { if !$0 { removingNote = nil } }), titleVisibility: .visible) {
+            if let note = removingNote {
+                Button("Retirar nota", role: .destructive) {
+                    Task {
+                        do { try await model.removeNote(note) }
+                        catch { noteNotice = .failure(error) }
+                    }
+                }
+            }
+            Button("Cancelar", role: .cancel) { removingNote = nil }
+        }
+        .alert(item: $noteNotice) { item in
+            Alert(title: Text(item.title), message: Text(item.message), dismissButton: .default(Text("Aceptar")))
+        }
         .toolbar {
             if isAdministrator {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -116,6 +150,15 @@ struct AssignmentDetailView: View {
                 .accessibilityHidden(true)
         }
         .detailSurface()
+    }
+
+    private func report(_ note: AssignmentNote, reason: String) {
+        Task {
+            do {
+                try await model.reportNote(note, reason: reason)
+                noteNotice = AuthNotice(title: "Reporte enviado", message: "Administración revisará el contenido.")
+            } catch { noteNotice = .failure(error) }
+        }
     }
 
     private var location: some View {

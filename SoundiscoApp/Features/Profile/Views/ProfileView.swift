@@ -28,6 +28,12 @@ struct ProfileView: View {
                 information("Cargo", value: nonblank(model.profile?.cargo) ?? nonblank(auth.jobTitle) ?? roleTitle,
                             symbol: "building.2")
                 if isAdministrator {
+                    NavigationLink { AdminContentReportsView() } label: {
+                        HStack(spacing: 12) {
+                            icon("flag")
+                            Text("Reportes de contenido")
+                        }.padding(.vertical, 4)
+                    }
                     NavigationLink { AdminPerformanceView() } label: {
                         HStack(spacing: 12) {
                             icon("chart.bar.xaxis")
@@ -99,8 +105,18 @@ struct ProfileView: View {
                 } label: {
                     Label("Idioma de interfaz", systemImage: "globe")
                 }
-                .disabled(true)
-                .accessibilityHint("El cambio de idioma aún no está disponible")
+            }
+
+            Section("Ayuda y privacidad") {
+                NavigationLink { SupportView() } label: {
+                    Label("Ayuda y soporte", systemImage: "questionmark.circle")
+                }
+                NavigationLink { LegalDocumentView(document: .privacy) } label: {
+                    Label("Política de privacidad", systemImage: "hand.raised")
+                }
+                NavigationLink { LegalDocumentView(document: .terms) } label: {
+                    Label("Términos de servicio", systemImage: "doc.text")
+                }
             }
 
             Section {
@@ -130,7 +146,7 @@ struct ProfileView: View {
             }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("Se eliminarán tus credenciales, perfil y dispositivos registrados. Se retirará tu participación de las asignaciones. El historial operativo compartido se conservará sin tu perfil. Esta acción no se puede deshacer.")
+            Text("Se eliminarán tus credenciales, perfil, dispositivos registrados, participación en asignaciones, confirmaciones y notas personales. Las asignaciones y los comunicados compartidos permanecerán para el equipo. Esta acción no se puede deshacer.")
         }
         .alert("No se pudo eliminar la cuenta", isPresented: Binding(get: { deletionFailure != nil }, set: { if !$0 { deletionFailure = nil } })) {
             Button("Aceptar", role: .cancel) { deletionFailure = nil }
@@ -139,9 +155,7 @@ struct ProfileView: View {
             Button("Cerrar sesión", role: .destructive) { Task { await auth.signOut() } }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text(auth.biometricEnabled
-                 ? "La aplicación quedará bloqueada. Podrás volver a entrar con Face ID."
-                 : "Necesitarás tu correo y contraseña para volver a entrar.")
+            Text("Necesitarás tu correo y contraseña para volver a entrar.")
         }
     }
 

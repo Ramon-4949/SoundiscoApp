@@ -206,6 +206,17 @@ final class AssignmentDetailViewModel: ObservableObject {
         ]).execute()
         await reload()
     }
+
+    func reportNote(_ note: AssignmentNote, reason: String) async throws {
+        try await client.rpc("report_assignment_note", params: [
+            "p_note_id": note.id.uuidString, "p_reason": reason
+        ]).execute()
+    }
+
+    func removeNote(_ note: AssignmentNote) async throws {
+        try await client.rpc("admin_remove_assignment_note", params: ["p_note_id": note.id.uuidString]).execute()
+        await reload()
+    }
 }
 
 private struct AssignmentNotesRequest: Encodable {

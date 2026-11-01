@@ -108,9 +108,10 @@
 				};
 			};
 			buildConfigurationList = C808318230589093002AB0B4 /* Build configuration list for PBXProject "SoundiscoApp" */;
-			developmentRegion = en;
+			developmentRegion = es;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				es,
 				en,
 				Base,
 			);

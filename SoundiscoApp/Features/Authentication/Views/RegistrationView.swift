@@ -4,6 +4,7 @@ struct RegistrationView: View {
     @EnvironmentObject private var auth: SessionViewModel
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model = RegistrationViewModel()
+    @State private var legalDocument: LegalDocument?
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -46,9 +47,9 @@ struct RegistrationView: View {
                 }
                 FieldValidationMessage(message: model.termsError)
                 HStack {
-                    Button("Términos") { model.legalNotice("Términos de servicio") }
+                    Button("Términos") { legalDocument = .terms }
                     Spacer()
-                    Button("Privacidad") { model.legalNotice("Política de privacidad") }
+                    Button("Privacidad") { legalDocument = .privacy }
                 }.font(.subheadline)
                 PrimaryAction(title: model.busy ? "Creando cuenta…" : "Crear cuenta", action: { model.register(using: auth) })
                 Button("Ya tengo una cuenta. Iniciar sesión") { dismiss() }
@@ -60,6 +61,7 @@ struct RegistrationView: View {
         .disabled(model.busy)
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $legalDocument) { LegalDocumentSheet(document: $0) }
         .onChange(of: model.registered) { _, registered in
             if registered { dismiss() }
         }

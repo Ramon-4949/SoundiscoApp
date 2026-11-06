@@ -1,0 +1,2716 @@
+{
+  "snapshot_note": "Schema definitions only; no production rows or credentials.",
+  "tables": [
+    {
+      "schema": "account_private",
+      "name": "access",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": "'pendiente'::text",
+          "nullable": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "android_push_private",
+      "name": "devices",
+      "columns": [
+        {
+          "name": "installation",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "perfil_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "android_push_private",
+      "name": "outbox",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "notification_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "installation",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "recipient",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "attempts",
+          "type": "int4",
+          "default": "0",
+          "nullable": "NO"
+        },
+        {
+          "name": "next_attempt",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        },
+        {
+          "name": "lease_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "leased_until",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "leased_token",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "sent_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "last_error",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "milestone_private",
+      "name": "migrations",
+      "columns": [
+        {
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "moderation_private",
+      "name": "blocked_phrases",
+      "columns": [
+        {
+          "name": "phrase",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "moderation_private",
+      "name": "note_reports",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "note_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "reporter_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        },
+        {
+          "name": "resolved_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "notification_private",
+      "name": "assignment_events",
+      "columns": [
+        {
+          "name": "transaction_id",
+          "type": "int8",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "assignment_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "old_team",
+          "type": "_uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "old_title",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "old_state",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "actor",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "content_changed",
+          "type": "bool",
+          "default": "false",
+          "nullable": "NO"
+        },
+        {
+          "name": "progress_changed",
+          "type": "bool",
+          "default": "false",
+          "nullable": "NO"
+        },
+        {
+          "name": "old_priority",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "completed_milestones",
+          "type": "_text",
+          "default": "'{}'::text[]",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "notification_private",
+      "name": "devices",
+      "columns": [
+        {
+          "name": "installation",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "perfil_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "environment",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "notification_private",
+      "name": "milestone_reminders",
+      "columns": [
+        {
+          "name": "hito_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "usuario_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "due_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "next_reminder_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "last_reminder_sent_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "last_phase",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "generation",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "schedule_version",
+          "type": "int4",
+          "default": "2",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "notification_private",
+      "name": "outbox",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "notification_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "installation",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "recipient",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "attempts",
+          "type": "int4",
+          "default": "0",
+          "nullable": "NO"
+        },
+        {
+          "name": "next_attempt",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "NO"
+        },
+        {
+          "name": "leased_until",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "lease_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "sent_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "last_error",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "columns": [
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "perfil_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_supervisores",
+      "columns": [
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "usuario_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "tipo_flujo",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "ubicacion",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "nivel_prioridad",
+          "type": "text",
+          "default": "'Normal'::text",
+          "nullable": "YES"
+        },
+        {
+          "name": "instrucciones",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "fecha_creacion",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "YES"
+        },
+        {
+          "name": "notas_incidencias",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": "'pendiente'::text",
+          "nullable": "NO"
+        },
+        {
+          "name": "fecha_limite",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "cargos_empresa",
+      "columns": [
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "orden",
+          "type": "int2",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "activo",
+          "type": "bool",
+          "default": "true",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "checklist_equipos",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "articulo",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "cantidad",
+          "type": "int4",
+          "default": "1",
+          "nullable": "YES"
+        },
+        {
+          "name": "cargado_en_camion",
+          "type": "bool",
+          "default": "false",
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "comunicados",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "asunto",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "mensaje",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "fecha_publicacion",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "YES"
+        },
+        {
+          "name": "leido_por",
+          "type": "_uuid",
+          "default": "'{}'::uuid[]",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "hito_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "usuario_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "estado_hito",
+          "type": "text",
+          "default": "'completado'::text",
+          "nullable": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "clock_timestamp()",
+          "nullable": "NO"
+        },
+        {
+          "name": "hora_programada",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "evaluacion",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "columns": [
+        {
+          "name": "hito_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "usuario_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": "'sin_confirmar'::text",
+          "nullable": "NO"
+        },
+        {
+          "name": "confirmado_at",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "hora_programada",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "orden",
+          "type": "int4",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "hora_estimada",
+          "type": "time",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "completado",
+          "type": "bool",
+          "default": "false",
+          "nullable": "YES"
+        },
+        {
+          "name": "hora_real_completado",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "estado_hito",
+          "type": "text",
+          "default": "'Bloqueado'::text",
+          "nullable": "YES"
+        },
+        {
+          "name": "fecha_programada",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "notas_incidencias",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "hora_programada",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "sla_abierto",
+          "type": "bool",
+          "default": "false",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "usuario_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "contenido",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "clock_timestamp()",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": "NO"
+        },
+        {
+          "name": "perfil_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "mensaje",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "asignacion_relacionada_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "leida",
+          "type": "bool",
+          "default": "false",
+          "nullable": "YES"
+        },
+        {
+          "name": "fecha_creacion",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "YES"
+        },
+        {
+          "name": "tipo",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "destino_tipo",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "destino_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "evento_key",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "nombre_completo",
+          "type": "text",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "rol",
+          "type": "text",
+          "default": "'empleado'::text",
+          "nullable": "YES"
+        },
+        {
+          "name": "device_token",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "fecha_registro",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": "YES"
+        },
+        {
+          "name": "telefono",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "usa_biometria",
+          "type": "bool",
+          "default": "false",
+          "nullable": "YES"
+        },
+        {
+          "name": "cargo",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        },
+        {
+          "name": "nombre_usuario",
+          "type": "text",
+          "default": null,
+          "nullable": "YES"
+        }
+      ]
+    },
+    {
+      "schema": "scheduling_private",
+      "name": "bookings",
+      "columns": [
+        {
+          "name": "asignacion_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "perfil_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "periodo",
+          "type": "tstzrange",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "sla_private",
+      "name": "participants",
+      "columns": [
+        {
+          "name": "hito_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "usuario_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        }
+      ]
+    },
+    {
+      "schema": "sla_private",
+      "name": "windows",
+      "columns": [
+        {
+          "name": "hito_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "hora_programada",
+          "type": "timestamptz",
+          "default": null,
+          "nullable": "NO"
+        },
+        {
+          "name": "opened_at",
+          "type": "timestamptz",
+          "default": "clock_timestamp()",
+          "nullable": "NO"
+        }
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "schema": "account_private",
+      "name": "access",
+      "conname": "access_estado_check",
+      "definition": "CHECK ((estado = ANY (ARRAY['pendiente'::text, 'aprobada'::text, 'rechazada'::text])))"
+    },
+    {
+      "schema": "account_private",
+      "name": "access",
+      "conname": "access_reviewed_by_fkey",
+      "definition": "FOREIGN KEY (reviewed_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "schema": "account_private",
+      "name": "access",
+      "conname": "access_user_id_fkey",
+      "definition": "FOREIGN KEY (user_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "account_private",
+      "name": "access",
+      "conname": "access_pkey",
+      "definition": "PRIMARY KEY (user_id)"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "devices",
+      "conname": "devices_perfil_id_fkey",
+      "definition": "FOREIGN KEY (perfil_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "devices",
+      "conname": "devices_pkey",
+      "definition": "PRIMARY KEY (installation)"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "devices",
+      "conname": "devices_token_key",
+      "definition": "UNIQUE (token)"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "outbox",
+      "conname": "outbox_installation_fkey",
+      "definition": "FOREIGN KEY (installation) REFERENCES android_push_private.devices(installation) ON DELETE CASCADE"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "outbox",
+      "conname": "outbox_notification_id_fkey",
+      "definition": "FOREIGN KEY (notification_id) REFERENCES notificaciones_app(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "outbox",
+      "conname": "outbox_recipient_fkey",
+      "definition": "FOREIGN KEY (recipient) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "outbox",
+      "conname": "outbox_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "android_push_private",
+      "name": "outbox",
+      "conname": "outbox_notification_id_installation_key",
+      "definition": "UNIQUE (notification_id, installation)"
+    },
+    {
+      "schema": "milestone_private",
+      "name": "migrations",
+      "conname": "migrations_pkey",
+      "definition": "PRIMARY KEY (name)"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "blocked_phrases",
+      "conname": "blocked_phrases_phrase_check",
+      "definition": "CHECK ((char_length(phrase) > 2))"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "blocked_phrases",
+      "conname": "blocked_phrases_pkey",
+      "definition": "PRIMARY KEY (phrase)"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "note_reports",
+      "conname": "note_reports_reason_check",
+      "definition": "CHECK ((reason = ANY (ARRAY['acoso'::text, 'contenido_inapropiado'::text, 'datos_personales'::text, 'otro'::text])))"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "note_reports",
+      "conname": "note_reports_note_id_fkey",
+      "definition": "FOREIGN KEY (note_id) REFERENCES notas_asignacion(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "note_reports",
+      "conname": "note_reports_reporter_id_fkey",
+      "definition": "FOREIGN KEY (reporter_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "note_reports",
+      "conname": "note_reports_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "moderation_private",
+      "name": "note_reports",
+      "conname": "note_reports_note_id_reporter_id_key",
+      "definition": "UNIQUE (note_id, reporter_id)"
+    },
+    {
+      "schema": "notification_private",
+      "name": "assignment_events",
+      "conname": "assignment_events_pkey",
+      "definition": "PRIMARY KEY (transaction_id, assignment_id)"
+    },
+    {
+      "schema": "notification_private",
+      "name": "assignment_events",
+      "conname": "flush_assignment",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "schema": "notification_private",
+      "name": "devices",
+      "conname": "devices_environment_check",
+      "definition": "CHECK ((environment = ANY (ARRAY['sandbox'::text, 'production'::text])))"
+    },
+    {
+      "schema": "notification_private",
+      "name": "devices",
+      "conname": "devices_perfil_id_fkey",
+      "definition": "FOREIGN KEY (perfil_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "notification_private",
+      "name": "devices",
+      "conname": "devices_pkey",
+      "definition": "PRIMARY KEY (installation)"
+    },
+    {
+      "schema": "notification_private",
+      "name": "milestone_reminders",
+      "conname": "milestone_reminders_hito_id_usuario_id_fkey",
+      "definition": "FOREIGN KEY (hito_id, usuario_id) REFERENCES hitos_colaboradores(hito_id, usuario_id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "notification_private",
+      "name": "milestone_reminders",
+      "conname": "milestone_reminders_pkey",
+      "definition": "PRIMARY KEY (hito_id, usuario_id)"
+    },
+    {
+      "schema": "notification_private",
+      "name": "outbox",
+      "conname": "outbox_installation_fkey",
+      "definition": "FOREIGN KEY (installation) REFERENCES notification_private.devices(installation) ON DELETE CASCADE"
+    },
+    {
+      "schema": "notification_private",
+      "name": "outbox",
+      "conname": "outbox_notification_id_fkey",
+      "definition": "FOREIGN KEY (notification_id) REFERENCES notificaciones_app(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "notification_private",
+      "name": "outbox",
+      "conname": "outbox_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "notification_private",
+      "name": "outbox",
+      "conname": "outbox_notification_id_installation_key",
+      "definition": "UNIQUE (notification_id, installation)"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "conname": "asignacion_equipo_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "conname": "asignacion_equipo_perfil_id_fkey",
+      "definition": "FOREIGN KEY (perfil_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "conname": "asignacion_equipo_pkey",
+      "definition": "PRIMARY KEY (asignacion_id, perfil_id)"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "conname": "availability_team",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_supervisores",
+      "conname": "asignacion_supervisores_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_supervisores",
+      "conname": "asignacion_supervisores_usuario_id_fkey",
+      "definition": "FOREIGN KEY (usuario_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_supervisores",
+      "conname": "asignacion_supervisores_pkey",
+      "definition": "PRIMARY KEY (asignacion_id, usuario_id)"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "conname": "asignaciones_texto_valido",
+      "definition": "CHECK (((titulo IS NOT NULL) AND ((char_length(btrim(titulo)) >= 3) AND (char_length(btrim(titulo)) <= 120)) AND (titulo !~ '[[:cntrl:]]'::text) AND (((tipo_flujo = 'campo'::text) AND (ubicacion IS NOT NULL) AND ((char_length(btrim(ubicacion)) >= 3) AND (char_length(btrim(ubicacion)) <= 180))) OR ((tipo_flujo = 'administrativa'::text) AND (ubicacion IS NULL))) AND ((instrucciones IS NULL) OR ((char_length(btrim(instrucciones)) >= 1) AND (char_length(btrim(instrucciones)) <= 2000))))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "conname": "asignaciones_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "conname": "availability_assignment",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "schema": "public",
+      "name": "cargos_empresa",
+      "conname": "cargos_empresa_pkey",
+      "definition": "PRIMARY KEY (nombre)"
+    },
+    {
+      "schema": "public",
+      "name": "cargos_empresa",
+      "conname": "cargos_empresa_orden_key",
+      "definition": "UNIQUE (orden)"
+    },
+    {
+      "schema": "public",
+      "name": "checklist_equipos",
+      "conname": "checklist_equipos_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "checklist_equipos",
+      "conname": "checklist_equipos_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "comunicados",
+      "conname": "comunicados_texto_valido",
+      "definition": "CHECK (((asunto IS NOT NULL) AND (mensaje IS NOT NULL) AND ((char_length(btrim(asunto)) >= 3) AND (char_length(btrim(asunto)) <= 140)) AND (asunto !~ '[[:cntrl:]]'::text) AND ((char_length(btrim(mensaje)) >= 10) AND (char_length(btrim(mensaje)) <= 4000)))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "comunicados",
+      "conname": "comunicados_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_estado_hito_check",
+      "definition": "CHECK ((estado_hito = 'completado'::text))"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_evaluacion_check",
+      "definition": "CHECK ((evaluacion = ANY (ARRAY['temprano'::text, 'a_tiempo'::text, 'tardio'::text])))"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_hito_id_fkey",
+      "definition": "FOREIGN KEY (hito_id) REFERENCES hitos_itinerario(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_usuario_id_fkey",
+      "definition": "FOREIGN KEY (usuario_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "confirmaciones_hitos",
+      "conname": "confirmaciones_hitos_hito_id_usuario_id_key",
+      "definition": "UNIQUE (hito_id, usuario_id)"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "conname": "hitos_colaboradores_check",
+      "definition": "CHECK ((((confirmado_at IS NULL) AND (estado = 'sin_confirmar'::text)) OR ((confirmado_at IS NOT NULL) AND (hora_programada IS NOT NULL) AND (estado <> 'sin_confirmar'::text))))"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "conname": "hitos_colaboradores_estado_check",
+      "definition": "CHECK ((estado = ANY (ARRAY['sin_confirmar'::text, 'temprano'::text, 'a_tiempo'::text, 'tardio'::text])))"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "conname": "hitos_colaboradores_hito_id_fkey",
+      "definition": "FOREIGN KEY (hito_id) REFERENCES hitos_itinerario(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "conname": "hitos_colaboradores_usuario_id_fkey",
+      "definition": "FOREIGN KEY (usuario_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "conname": "hitos_colaboradores_pkey",
+      "definition": "PRIMARY KEY (hito_id, usuario_id)"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "conname": "hitos_texto_valido",
+      "definition": "CHECK (((descripcion IS NOT NULL) AND ((char_length(btrim(descripcion)) >= 2) AND (char_length(btrim(descripcion)) <= 100)) AND (descripcion !~ '[[:cntrl:]]'::text))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "conname": "hitos_itinerario_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "conname": "hitos_itinerario_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "conname": "availability_milestones",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "conname": "notas_asignacion_contenido_check",
+      "definition": "CHECK (((char_length(btrim(contenido)) >= 1) AND (char_length(btrim(contenido)) <= 4000)))"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "conname": "notas_texto_valido",
+      "definition": "CHECK (((contenido IS NOT NULL) AND ((char_length(btrim(contenido)) >= 3) AND (char_length(btrim(contenido)) <= 4000)))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "conname": "notas_asignacion_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "conname": "notas_asignacion_usuario_id_fkey",
+      "definition": "FOREIGN KEY (usuario_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "conname": "notas_asignacion_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "conname": "notificaciones_app_asignacion_relacionada_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_relacionada_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "conname": "notificaciones_app_perfil_id_fkey",
+      "definition": "FOREIGN KEY (perfil_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "conname": "notificaciones_app_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "conname": "perfiles_nombre_formato",
+      "definition": "CHECK (((nombre_completo IS NULL) OR (((char_length(btrim(nombre_completo)) >= 2) AND (char_length(btrim(nombre_completo)) <= 80)) AND (nombre_completo !~ '[0-9]'::text) AND (nombre_completo !~ '[[:cntrl:]]'::text)))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "conname": "perfiles_rol_valido",
+      "definition": "CHECK (((rol IS NULL) OR (rol = ANY (ARRAY['admin'::text, 'empleado'::text])))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "conname": "perfiles_telefono_formato",
+      "definition": "CHECK (((telefono IS NULL) OR (((char_length(regexp_replace(telefono, '[^0-9]'::text, ''::text, 'g'::text)) >= 10) AND (char_length(regexp_replace(telefono, '[^0-9]'::text, ''::text, 'g'::text)) <= 15)) AND (telefono ~ '^[0-9+() -]+$'::text)))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "conname": "perfiles_cargo_empresa_fk",
+      "definition": "FOREIGN KEY (cargo) REFERENCES cargos_empresa(nombre) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "conname": "perfiles_id_fkey",
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "conname": "perfiles_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "scheduling_private",
+      "name": "bookings",
+      "conname": "bookings_asignacion_id_fkey",
+      "definition": "FOREIGN KEY (asignacion_id) REFERENCES asignaciones(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "scheduling_private",
+      "name": "bookings",
+      "conname": "bookings_perfil_id_fkey",
+      "definition": "FOREIGN KEY (perfil_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "scheduling_private",
+      "name": "bookings",
+      "conname": "bookings_pkey",
+      "definition": "PRIMARY KEY (asignacion_id, perfil_id)"
+    },
+    {
+      "schema": "scheduling_private",
+      "name": "bookings",
+      "conname": "employee_no_overlap",
+      "definition": "EXCLUDE USING gist (perfil_id WITH =, periodo WITH &&)"
+    },
+    {
+      "schema": "sla_private",
+      "name": "participants",
+      "conname": "participants_hito_id_fkey",
+      "definition": "FOREIGN KEY (hito_id) REFERENCES sla_private.windows(hito_id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "sla_private",
+      "name": "participants",
+      "conname": "participants_usuario_id_fkey",
+      "definition": "FOREIGN KEY (usuario_id) REFERENCES perfiles(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "sla_private",
+      "name": "participants",
+      "conname": "participants_pkey",
+      "definition": "PRIMARY KEY (hito_id, usuario_id)"
+    },
+    {
+      "schema": "sla_private",
+      "name": "windows",
+      "conname": "windows_hito_id_fkey",
+      "definition": "FOREIGN KEY (hito_id) REFERENCES hitos_itinerario(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "sla_private",
+      "name": "windows",
+      "conname": "windows_pkey",
+      "definition": "PRIMARY KEY (hito_id)"
+    }
+  ],
+  "policies": [
+    {
+      "schemaname": "public",
+      "tablename": "asignacion_equipo",
+      "policyname": "Equipo visible por participante o admin",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "puede_ver_asignacion(asignacion_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignacion_equipo",
+      "policyname": "approved_account_guard",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "account_is_approved()",
+      "with_check": "account_is_approved()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignacion_equipo",
+      "policyname": "crud_admin_delete",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "es_admin()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignacion_equipo",
+      "policyname": "crud_admin_insert",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignacion_equipo",
+      "policyname": "crud_admin_update",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "es_admin()",
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignacion_supervisores",
+      "policyname": "supervisors_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "can_supervise_assignment(asignacion_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignaciones",
+      "policyname": "Administradores gestionan asignaciones",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "es_admin()",
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignaciones",
+      "policyname": "Empleados leen sus asignaciones",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "puede_ver_asignacion(id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignaciones",
+      "policyname": "approved_account_guard",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "account_is_approved()",
+      "with_check": "account_is_approved()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignaciones",
+      "policyname": "crud_admin_delete",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "es_admin()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignaciones",
+      "policyname": "crud_admin_insert",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "asignaciones",
+      "policyname": "crud_admin_update",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "es_admin()",
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cargos_empresa",
+      "policyname": "cargos_empresa_visibles",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "activo",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "checklist_equipos",
+      "policyname": "approved_account_guard",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "account_is_approved()",
+      "with_check": "account_is_approved()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comunicados",
+      "policyname": "Administradores gestionan comunicados",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "es_admin()",
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comunicados",
+      "policyname": "Plantilla lee comunicados",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comunicados",
+      "policyname": "approved_account_guard",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "account_is_approved()",
+      "with_check": "account_is_approved()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comunicados",
+      "policyname": "crud_admin_delete",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "es_admin()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comunicados",
+      "policyname": "crud_admin_insert",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comunicados",
+      "policyname": "crud_admin_update",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "es_admin()",
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "confirmaciones_hitos",
+      "policyname": "sla_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(account_is_approved() AND (es_admin() OR (usuario_id = auth.uid())) AND puede_ver_asignacion(asignacion_id))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_colaboradores",
+      "policyname": "milestone_members_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(account_is_approved() AND ((usuario_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM hitos_itinerario h\n  WHERE ((h.id = hitos_colaboradores.hito_id) AND can_supervise_assignment(h.asignacion_id))))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "Hitos visibles por participante o admin",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "puede_ver_asignacion(asignacion_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "approved_account_guard",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "account_is_approved()",
+      "with_check": "account_is_approved()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "crud_admin_delete",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "es_admin()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "crud_admin_insert",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "crud_admin_update",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "es_admin()",
+      "with_check": "es_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "granular_milestones",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "can_read_milestone(id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "hitos_itinerario",
+      "policyname": "granular_milestones_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "can_read_milestone(id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "notas_asignacion",
+      "policyname": "notes_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(account_is_approved() AND puede_ver_asignacion(asignacion_id))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "notificaciones_app",
+      "policyname": "account_notification_read",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "account_is_approved()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "notificaciones_app",
+      "policyname": "notification_owner",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(perfil_id = ( SELECT auth.uid() AS uid))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "notificaciones_app",
+      "policyname": "notification_owner_guard",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(perfil_id = ( SELECT auth.uid() AS uid))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "perfiles",
+      "policyname": "Usuarios actualizan su perfil",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(id = ( SELECT auth.uid() AS uid))",
+      "with_check": "(id = ( SELECT auth.uid() AS uid))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "perfiles",
+      "policyname": "Usuarios leen su perfil",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((id = ( SELECT auth.uid() AS uid)) OR es_admin())",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "perfiles",
+      "policyname": "account_profile_owner",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((id = auth.uid()) OR es_admin())",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "perfiles",
+      "policyname": "account_profile_read",
+      "permissive": "RESTRICTIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(account_is_approved() OR (id = auth.uid()))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "perfiles",
+      "policyname": "supervisor_member_names",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "can_supervise_profile(id)",
+      "with_check": null
+    }
+  ],
+  "functions": [
+    {
+      "signature": "account_is_approved()",
+      "definition": "CREATE OR REPLACE FUNCTION public.account_is_approved()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select exists(select 1 from account_private.access where user_id = auth.uid() and estado = 'aprobada');\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "account_private.check_assignee()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.check_assignee()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if not exists(select 1 from account_private.access where user_id=new.perfil_id and estado='aprobada') then\n    raise exception 'Solo puedes asignar empleados con acceso aprobado' using errcode='23514';\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "account_private.filter_notification()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.filter_notification()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if new.tipo in ('cuenta_aprobada','cuenta_rechazada') or exists (\n    select 1 from account_private.access where user_id=new.perfil_id and estado='aprobada'\n  ) then return new; end if;\n  return null;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "account_private.new_auth_user()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.new_auth_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_username text := btrim(coalesce(new.raw_user_meta_data->>'nombre_usuario', ''));\n  v_name text := btrim(coalesce(new.raw_user_meta_data->>'nombre_completo', ''));\n  v_phone text := btrim(coalesce(new.raw_user_meta_data->>'telefono', ''));\n  v_digits text := regexp_replace(v_phone, '[^0-9]', '', 'g');\n  v_cargo text := account_private.normalizar_cargo(new.raw_user_meta_data->>'cargo');\nbegin\n  if char_length(v_username) not between 3 and 30\n     or v_username !~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' then\n    raise exception 'El nombre de usuario no es valido' using errcode = '22023';\n  end if;\n  if char_length(v_name) not between 2 and 80\n     or v_name ~ '[0-9]' or v_name ~ '[[:cntrl:]]' then\n    raise exception 'El nombre completo no es valido' using errcode = '22023';\n  end if;\n  if char_length(v_digits) not between 10 and 15\n     or v_phone !~ '^[0-9+() -]+$' then\n    raise exception 'El telefono no es valido' using errcode = '22023';\n  end if;\n  if v_cargo is null then\n    raise exception 'El cargo no pertenece al catalogo de la empresa' using errcode = '22023';\n  end if;\n\n  insert into public.perfiles(id, nombre_completo, rol, telefono, cargo)\n  values(new.id, v_name, 'empleado', v_phone, v_cargo)\n  on conflict(id) do update set\n    nombre_completo = coalesce(public.perfiles.nombre_completo, excluded.nombre_completo),\n    telefono = coalesce(public.perfiles.telefono, excluded.telefono),\n    cargo = coalesce(public.perfiles.cargo, excluded.cargo),\n    rol = case when public.perfiles.rol = 'tecnico' then 'empleado' else public.perfiles.rol end;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "account_private.new_profile()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.new_profile()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  insert into account_private.access(user_id) values(new.id) on conflict do nothing;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "account_private.protect_profile_identity()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.protect_profile_identity()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.role() in ('authenticated', 'anon')\n     and new.nombre_completo is distinct from old.nombre_completo then\n    raise exception 'El nombre completo no se puede modificar' using errcode = '42501';\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "account_private.sync_approved_auth()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.sync_approved_auth()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if new.estado = 'aprobada' then\n    update auth.users\n    set email_confirmed_at = now()\n    where id = new.user_id and email_confirmed_at is null\n      and nullif(btrim(email), '') is not null;\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "account_private.sync_new_profile_username()",
+      "definition": "CREATE OR REPLACE FUNCTION account_private.sync_new_profile_username()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  update public.perfiles\n  set nombre_usuario = nullif(btrim(new.raw_user_meta_data->>'nombre_usuario'), '')\n  where id = new.id;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "add_assignment_note(uuid,uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.add_assignment_note(p_id uuid, p_asignacion_id uuid, p_contenido text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not public.account_is_approved() or not public.puede_ver_asignacion(p_asignacion_id) then\n    raise exception 'No tienes acceso a esta asignacion' using errcode='42501'; end if;\n  if p_contenido is null or char_length(btrim(p_contenido)) not between 1 and 4000 then raise exception 'Escribe entre 1 y 4000 caracteres'; end if;\n  insert into public.notas_asignacion(id,asignacion_id,usuario_id,contenido)\n    values(p_id,p_asignacion_id,auth.uid(),btrim(p_contenido)) on conflict(id) do nothing;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_assignments_page(integer,integer,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_assignments_page(p_offset integer DEFAULT 0, p_limit integer DEFAULT 50, p_estado text DEFAULT 'pendientes'::text, p_busqueda text DEFAULT ''::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  page_size integer := least(100, greatest(1, coalesce(p_limit, 50)));\n  page_offset integer := greatest(0, coalesce(p_offset, 0));\n  search_text text := lower(trim(coalesce(p_busqueda, '')));\n  result jsonb;\nbegin\n  if auth.uid() is null or not coalesce(public.es_admin(), false) then\n    raise exception 'Solo administradores' using errcode = '42501';\n  end if;\n  if p_estado is null or p_estado not in ('todas', 'pendientes', 'vencidas', 'completadas') then\n    raise exception 'Filtro de estado no valido' using errcode = '22023';\n  end if;\n  if length(search_text) > 100 then\n    raise exception 'La busqueda excede 100 caracteres' using errcode = '22023';\n  end if;\n  with candidates as materialized (\n    select a.* from public.asignaciones a\n    where (\n      p_estado = 'todas'\n        or (p_estado = 'completadas' and a.estado = 'completada')\n        or (p_estado = 'vencidas' and a.estado <> 'completada'\n          and (a.estado = 'vencida' or a.fecha_limite <= now()))\n        or (p_estado = 'pendientes' and a.estado in ('pendiente', 'en_curso')\n          and (a.fecha_limite is null or a.fecha_limite > now()))\n    ) and (\n      search_text = ''\n      or strpos(lower(a.titulo), search_text) > 0\n      or strpos(lower(coalesce(a.ubicacion, '')), search_text) > 0\n      or exists (\n        select 1 from public.asignacion_equipo search_team\n        join public.perfiles search_profile on search_profile.id = search_team.perfil_id\n        where search_team.asignacion_id = a.id\n          and strpos(lower(coalesce(search_profile.nombre_completo, '')), search_text) > 0\n      )\n    )\n    order by a.fecha_creacion desc, a.id desc\n    limit page_size + 1 offset page_offset\n  ), page as (\n    select * from candidates order by fecha_creacion desc, id desc limit page_size\n  )\n  select jsonb_build_object(\n    'items', coalesce((select jsonb_agg(\n      to_jsonb(p) || jsonb_build_object(\n        'hitos_itinerario', coalesce((\n          select jsonb_agg(to_jsonb(h) order by h.orden)\n          from public.hitos_itinerario h where h.asignacion_id = p.id\n        ), '[]'::jsonb),\n        'asignacion_equipo', coalesce((\n          select jsonb_agg(jsonb_build_object('perfiles', to_jsonb(profile)))\n          from public.asignacion_equipo team\n          join public.perfiles profile on profile.id = team.perfil_id\n          where team.asignacion_id = p.id\n        ), '[]'::jsonb)\n      ) order by p.fecha_creacion desc, p.id desc)\n      from page p), '[]'::jsonb),\n    'has_more', (select count(*) > page_size from candidates),\n    'next_offset', case when (select count(*) > page_size from candidates)\n      then page_offset + page_size else null end\n  ) into result;\n  return result;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_create_assignment(jsonb,uuid[],jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_create_assignment(p_asignacion jsonb, p_empleados uuid[], p_hitos jsonb DEFAULT '[]'::jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare aid uuid; team uuid[]; supervisors jsonb:=coalesce(p_asignacion->'supervisores','[]'::jsonb);\nbegin\n  team:=milestone_private.validate_members(p_hitos,supervisors);\n  aid:=milestone_private.create_legacy(p_asignacion,team,p_hitos);\n  perform milestone_private.save_members(aid,p_hitos,supervisors);\n  perform sla_private.advance(aid);\n  return aid;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_dashboard_summary()",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_dashboard_summary()\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare result jsonb;\nbegin\n  if auth.uid() is null or not coalesce(public.es_admin(), false) then\n    raise exception 'Solo administradores' using errcode = '42501';\n  end if;\n  select jsonb_build_object(\n    'total', count(*),\n    'unidades_asignadas', count(*) filter (where exists (\n      select 1 from public.asignacion_equipo e where e.asignacion_id = a.id)),\n    'unidades_activas', count(*) filter (where a.estado = 'en_curso'\n      and (a.fecha_limite is null or a.fecha_limite > now())),\n    'completadas', count(*) filter (where a.estado = 'completada'),\n    'vencidas', count(*) filter (where a.estado <> 'completada'\n      and (a.estado = 'vencida' or a.fecha_limite <= now())),\n    'tasa_entrega', coalesce(round(100.0 * count(*) filter (where a.estado = 'completada')\n      / nullif(count(*), 0), 2), 0),\n    'creadas_ultimos_7_dias', (\n      select jsonb_agg(coalesce(d.cantidad, 0) order by dias.dia)\n      from generate_series(\n        (now() at time zone 'America/Santo_Domingo')::date - 6,\n        (now() at time zone 'America/Santo_Domingo')::date,\n        interval '1 day'\n      ) dias(dia)\n      left join (\n        select (daily.fecha_creacion at time zone 'America/Santo_Domingo')::date dia,\n          count(*) cantidad\n        from public.asignaciones daily\n        where daily.fecha_creacion >= (\n          ((now() at time zone 'America/Santo_Domingo')::date - 6)::timestamp\n          at time zone 'America/Santo_Domingo'\n        )\n        group by 1\n      ) d on d.dia = dias.dia::date\n    )\n  ) into result from public.asignaciones a;\n  return result;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_delete_assignment(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_delete_assignment(p_asignacion_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not public.account_is_approved() or not public.es_admin() then\n    raise exception 'Solo administradores pueden eliminar asignaciones' using errcode='42501'; end if;\n  perform 1 from public.asignaciones where id=p_asignacion_id for update;\n  if not found then raise exception 'La asignacion ya no existe'; end if;\n  perform set_config('soundisco.deleting_assignment',p_asignacion_id::text,true);\n  delete from public.checklist_equipos where asignacion_id=p_asignacion_id;\n  update public.notificaciones_app set asignacion_relacionada_id=null where asignacion_relacionada_id=p_asignacion_id;\n  delete from public.hitos_itinerario where asignacion_id=p_asignacion_id;\n  delete from public.asignacion_equipo where asignacion_id=p_asignacion_id;\n  delete from public.asignaciones where id=p_asignacion_id;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_employee_availability(timestamp with time zone,timestamp with time zone,uuid,integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_employee_availability(p_inicio timestamp with time zone, p_fin timestamp with time zone, p_excluir uuid DEFAULT NULL::uuid, p_offset integer DEFAULT 0)\n RETURNS TABLE(id uuid, nombre text, cargo text, rol text, disponible boolean, ocupado_desde timestamp with time zone, ocupado_hasta timestamp with time zone)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if not public.es_admin() then raise exception 'Solo administradores pueden consultar disponibilidad' using errcode='42501'; end if;\n  if p_inicio is null or p_fin is null or p_fin<p_inicio then raise exception 'Periodo invalido'; end if;\n  return query select p.id,p.nombre_completo,\n    coalesce(nullif(btrim(p.cargo),''),nullif(btrim(u.raw_user_meta_data->>'cargo'),'')),p.rol,\n    conflict.perfil_id is null,lower(conflict.periodo),upper(conflict.periodo)\n    from public.perfiles p join account_private.access a on a.user_id=p.id and a.estado='aprobada'\n    left join auth.users u on u.id=p.id\n    left join lateral (\n      select b.perfil_id,b.periodo from scheduling_private.bookings b\n      where b.perfil_id=p.id and b.asignacion_id is distinct from p_excluir\n        and b.periodo && tstzrange(p_inicio,p_fin,'[]')\n      order by upper(b.periodo) desc limit 1\n    ) conflict on true\n    order by p.nombre_completo nulls last,p.id limit 200 offset greatest(coalesce(p_offset,0),0);\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_employee_performance(date,integer,uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_employee_performance(p_month date, p_offset integer DEFAULT 0, p_employee uuid DEFAULT NULL::uuid)\n RETURNS SETOF jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare start_at timestamptz; end_at timestamptz;\nbegin\n  if auth.uid() is null or not coalesce(public.es_admin(),false) then\n    raise exception 'Solo administradores pueden consultar rendimiento' using errcode='42501';\n  end if;\n  if p_month is null then raise exception 'Selecciona un mes'; end if;\n  start_at := date_trunc('month',p_month::timestamp) at time zone 'America/Santo_Domingo';\n  end_at := (date_trunc('month',p_month::timestamp)+interval '1 month') at time zone 'America/Santo_Domingo';\n  return query\n  with employees as (\n    select p.id,coalesce(nullif(btrim(p.nombre_completo),''),'Sin nombre') nombre,\n      coalesce(nullif(btrim(p.cargo),''),'Sin cargo') cargo\n    from public.perfiles p join account_private.access access on access.user_id=p.id\n    where access.estado='aprobada' and coalesce(p.rol,'tecnico') <> 'admin'\n      and (p_employee is null or p.id=p_employee)\n    order by lower(coalesce(p.nombre_completo,'')),p.id\n    limit 100 offset greatest(coalesce(p_offset,0),0)\n  )\n  select jsonb_build_object(\n    'id',e.id,'nombre',e.nombre,'cargo',e.cargo,\n    'temprano',punctual.early,'a_tiempo',punctual.ontime,'tardio',punctual.late,\n    'sin_confirmar',punctual.missing,'retraso_medio_minutos',punctual.delay,\n    'notas_semanales',notes.weeks,\n    'asignaciones',work.total,'completadas',work.completed,'activas',work.active,'vencidas',work.overdue\n  )\n  from employees e\n  cross join lateral (\n    select count(*) filter(where c.evaluacion='temprano') early,\n      count(*) filter(where c.evaluacion='a_tiempo') ontime,\n      count(*) filter(where c.evaluacion='tardio') late,\n      count(*) filter(where c.id is null) missing,\n      round(avg(greatest(0,extract(epoch from (c.created_at-c.hora_programada))/60))\n        filter(where c.evaluacion='tardio'),1) delay\n    from (\n      select w.hito_id,w.hora_programada\n      from sla_private.participants sp join sla_private.windows w using(hito_id)\n      where sp.usuario_id=e.id\n      union\n      select c.hito_id,c.hora_programada from public.confirmaciones_hitos c where c.usuario_id=e.id\n    ) scheduled\n    left join public.confirmaciones_hitos c on c.hito_id=scheduled.hito_id and c.usuario_id=e.id\n    where scheduled.hora_programada >= start_at and scheduled.hora_programada < end_at\n      and (c.id is not null or scheduled.hora_programada < now())\n  ) punctual\n  cross join lateral (\n    select jsonb_agg(jsonb_build_object('semana',week,'cantidad',amount) order by week) weeks\n    from (\n      select week,count(n.id) amount\n      from generate_series(1,ceil(extract(day from (end_at at time zone 'America/Santo_Domingo')-interval '1 day')/7)::int) week\n      left join public.notas_asignacion n on n.usuario_id=e.id and n.created_at>=start_at and n.created_at<end_at\n        and ((extract(day from n.created_at at time zone 'America/Santo_Domingo')::int-1)/7)+1=week\n      group by week\n    ) weekly\n  ) notes\n  cross join lateral (\n    select count(*) total,count(*) filter(where a.estado='completada') completed,\n      count(*) filter(where coalesce(a.estado,'pendiente')<>'completada'\n        and (a.estado='vencida' or coalesce(d.last_at,a.fecha_limite)<now())) overdue,\n      count(*) filter(where coalesce(a.estado,'pendiente') not in ('completada','vencida')\n        and (coalesce(d.last_at,a.fecha_limite)>=now() or coalesce(d.last_at,a.fecha_limite) is null)) active\n    from public.asignaciones a\n    left join lateral (\n      select min(fecha_programada) first_at,max(fecha_programada) last_at\n      from public.hitos_itinerario where asignacion_id=a.id\n    ) d on true\n    where a.id in (\n      select asignacion_id from public.asignacion_equipo where perfil_id=e.id\n      union select asignacion_id from public.confirmaciones_hitos where usuario_id=e.id\n      union select h.asignacion_id from sla_private.participants sp\n        join public.hitos_itinerario h on h.id=sp.hito_id where sp.usuario_id=e.id\n    )\n    and coalesce(case when a.tipo_flujo='administrativa' then a.fecha_creacion else d.first_at end,a.fecha_creacion)<end_at\n    and coalesce(d.last_at,a.fecha_limite,a.fecha_creacion)>=start_at\n  ) work;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_list_accounts(integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_list_accounts(p_offset integer DEFAULT 0)\n RETURNS TABLE(id uuid, nombre text, email text, telefono text, cargo text, estado text, fecha timestamp with time zone)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if not public.es_admin() then\n    raise exception 'Solo administradores pueden gestionar accesos' using errcode = '42501';\n  end if;\n  return query\n    select p.id, p.nombre_completo, u.email::text, p.telefono,\n      coalesce(\n        nullif(btrim(p.cargo), ''),\n        account_private.normalizar_cargo(u.raw_user_meta_data->>'cargo'),\n        'Sin cargo'\n      ),\n      a.estado, a.created_at\n    from account_private.access a\n    join public.perfiles p on p.id = a.user_id\n    join auth.users u on u.id = p.id\n    order by a.created_at desc, p.id\n    limit 200 offset greatest(p_offset, 0);\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_note_reports(integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_note_reports(p_offset integer DEFAULT 0)\n RETURNS TABLE(id uuid, note_id uuid, reason text, created_at timestamp with time zone, contenido text, asignacion text)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) or not public.es_admin() then\n    raise exception 'Solo administradores pueden revisar reportes' using errcode='42501'; end if;\n  return query select r.id,r.note_id,r.reason,r.created_at,n.contenido,a.titulo\n    from moderation_private.note_reports r\n    join public.notas_asignacion n on n.id=r.note_id\n    join public.asignaciones a on a.id=n.asignacion_id\n    where r.resolved_at is null order by r.created_at,r.id\n    limit 50 offset greatest(coalesce(p_offset,0),0);\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_remove_assignment_note(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_remove_assignment_note(p_note_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) or not public.es_admin() then\n    raise exception 'Solo administradores pueden retirar notas' using errcode='42501'; end if;\n  delete from public.notas_asignacion where id=p_note_id;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_resolve_note_report(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_resolve_note_report(p_report_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) or not public.es_admin() then\n    raise exception 'Solo administradores pueden revisar reportes' using errcode='42501'; end if;\n  update moderation_private.note_reports set resolved_at=now() where id=p_report_id and resolved_at is null;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_review_account(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_review_account(p_user_id uuid, p_estado text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare previous text;\nbegin\n  if not public.es_admin() then raise exception 'Solo administradores pueden revisar cuentas' using errcode = '42501'; end if;\n  if p_estado is null or p_estado not in ('aprobada','rechazada') then raise exception 'Estado invalido'; end if;\n  select estado into previous from account_private.access where user_id=p_user_id for update;\n  if previous is null then raise exception 'La cuenta ya no existe'; end if;\n  if previous = p_estado then return; end if;\n  if previous = 'aprobada' then raise exception 'Este flujo solo revisa solicitudes pendientes o rechazadas'; end if;\n  update account_private.access set estado=p_estado,reviewed_at=now(),reviewed_by=auth.uid() where user_id=p_user_id;\n  perform notification_private.emit(p_user_id,\n    case when p_estado='aprobada' then 'cuenta_aprobada' else 'cuenta_rechazada' end,\n    case when p_estado='aprobada' then 'Cuenta verificada' else 'Solicitud revisada' end,\n    case when p_estado='aprobada' then 'Tus credenciales han sido aprobadas. Ya puedes acceder al sistema'\n      else 'Tu solicitud no fue aprobada. Contacta con administracion.' end,\n    'perfil',p_user_id,p_estado,'acceso:'||p_user_id::text||':'||gen_random_uuid()::text);\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_suspend_account(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_suspend_account(p_user_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) or not public.es_admin() then\n    raise exception 'Solo administradores pueden suspender accesos' using errcode='42501'; end if;\n  if p_user_id=auth.uid() or exists(select 1 from public.perfiles where id=p_user_id and rol='admin') then\n    raise exception 'No puedes suspender una cuenta administradora desde este panel' using errcode='42501'; end if;\n  update account_private.access set estado='rechazada',reviewed_at=now(),reviewed_by=auth.uid()\n    where user_id=p_user_id;\n  if not found then raise exception 'La cuenta ya no existe' using errcode='P0002'; end if;\n  delete from notification_private.devices where perfil_id=p_user_id;\n  if to_regclass('android_push_private.devices') is not null then\n    execute 'delete from android_push_private.devices where perfil_id=$1' using p_user_id;\n  end if;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "admin_update_assignment(uuid,jsonb,uuid[],jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_update_assignment(p_asignacion_id uuid, p_asignacion jsonb, p_empleados uuid[], p_hitos jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare team uuid[]; supervisors jsonb:=coalesce(p_asignacion->'supervisores','[]'::jsonb);\nbegin\n  team:=milestone_private.validate_members(p_hitos,supervisors);\n  perform 1 from public.asignaciones where id=p_asignacion_id for update;\n  perform milestone_private.update_legacy(p_asignacion_id,p_asignacion,team,p_hitos);\n  perform milestone_private.save_members(p_asignacion_id,p_hitos,supervisors);\n  perform sla_private.advance(p_asignacion_id);\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "android_push_private.enqueue_push()",
+      "definition": "CREATE OR REPLACE FUNCTION android_push_private.enqueue_push()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  insert into android_push_private.outbox(notification_id,installation,recipient)\n    select new.id,d.installation,new.perfil_id from android_push_private.devices d\n    where d.perfil_id=new.perfil_id on conflict do nothing;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "android_push_private.enqueue()",
+      "definition": "CREATE OR REPLACE FUNCTION android_push_private.enqueue()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\nbegin\r\n    insert into android_push_private.outbox(notification_id, installation, recipient)\r\n    select new.id, d.installation, new.perfil_id\r\n    from android_push_private.devices d where d.perfil_id = new.perfil_id\r\n    on conflict(notification_id, installation) do nothing;\r\n    return new;\r\nend;\r\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "assignment_collaborators(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.assignment_collaborators(p_assignment uuid)\n RETURNS TABLE(id uuid, nombre text, cargo text, es_supervisor boolean)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not public.account_is_approved()\n    or not public.puede_ver_asignacion(p_assignment) then\n    raise exception 'No tienes acceso a esta asignación' using errcode = '42501';\n  end if;\n  return query\n  with members as (\n    select c.usuario_id from public.hitos_colaboradores c\n    join public.hitos_itinerario h on h.id = c.hito_id\n    where h.asignacion_id = p_assignment\n    union\n    select s.usuario_id from public.asignacion_supervisores s\n    where s.asignacion_id = p_assignment\n  )\n  select p.id, coalesce(nullif(btrim(p.nombre_completo),''),'Sin nombre'),\n    coalesce(nullif(btrim(p.cargo),''),'Sin cargo'),\n    exists(select 1 from public.asignacion_supervisores s\n      where s.asignacion_id = p_assignment and s.usuario_id = p.id) as supervisor\n  from members m join public.perfiles p on p.id = m.usuario_id\n  order by supervisor desc, lower(p.nombre_completo), p.id;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "assignment_deadline(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.assignment_deadline(p_asignacion_id uuid)\n RETURNS timestamp with time zone\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select coalesce(\n    a.fecha_limite,\n    (\n      select h.fecha_programada\n      from public.hitos_itinerario h\n      where h.asignacion_id = a.id\n        and h.fecha_programada is not null\n      order by h.orden desc\n      limit 1\n    )\n  )\n  from public.asignaciones a\n  where a.id = p_asignacion_id;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "assignment_notes(uuid,integer,integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.assignment_notes(p_assignment uuid, p_offset integer DEFAULT 0, p_limit integer DEFAULT 200)\n RETURNS TABLE(id uuid, usuario_id uuid, contenido text, created_at timestamp with time zone, autor_nombre text)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  reveal_authors boolean;\nbegin\n  if auth.uid() is null\n     or not coalesce(public.account_is_approved(), false)\n     or not coalesce(public.puede_ver_asignacion(p_assignment), false) then\n    raise exception 'No tienes acceso a esta asignación' using errcode = '42501';\n  end if;\n\n  if p_offset is null or p_limit is null or p_offset < 0 or p_limit < 1 or p_limit > 200 then\n    raise exception 'Paginación inválida' using errcode = '22023';\n  end if;\n\n  reveal_authors := coalesce(public.can_supervise_assignment(p_assignment), false);\n\n  return query\n  select\n    n.id,\n    case when reveal_authors or n.usuario_id = auth.uid() then n.usuario_id end as usuario_id,\n    n.contenido,\n    n.created_at,\n    case when reveal_authors then nullif(btrim(p.nombre_completo), '') end as autor_nombre\n  from public.notas_asignacion n\n  left join public.perfiles p on p.id = n.usuario_id\n  where n.asignacion_id = p_assignment\n  order by n.created_at desc, n.id\n  offset p_offset\n  limit p_limit;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "can_read_milestone(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.can_read_milestone(p_hito uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select auth.uid() is not null and public.account_is_approved() and exists(\n    select 1 from public.hitos_itinerario h where h.id=p_hito and\n      (public.can_supervise_assignment(h.asignacion_id) or exists(select 1\n        from public.hitos_colaboradores c where c.hito_id=h.id and c.usuario_id=auth.uid())));\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "can_supervise_assignment(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.can_supervise_assignment(p_assignment uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select auth.uid() is not null and public.account_is_approved() and\n    (public.es_admin() or exists(select 1 from public.asignacion_supervisores\n      where asignacion_id=p_assignment and usuario_id=auth.uid()));\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "can_supervise_profile(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.can_supervise_profile(p_user uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select public.account_is_approved() and exists(select 1 from public.hitos_colaboradores c\n    join public.hitos_itinerario h on h.id=c.hito_id\n    where c.usuario_id=p_user and public.can_supervise_assignment(h.asignacion_id));\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "check_account_access()",
+      "definition": "CREATE OR REPLACE FUNCTION public.check_account_access()\n RETURNS void\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\ndeclare path text := trim(both '/' from coalesce(current_setting('request.path',true),''));\r\nbegin\r\n    if auth.role() = 'authenticated' and not public.account_is_approved() then\r\n        if path in ('rpc/my_account_access','rpc/delete_my_account',\r\n            'rpc/register_push_device','rpc/unregister_push_device',\r\n            'rpc/register_android_push_device','rpc/unregister_android_push_device') then return; end if;\r\n        if path = 'perfiles' and current_setting('request.method',true) in ('GET','HEAD') then return; end if;\r\n        raise exception 'Tu cuenta no tiene acceso aprobado' using errcode = '42501';\r\n    end if;\r\nend;\r\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "check_in_milestone(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.check_in_milestone(p_hito_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare h public.hitos_itinerario%rowtype; aid uuid; checked timestamptz:=statement_timestamp();\n  evaluation text; recipient uuid; actor_name text; confirmation_id uuid;\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) then\n    raise exception 'Acceso no aprobado' using errcode='42501'; end if;\n  select asignacion_id into aid from public.hitos_itinerario where id=p_hito_id;\n  perform 1 from public.asignaciones where id=aid for update;\n  select * into h from public.hitos_itinerario where id=p_hito_id;\n  if not found then raise exception 'El hito ya no existe'; end if;\n  if not exists(select 1 from public.hitos_colaboradores where hito_id=h.id and usuario_id=auth.uid()) then\n    raise exception 'No estás asignado a este hito' using errcode='42501'; end if;\n  if exists(select 1 from public.hitos_colaboradores where hito_id=h.id and usuario_id=auth.uid() and confirmado_at is not null) then return; end if;\n  if h.fecha_programada is null then raise exception 'Falta la fecha límite del hito'; end if;\n  if exists(select 1 from public.hitos_itinerario m join public.hitos_colaboradores c on c.hito_id=m.id\n    where m.asignacion_id=aid and m.orden<h.orden and c.usuario_id=auth.uid() and c.confirmado_at is null) then\n    raise exception 'Confirma primero tu hito anterior' using errcode='23514'; end if;\n  evaluation:=milestone_private.confirmation_evaluation(checked,h.fecha_programada);\n  update public.hitos_colaboradores set confirmado_at=checked,hora_programada=h.fecha_programada,estado=evaluation\n    where hito_id=h.id and usuario_id=auth.uid();\n  insert into public.confirmaciones_hitos(asignacion_id,hito_id,usuario_id,created_at,hora_programada,evaluacion)\n    values(aid,h.id,auth.uid(),checked,h.fecha_programada,evaluation) returning id into confirmation_id;\n  select coalesce(nombre_completo,'Un colaborador') into actor_name from public.perfiles where id=auth.uid();\n  for recipient in\n    select id from public.perfiles where rol='admin'\n    union select usuario_id from public.asignacion_supervisores where asignacion_id=aid\n  loop\n    perform notification_private.emit(recipient,'hito_completado','Confirmación de Hito',\n      actor_name||' confirmó '||h.descripcion,'asignacion',aid,null,'checkin:'||confirmation_id::text);\n  end loop;\n  perform set_config('soundisco.individual_checkin','true',true);\n  perform sla_private.advance(aid);\n  if exists(select 1 from public.asignaciones where id=aid and estado='completada') then\n    for recipient in\n      select id from public.perfiles where rol='admin'\n      union select usuario_id from public.asignacion_supervisores where asignacion_id=aid\n    loop\n      perform notification_private.emit(recipient,'asignacion_completada','Asignación completada',\n        'El evento ha sido completado al 100%','asignacion',aid,'completada','checkin-complete:'||confirmation_id::text);\n    end loop;\n  end if;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "claim_android_notification_pushes()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_android_notification_pushes()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, title text, body text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\nbegin\r\n    delete from android_push_private.outbox where created_at < now() - interval '7 days';\r\n    return query\r\n    with candidates as (\r\n        select o.id from android_push_private.outbox o\r\n        join android_push_private.devices d on d.installation = o.installation and d.perfil_id = o.recipient\r\n        join public.notificaciones_app n on n.id = o.notification_id and n.perfil_id = o.recipient\r\n        where o.sent_at is null and o.attempts < 8 and o.next_attempt <= now()\r\n          and (o.leased_until is null or o.leased_until < now())\r\n          and o.created_at > now() - interval '24 hours'\r\n        order by o.created_at limit 50 for update of o skip locked\r\n    ), leased as (\r\n        update android_push_private.outbox o\r\n        set attempts = o.attempts + 1, lease_id = gen_random_uuid(), leased_until = now() + interval '5 minutes',\r\n            leased_token = (select d.token from android_push_private.devices d where d.installation = o.installation)\r\n        where o.id in (select c.id from candidates c) returning o.*\r\n    )\r\n    select l.id, l.lease_id, l.notification_id, l.recipient, l.leased_token, n.titulo, n.mensaje\r\n    from leased l join public.notificaciones_app n on n.id = l.notification_id;\r\nend;\r\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "claim_android_pushes_v2()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_android_pushes_v2()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, title text, body text, is_alarm boolean)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\n  select j.*,coalesce(n.payload->>'is_alarm','false')='true'\r\n  from public.claim_android_pushes() j\r\n  join public.notificaciones_app n on n.id=j.notification_id and n.perfil_id=j.recipient;\r\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "claim_android_pushes()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_android_pushes()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, title text, body text)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  with picked as (\n    select o.id from android_push_private.outbox o\n    join android_push_private.devices d on d.installation=o.installation and d.perfil_id=o.recipient\n    join public.notificaciones_app n on n.id=o.notification_id and n.perfil_id=o.recipient\n    where o.sent_at is null and o.attempts<8 and o.next_attempt<=now()\n      and (o.leased_until is null or o.leased_until<now())\n    order by o.next_attempt,o.id limit 20 for update of o skip locked\n  ), leased as (\n    update android_push_private.outbox o set leased_until=now()+interval '5 minutes',\n      lease_id=gen_random_uuid(), attempts=o.attempts+1\n    from picked where o.id=picked.id returning o.*\n  )\n  select l.id,l.lease_id,l.notification_id,l.recipient,d.token,n.titulo,n.mensaje\n    from leased l join android_push_private.devices d\n      on d.installation=l.installation and d.perfil_id=l.recipient\n    join public.notificaciones_app n on n.id=l.notification_id and n.perfil_id=l.recipient;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "claim_notification_pushes_v2()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_notification_pushes_v2()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, environment text, title text, body text)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select j.job_id,j.lease,j.notification_id,j.recipient,j.token,j.environment,n.titulo,n.mensaje\n  from public.claim_notification_pushes() j join public.notificaciones_app n\n    on n.id = j.notification_id and n.perfil_id = j.recipient;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "claim_notification_pushes_v3()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_notification_pushes_v3()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, environment text, title text, body text, badge integer)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select j.*, (select count(*)::integer from public.notificaciones_app n\n    where n.perfil_id=j.recipient and n.leida is not true)\n  from public.claim_notification_pushes_v2() j;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "claim_notification_pushes_v4()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_notification_pushes_v4()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, environment text, title text, body text, badge integer, is_alarm boolean)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select j.*,coalesce(n.payload->'is_alarm'='true'::jsonb,false)\n  from public.claim_notification_pushes_v3() j\n  join public.notificaciones_app n on n.id=j.notification_id and n.perfil_id=j.recipient\n  where n.tipo is distinct from 'recordatorio'\n    or n.destino_tipo is distinct from 'asignacion'\n    or notification_private.reminder_is_actionable(n.destino_id,n.perfil_id,n.payload);\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "claim_notification_pushes()",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_notification_pushes()\n RETURNS TABLE(job_id uuid, lease uuid, notification_id uuid, recipient uuid, token text, environment text)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  with picked as (\n    select o.id from notification_private.outbox o\n    where o.sent_at is null and o.attempts < 8 and o.next_attempt <= now()\n      and (o.leased_until is null or o.leased_until < now())\n    order by o.next_attempt limit 50 for update skip locked\n  ), leased as (\n    update notification_private.outbox o set leased_until = now() + interval '5 minutes',\n      lease_id = gen_random_uuid(), attempts = attempts + 1\n    from picked where o.id = picked.id returning o.*\n  )\n  select l.id,l.lease_id,l.notification_id,l.recipient,d.token,d.environment\n  from leased l join notification_private.devices d on d.installation = l.installation and d.perfil_id = l.recipient;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "crear_perfil_nuevo_usuario()",
+      "definition": "CREATE OR REPLACE FUNCTION public.crear_perfil_nuevo_usuario()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  insert into public.perfiles (\n    id,\n    nombre_completo,\n    rol,\n    telefono\n  )\n  values (\n    new.id,\n    coalesce(\n      nullif(new.raw_user_meta_data ->> 'nombre_completo', ''),\n      split_part(new.email, '@', 1)\n    ),\n    'tecnico',\n    nullif(new.raw_user_meta_data ->> 'telefono', '')\n  )\n  on conflict (id) do nothing;\n\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "delete_my_account()",
+      "definition": "CREATE OR REPLACE FUNCTION public.delete_my_account()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare uid uuid := auth.uid(); full_name text; user_email text;\nbegin\n  if uid is null then raise exception 'Sesion requerida' using errcode = '42501'; end if;\n  select nombre_completo into full_name from public.perfiles where id=uid for update;\n  select email into user_email from auth.users where id=uid;\n  delete from notification_private.devices where perfil_id=uid;\n  delete from public.asignacion_equipo where perfil_id=uid;\n  update public.comunicados set leido_por=array_remove(leido_por,uid) where uid=any(leido_por);\n  delete from public.notificaciones_app where perfil_id=uid or (destino_tipo='perfil' and destino_id=uid)\n    or (nullif(full_name,'') is not null and destino_tipo='asignacion'\n      and left(mensaje,length(full_name)+1)=full_name||' ')\n    or (nullif(user_email,'') is not null and position(user_email in mensaje)>0);\n  update notification_private.assignment_events set actor=null where actor=uid;\n  delete from public.perfiles where id=uid;\n  delete from auth.users where id=uid;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "employee_complete_milestone(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.employee_complete_milestone(p_hito_id uuid, p_notas text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if nullif(btrim(p_notas),'') is not null then raise exception 'Actualiza la app para enviar notas independientes'; end if;\n  perform public.check_in_milestone(p_hito_id);\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "es_admin()",
+      "definition": "CREATE OR REPLACE FUNCTION public.es_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select public.account_is_approved() and exists (\n    select 1 from public.perfiles where id = auth.uid() and rol = 'admin');\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "finish_android_notification_push(uuid,uuid,boolean,text,boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_android_notification_push(p_job uuid, p_lease uuid, p_success boolean, p_error text, p_invalid boolean DEFAULT false)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\ndeclare j android_push_private.outbox%rowtype;\r\nbegin\r\n    select * into j from android_push_private.outbox where id = p_job and lease_id = p_lease and sent_at is null for update;\r\n    if not found then return; end if;\r\n    if p_invalid then\r\n        delete from android_push_private.devices\r\n        where installation = j.installation and perfil_id = j.recipient and token = j.leased_token;\r\n    end if;\r\n    update android_push_private.outbox set\r\n        sent_at = case when p_success then now() else null end,\r\n        last_error = case when p_success then null else left(p_error, 120) end,\r\n        lease_id = null, leased_until = null,\r\n        next_attempt = now() + make_interval(secs => least(3600, (power(2, j.attempts) * 15)::integer))\r\n    where id = j.id;\r\nend;\r\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "finish_android_push(uuid,uuid,boolean,text,boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_android_push(p_job uuid, p_lease uuid, p_success boolean, p_error text, p_invalid boolean DEFAULT false)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare j android_push_private.outbox%rowtype;\nbegin\n  select * into j from android_push_private.outbox\n    where id=p_job and lease_id=p_lease and sent_at is null for update;\n  if not found then return; end if;\n  if p_invalid then\n    delete from android_push_private.devices where installation=j.installation and perfil_id=j.recipient;\n  else\n    update android_push_private.outbox set sent_at=case when p_success then now() else null end,\n      last_error=case when p_success then null else left(p_error,300) end,\n      leased_until=null,lease_id=null,\n      next_attempt=now()+make_interval(secs=>least(3600,30*power(2,attempts)::integer))\n    where id=p_job;\n  end if;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "finish_notification_push(uuid,uuid,boolean,text,boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_notification_push(p_job uuid, p_lease uuid, p_success boolean, p_error text, p_invalid boolean DEFAULT false)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare j notification_private.outbox%rowtype;\nbegin\n  select * into j from notification_private.outbox where id = p_job and lease_id = p_lease for update;\n  if not found then return; end if;\n  if p_invalid then\n    delete from notification_private.devices where installation = j.installation and perfil_id = j.recipient;\n  else\n    update notification_private.outbox set sent_at = case when p_success then now() else null end,\n      last_error = left(p_error,300),leased_until = null,\n      next_attempt = now() + make_interval(secs => least(3600,30 * power(2,attempts)::integer))\n    where id = p_job;\n  end if;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "generate_notification_reminders()",
+      "definition": "CREATE OR REPLACE FUNCTION public.generate_notification_reminders()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  r record;\n  tick timestamptz := clock_timestamp();\n  phase text;\n  minutes_after integer;\n  following timestamptz;\nbegin\n  if not pg_try_advisory_xact_lock(81420931) then return; end if;\n  for r in\n    select s.*,h.asignacion_id,h.descripcion\n    from notification_private.milestone_reminders s\n    join public.hitos_colaboradores c on c.hito_id=s.hito_id and c.usuario_id=s.usuario_id\n    join public.hitos_itinerario h on h.id=s.hito_id\n    join public.asignaciones a on a.id=h.asignacion_id\n    where s.next_reminder_at<=tick and c.confirmado_at is null and h.fecha_programada=s.due_at\n    order by s.next_reminder_at,s.hito_id,s.usuario_id\n    limit 500 for update of h,c,s skip locked\n  loop\n    minutes_after:=case\n      when tick>=r.due_at+interval '60 minutes' then 60\n      when tick>=r.due_at+interval '30 minutes' then 30\n      else 15 end;\n    phase:='after:' || minutes_after::text;\n    following:=case minutes_after\n      when 15 then r.due_at+interval '30 minutes'\n      when 30 then r.due_at+interval '60 minutes'\n      else 'infinity'::timestamptz end;\n    insert into public.notificaciones_app(id,perfil_id,titulo,mensaje,leida,fecha_creacion,\n      tipo,destino_tipo,destino_id,evento_key,payload)\n      values(gen_random_uuid(),r.usuario_id,\n        'Recordatorio de Hito',\n        'El hito ' || coalesce(r.descripcion,'pendiente') || ' está vencido. Confírmalo cuanto antes.',\n        false,tick,'recordatorio','asignacion',r.asignacion_id,\n        'milestone-reminder:' || r.generation::text || ':' || phase,\n        jsonb_build_object('is_alarm',false,'hito_id',r.hito_id,'due_at',r.due_at,\n          'reminder_phase',phase,'reminder_schedule','overdue-three-v2'))\n      on conflict(perfil_id,evento_key) do nothing;\n    update notification_private.milestone_reminders\n      set next_reminder_at=following,last_reminder_sent_at=tick,last_phase=phase\n      where hito_id=r.hito_id and usuario_id=r.usuario_id;\n  end loop;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "moderation_private.validate_content()",
+      "definition": "CREATE OR REPLACE FUNCTION moderation_private.validate_content()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare content text;\nbegin\n  content:=lower(regexp_replace(coalesce(to_jsonb(new)->>'contenido',\n    (to_jsonb(new)->>'asunto')||' '||(to_jsonb(new)->>'mensaje'),''),'[[:space:][:punct:]]+',' ','g'));\n  if exists(select 1 from moderation_private.blocked_phrases p\n    where position(' '||p.phrase||' ' in ' '||content||' ')>0) then\n    raise exception 'El contenido contiene expresiones no permitidas. Revísalo antes de publicarlo.' using errcode='22023';\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "my_account_access()",
+      "definition": "CREATE OR REPLACE FUNCTION public.my_account_access()\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare state text;\nbegin\n  if auth.uid() is null then raise exception 'Sesion requerida' using errcode = '42501'; end if;\n  select estado into state from account_private.access where user_id = auth.uid();\n  if state is null then raise exception 'No existe el perfil de acceso. Contacta con administracion.' using errcode = '42501'; end if;\n  return jsonb_build_object('estado',state);\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "notification_private.assignment_note_added()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.assignment_note_added()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare assignment_title text;\nbegin\n  select titulo into assignment_title from public.asignaciones where id=new.asignacion_id;\n  insert into public.notificaciones_app(id,perfil_id,titulo,mensaje,leida,fecha_creacion,\n    tipo,destino_tipo,destino_id,asignacion_relacionada_id,evento_key)\n  select gen_random_uuid(),r.id,'Nueva nota / incidencia',\n    'Se añadió una nota o incidencia en '||coalesce(assignment_title,'la asignación'),false,now(),\n    'nota_asignacion','asignacion',new.asignacion_id,new.asignacion_id,'note:'||new.id::text\n  from (\n    select id from public.perfiles where rol='admin'\n    union select usuario_id from public.asignacion_supervisores where asignacion_id=new.asignacion_id\n    union select c.usuario_id from public.hitos_colaboradores c\n      join public.hitos_itinerario h on h.id=c.hito_id where h.asignacion_id=new.asignacion_id\n  ) r on conflict(perfil_id,evento_key) do nothing;\n  return new;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.bulletin_event()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.bulletin_event()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare c public.comunicados%rowtype; recipient uuid; kind text; title text; body text;\nbegin\n  if tg_op = 'UPDATE' and (old.asunto,old.mensaje) is not distinct from (new.asunto,new.mensaje) then return new; end if;\n  if tg_op = 'DELETE' then c := old; else c := new; end if;\n  kind := case tg_op when 'INSERT' then 'comunicado_nuevo' when 'UPDATE' then 'comunicado_actualizado' else 'comunicado_eliminado' end;\n  title := case tg_op when 'INSERT' then 'Nuevo Comunicado de Admin' when 'UPDATE' then 'Comunicado actualizado' else 'Comunicado retirado' end;\n  body := case tg_op when 'INSERT' then c.asunto when 'UPDATE' then 'El comunicado ' || c.asunto || ' ha sido modificado'\n    else 'El comunicado ' || c.asunto || ' ya no está disponible' end;\n  for recipient in select id from public.perfiles loop\n    perform notification_private.emit(recipient,kind,title,body,'comunicado',c.id,null,\n      txid_current()::text || ':comunicado:' || c.id::text || ':' || tg_op);\n  end loop;\n  if tg_op = 'DELETE' then return old; end if; return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.cancel_deleted_assignment_reminders()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.cancel_deleted_assignment_reminders()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  delete from public.notificaciones_app\n  where destino_tipo='asignacion'\n    and tipo='recordatorio'\n    and destino_id=old.id;\n  return old;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.cancel_stale_milestone_reminders()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.cancel_stale_milestone_reminders()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare aid uuid;\nbegin\n  if tg_table_name='asignaciones' then\n    aid:=old.id;\n  elsif tg_table_name='hitos_itinerario' then\n    aid:=old.asignacion_id;\n  else\n    select asignacion_id into aid from public.hitos_itinerario where id=old.hito_id;\n  end if;\n  delete from public.notificaciones_app n\n    where n.tipo='recordatorio' and n.destino_tipo='asignacion'\n      and n.destino_id=aid\n      and not notification_private.reminder_is_actionable(n.destino_id,n.perfil_id,n.payload);\n  return null;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.capture_assignment()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.capture_assignment()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  aid uuid; title text; state text; team uuid[]; priority text;\n  content boolean := false; progress boolean := false; milestones text[] := '{}';\nbegin\n  if tg_op = 'UPDATE' and to_jsonb(old) = to_jsonb(new) then return new; end if;\n  if tg_table_name = 'asignaciones' then\n    aid := case when tg_op = 'DELETE' then old.id else new.id end;\n    title := case when tg_op = 'INSERT' then new.titulo else old.titulo end;\n    state := case when tg_op = 'INSERT' then null else old.estado end;\n    priority := case when tg_op = 'INSERT' then null else old.nivel_prioridad end;\n    content := tg_op <> 'UPDATE' or\n      (to_jsonb(old) - 'estado') is distinct from (to_jsonb(new) - 'estado');\n    progress := tg_op = 'UPDATE' and old.estado is distinct from new.estado;\n  else\n    aid := case when tg_op = 'DELETE' then old.asignacion_id else new.asignacion_id end;\n    select titulo,estado,nivel_prioridad into title,state,priority from public.asignaciones where id = aid;\n    if tg_table_name = 'hitos_itinerario' then\n      progress := tg_op = 'UPDATE' and\n        (old.completado,old.estado_hito,old.notas_incidencias) is distinct from\n        (new.completado,new.estado_hito,new.notas_incidencias);\n      if tg_op = 'UPDATE' and (coalesce(new.completado,false) or new.estado_hito = 'completado')\n        and not (coalesce(old.completado,false) or coalesce(old.estado_hito,'') = 'completado') then\n        milestones := array[coalesce(nullif(new.descripcion,''),'el hito')];\n      end if;\n      content := tg_op <> 'UPDATE' or\n        (old.descripcion,old.fecha_programada,old.orden) is distinct from\n        (new.descripcion,new.fecha_programada,new.orden);\n    end if;\n  end if;\n  select coalesce(array_agg(distinct perfil_id),'{}') into team\n    from public.asignacion_equipo where asignacion_id = aid;\n  insert into notification_private.assignment_events(\n    transaction_id,assignment_id,old_team,old_title,old_state,actor,content_changed,\n    progress_changed,old_priority,completed_milestones)\n  values(txid_current(),aid,team,title,state,auth.uid(),content,progress,priority,milestones)\n  on conflict(transaction_id,assignment_id) do update set\n    content_changed = assignment_events.content_changed or excluded.content_changed,\n    progress_changed = assignment_events.progress_changed or excluded.progress_changed,\n    completed_milestones = assignment_events.completed_milestones || excluded.completed_milestones;\n  if tg_op = 'DELETE' then return old; end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.emit(uuid,text,text,text,text,uuid,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.emit(recipient uuid, kind text, title text, body text, target_type text, target_id uuid, state text, event_key text)\n RETURNS void\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  insert into public.notificaciones_app(id,perfil_id,titulo,mensaje,leida,fecha_creacion,\n    tipo,destino_tipo,destino_id,estado,evento_key)\n  select gen_random_uuid(),recipient,title,body,false,now(),kind,target_type,target_id,state,event_key\n  where recipient is distinct from auth.uid()\n    or (kind='asignacion_nueva' and target_type='asignacion' and exists(\n      select 1 from public.asignacion_equipo e where e.asignacion_id=target_id and e.perfil_id=recipient))\n  on conflict(perfil_id,evento_key) do nothing;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.enqueue_push()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.enqueue_push()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  insert into notification_private.outbox(notification_id,installation,recipient)\n    select new.id, installation, new.perfil_id from notification_private.devices where perfil_id = new.perfil_id;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.flush_assignment()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.flush_assignment()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  e notification_private.assignment_events%rowtype;\n  a public.asignaciones%rowtype;\n  team uuid[]; recipient uuid; kind text; title text; body text;\n  event_key text; assignment_title text;\nbegin\n  delete from notification_private.assignment_events\n    where transaction_id=new.transaction_id and assignment_id=new.assignment_id returning * into e;\n  if not found then return null; end if;\n  if current_setting('soundisco.individual_checkin',true)='true' then return null; end if;\n  select * into a from public.asignaciones where id=e.assignment_id;\n  select coalesce(array_agg(distinct perfil_id),'{}') into team\n    from public.asignacion_equipo where asignacion_id=e.assignment_id;\n  assignment_title:=coalesce(nullif(a.titulo,''),nullif(e.old_title,''),'la actividad');\n  event_key:=e.transaction_id::text||':'||e.assignment_id::text;\n  for recipient in select distinct unnest(e.old_team||team) loop\n    kind:=null;\n    if a.id is null then\n      kind:='asignacion_eliminada'; title:='Asignación cancelada';\n      body:='La asignación '||assignment_title||' ha sido eliminada';\n    elsif recipient=any(e.old_team) and not recipient=any(team) then\n      kind:='asignacion_retirada'; title:='Asignación cancelada';\n      body:='Has sido removido de la asignación '||assignment_title;\n    elsif recipient=any(team) and not recipient=any(e.old_team) then\n      kind:='asignacion_nueva'; title:='Nueva asignación';\n      body:=case when a.tipo_flujo='campo' then 'Se te ha asignado al montaje: '\n        else 'Se te ha asignado la tarea: ' end||assignment_title;\n    elsif e.content_changed or\n      (select array_agg(x order by x) from unnest(e.old_team) x) is distinct from\n      (select array_agg(x order by x) from unnest(team) x) then\n      kind:='asignacion_actualizada'; title:='Cambios en tu evento';\n      body:='La asignación '||assignment_title||' ha sido modificada';\n    end if;\n    if kind is not null then\n      perform notification_private.emit(recipient,kind,title,body,'asignacion',e.assignment_id,a.estado,event_key);\n    end if;\n    if a.id is not null and recipient=any(team) and lower(a.nivel_prioridad)='alta'\n      and lower(coalesce(e.old_priority,''))<>'alta' then\n      perform notification_private.emit(recipient,'asignacion_urgente','¡URGENTE!',\n        'La asignación '||assignment_title||' ha sido marcada como urgente. Se requiere atención inmediata en el evento.',\n        'asignacion',e.assignment_id,a.estado,event_key||':urgente');\n    end if;\n  end loop;\n  return null;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.guard_reminder_insert()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.guard_reminder_insert()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if new.tipo='recordatorio' and new.destino_tipo='asignacion'\n    and not notification_private.reminder_is_actionable(new.destino_id,new.perfil_id,new.payload) then\n    return null;\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.profile_registered()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.profile_registered()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare recipient uuid;\nbegin\n  for recipient in select p.id from public.perfiles p join account_private.access a on a.user_id=p.id\n    where p.rol='admin' and a.estado='aprobada' and p.id<>new.id loop\n    perform notification_private.emit(recipient,'usuario_nuevo','Nuevo registro',\n      'Un nuevo usuario ha creado sus credenciales y espera tu aprobacion',\n      'perfil',new.id,null,'registro:'||new.id::text);\n  end loop;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.purge_sent_outbox()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.purge_sent_outbox()\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare removed bigint;\nbegin\n  delete from notification_private.outbox\n  where sent_at < now() - interval '30 days'\n    and (leased_until is null or leased_until < now());\n  get diagnostics removed = row_count;\n  return removed;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.reminder_is_actionable(uuid,uuid,jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.reminder_is_actionable(assignment_id uuid, recipient_id uuid, reminder_payload jsonb)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select exists (\n    select 1\n    from public.asignaciones a\n    join public.hitos_itinerario h on h.asignacion_id=a.id\n    join public.hitos_colaboradores c on c.hito_id=h.id\n    where a.id=assignment_id\n      and c.usuario_id=recipient_id\n      and c.confirmado_at is null\n      and h.id::text=reminder_payload->>'hito_id'\n      and h.fecha_programada is not null\n      and (reminder_payload->>'due_at')::timestamptz=h.fecha_programada\n  );\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.sync_member_reminder()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.sync_member_reminder()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare due timestamptz;\nbegin\n  select fecha_programada into due from public.hitos_itinerario where id=new.hito_id;\n  if new.confirmado_at is not null or due is null then\n    delete from notification_private.milestone_reminders\n      where hito_id=new.hito_id and usuario_id=new.usuario_id;\n  else\n    insert into notification_private.milestone_reminders(hito_id,usuario_id,due_at,next_reminder_at)\n      values(new.hito_id,new.usuario_id,due,due+interval '15 minutes')\n      on conflict(hito_id,usuario_id) do nothing;\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notification_private.sync_milestone_reminders()",
+      "definition": "CREATE OR REPLACE FUNCTION notification_private.sync_milestone_reminders()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if new.fecha_programada is not distinct from old.fecha_programada then return new; end if;\n  delete from notification_private.milestone_reminders where hito_id=new.id;\n  if new.fecha_programada is not null then\n    insert into notification_private.milestone_reminders(hito_id,usuario_id,due_at,next_reminder_at)\n      select new.id,c.usuario_id,new.fecha_programada,new.fecha_programada+interval '15 minutes'\n      from public.hitos_colaboradores c where c.hito_id=new.id and c.confirmado_at is null;\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "notifications_mark_read(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.notifications_mark_read(p_id uuid DEFAULT NULL::uuid)\n RETURNS void\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  update public.notificaciones_app set leida = true\n  where perfil_id = auth.uid() and (p_id is null or id = p_id);\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "process_assignment_sla()",
+      "definition": "CREATE OR REPLACE FUNCTION public.process_assignment_sla()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare a record;\nbegin\n  if not pg_try_advisory_xact_lock(81420932) then return; end if;\n  for a in select id from public.asignaciones where estado is distinct from 'completada' order by id loop\n    perform sla_private.advance(a.id);\n  end loop;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": false
+    },
+    {
+      "signature": "proteger_rol_perfil()",
+      "definition": "CREATE OR REPLACE FUNCTION public.proteger_rol_perfil()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.role() in ('authenticated', 'anon') then\n    if tg_op = 'INSERT' then\n      if new.rol = 'admin' and not coalesce(public.es_admin(), false) then\n        raise exception 'No puedes asignar privilegios de administrador' using errcode = '42501';\n      end if;\n    elsif new.rol is distinct from old.rol and not coalesce(public.es_admin(), false) then\n      raise exception 'Solo administradores pueden cambiar roles' using errcode = '42501';\n    end if;\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "puede_ver_asignacion(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.puede_ver_asignacion(p_asignacion_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select public.es_admin() or exists (\n    select 1\n    from public.asignacion_equipo\n    where asignacion_id = p_asignacion_id\n      and perfil_id = (select auth.uid())\n  );\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "register_android_push_device(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.register_android_push_device(p_installation uuid, p_token text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null or not exists(select 1 from public.perfiles where id=auth.uid()) then\n    raise exception 'Perfil requerido' using errcode='42501';\n  end if;\n  if p_installation is null or p_token is null or length(p_token) not between 20 and 4096\n    or p_token ~ '[[:space:][:cntrl:]]' then\n    raise exception 'Dispositivo invalido' using errcode='22023';\n  end if;\n  perform pg_advisory_xact_lock(hashtextextended('android-installation:' || p_installation::text,0));\n  perform pg_advisory_xact_lock(hashtextextended('android-token:' || p_token,0));\n  delete from android_push_private.devices\n    where (token=p_token and installation<>p_installation)\n       or (installation=p_installation and (perfil_id<>auth.uid() or token<>p_token));\n  insert into android_push_private.devices(installation,perfil_id,token)\n    values(p_installation,auth.uid(),p_token)\n    on conflict(installation) do update set updated_at=now();\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "register_push_device(uuid,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.register_push_device(p_installation uuid, p_token text, p_environment text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null\n    or not exists(select 1 from public.perfiles where id = auth.uid()) then\n    raise exception 'Perfil requerido' using errcode = '42501';\n  end if;\n\n  if p_token !~ '^[0-9a-f]{64,200}$'\n    or p_environment not in ('sandbox', 'production') then\n    raise exception 'Dispositivo invalido' using errcode = '22023';\n  end if;\n\n  perform pg_advisory_xact_lock(\n    hashtextextended(p_environment || ':' || p_token, 0)\n  );\n\n  delete from notification_private.devices\n  where token = p_token\n    and environment = p_environment\n    and installation <> p_installation;\n\n  insert into notification_private.devices(\n    installation,\n    perfil_id,\n    token,\n    environment,\n    updated_at\n  )\n  values(\n    p_installation,\n    auth.uid(),\n    p_token,\n    p_environment,\n    now()\n  )\n  on conflict(installation) do update set\n    perfil_id = excluded.perfil_id,\n    token = excluded.token,\n    environment = excluded.environment,\n    updated_at = now();\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "report_assignment_note(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.report_assignment_note(p_note_id uuid, p_reason text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare aid uuid;\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) then\n    raise exception 'Acceso no aprobado' using errcode='42501'; end if;\n  select asignacion_id into aid from public.notas_asignacion where id=p_note_id;\n  if aid is null or not coalesce(public.puede_ver_asignacion(aid),false) then\n    raise exception 'No tienes acceso a esta nota' using errcode='42501'; end if;\n  if p_reason is null or p_reason not in ('acoso','contenido_inapropiado','datos_personales','otro') then\n    raise exception 'Selecciona un motivo válido' using errcode='22023'; end if;\n  insert into moderation_private.note_reports(note_id,reporter_id,reason)\n    values(p_note_id,auth.uid(),p_reason) on conflict(note_id,reporter_id) do nothing;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "schema": "scheduling_private",
+      "signature": "scheduling_private.assignment_changed()",
+      "definition": "CREATE OR REPLACE FUNCTION scheduling_private.assignment_changed()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare old_id uuid; new_id uuid;\nbegin\n  if tg_table_name = 'asignaciones' then\n    if tg_op <> 'INSERT' then old_id := old.id; end if;\n    if tg_op <> 'DELETE' then new_id := new.id; end if;\n  else\n    if tg_op <> 'INSERT' then old_id := old.asignacion_id; end if;\n    if tg_op <> 'DELETE' then new_id := new.asignacion_id; end if;\n  end if;\n  if old_id is not null and old_id is distinct from new_id then\n    perform scheduling_private.sync_assignment(old_id);\n  end if;\n  if new_id is not null then perform scheduling_private.sync_assignment(new_id); end if;\n  return null;\nend;\n$function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "scheduling_private",
+      "signature": "scheduling_private.sync_assignment(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION scheduling_private.sync_assignment(p_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare a public.asignaciones%rowtype;\nbegin\n  select * into a from public.asignaciones where id=p_id for update;\n  delete from scheduling_private.bookings where asignacion_id=p_id;\n  if a.id is null or a.estado='completada' then return; end if;\n  insert into scheduling_private.bookings(asignacion_id,perfil_id,periodo)\n  select p_id,usuario_id,tstzrange(case when a.tipo_flujo='administrativa' then a.fecha_creacion\n    else min(fecha_programada) end,max(fecha_programada),'[]')\n  from (\n    select c.usuario_id,h.fecha_programada from public.hitos_colaboradores c\n      join public.hitos_itinerario h on h.id=c.hito_id where h.asignacion_id=p_id\n    union all\n    select s.usuario_id,h.fecha_programada from public.asignacion_supervisores s\n      join public.hitos_itinerario h on h.asignacion_id=s.asignacion_id where s.asignacion_id=p_id\n  ) members group by usuario_id order by usuario_id;\nexception when exclusion_violation then\n  raise exception 'Un colaborador no esta disponible entre sus hitos asignados. Revisa la seleccion.' using errcode='23P01';\nend $function$\n",
+      "owner": "postgres"
+    },
+    {
+      "signature": "sync_assignment_deadline_from_milestones()",
+      "definition": "CREATE OR REPLACE FUNCTION public.sync_assignment_deadline_from_milestones()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_asignacion_id uuid := coalesce(new.asignacion_id, old.asignacion_id);\n  v_deadline timestamptz;\nbegin\n  select h.fecha_programada\n    into v_deadline\n  from public.hitos_itinerario h\n  where h.asignacion_id = v_asignacion_id\n    and h.fecha_programada is not null\n  order by h.orden desc\n  limit 1;\n\n  update public.asignaciones\n  set fecha_limite = v_deadline\n  where id = v_asignacion_id\n    and fecha_limite is distinct from v_deadline;\n\n  if tg_op = 'DELETE' then\n    return old;\n  end if;\n  return new;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "undo_milestone_confirmation(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.undo_milestone_confirmation(p_hito_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare h public.hitos_itinerario%rowtype; aid uuid; confirmation_id uuid; recipient uuid; actor_name text;\nbegin\n  if auth.uid() is null or not coalesce(public.account_is_approved(),false) then\n    raise exception 'Acceso no aprobado' using errcode='42501'; end if;\n  select asignacion_id into aid from public.hitos_itinerario where id=p_hito_id;\n  perform 1 from public.asignaciones where id=aid for update;\n  select * into h from public.hitos_itinerario where id=p_hito_id;\n  if not found then raise exception 'El hito ya no existe'; end if;\n  if not exists(select 1 from public.hitos_colaboradores where hito_id=h.id and usuario_id=auth.uid()) then\n    raise exception 'No estás asignado a este hito' using errcode='42501'; end if;\n  if not exists(select 1 from public.hitos_colaboradores where hito_id=h.id and usuario_id=auth.uid() and confirmado_at is not null) then return; end if;\n  delete from public.confirmaciones_hitos where hito_id=h.id and usuario_id=auth.uid() returning id into confirmation_id;\n  update public.hitos_colaboradores set confirmado_at=null,estado='sin_confirmar',hora_programada=h.fecha_programada\n    where hito_id=h.id and usuario_id=auth.uid();\n  perform sla_private.advance(aid);\n  select coalesce(nombre_completo,'Un colaborador') into actor_name from public.perfiles where id=auth.uid();\n  for recipient in\n    select id from public.perfiles where rol='admin'\n    union select usuario_id from public.asignacion_supervisores where asignacion_id=aid\n  loop\n    perform notification_private.emit(recipient,'hito_revertido','Confirmación deshecha',\n      actor_name||' deshizo su confirmación de '||h.descripcion,'asignacion',aid,null,\n      'undo:'||coalesce(confirmation_id,gen_random_uuid())::text);\n  end loop;\nend $function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "unregister_android_push_device(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.unregister_android_push_device(p_installation uuid)\n RETURNS void\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  delete from android_push_private.devices where installation=p_installation and perfil_id=auth.uid();\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "unregister_push_device(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.unregister_push_device(p_installation uuid)\n RETURNS void\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  delete from notification_private.devices where installation = p_installation and perfil_id = auth.uid();\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "signature": "update_my_profile(text,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.update_my_profile(p_username text, p_phone text, p_job text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_user uuid := auth.uid();\n  v_username text := btrim(coalesce(p_username, ''));\n  v_phone text := btrim(coalesce(p_phone, ''));\n  v_job text := btrim(coalesce(p_job, ''));\nbegin\n  if v_user is null or not coalesce(public.account_is_approved(), false) then\n    raise exception 'Tu cuenta no tiene acceso' using errcode = '42501';\n  end if;\n  if char_length(v_username) not between 3 and 30 or v_username !~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' then\n    raise exception 'El nombre de usuario no es válido' using errcode = '22023';\n  end if;\n  if v_phone !~ '^[0-9+() -]+$'\n     or char_length(regexp_replace(v_phone, '[^0-9]', '', 'g')) not between 10 and 15 then\n    raise exception 'El teléfono no es válido' using errcode = '22023';\n  end if;\n  if not exists(select 1 from public.cargos_empresa where nombre = v_job and activo) then\n    raise exception 'Selecciona un cargo válido' using errcode = '22023';\n  end if;\n  update public.perfiles set nombre_usuario = v_username, telefono = v_phone, cargo = v_job\n  where id = v_user;\n  if not found then\n    raise exception 'No se encontró tu perfil' using errcode = 'P0002';\n  end if;\n  update auth.users\n  set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) ||\n      jsonb_build_object('nombre_usuario', v_username, 'telefono', v_phone, 'cargo', v_job)\n  where id = v_user;\nend;\n$function$\n",
+      "owner": "postgres",
+      "client_execute": true
+    },
+    {
+      "schema": "milestone_private",
+      "signature": "milestone_private.confirmation_evaluation(timestamp with time zone,timestamp with time zone)",
+      "definition": "CREATE OR REPLACE FUNCTION milestone_private.confirmation_evaluation(confirmed_at timestamp with time zone, scheduled_at timestamp with time zone)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE STRICT\n SET search_path TO ''\nAS $function$\n  select case when confirmed_at<scheduled_at then 'temprano'\n    when confirmed_at<=scheduled_at+interval '15 minutes' then 'a_tiempo'\n    else 'tardio' end;\n$function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "milestone_private",
+      "signature": "milestone_private.create_legacy(jsonb,uuid[],jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION milestone_private.create_legacy(p_asignacion jsonb, p_empleados uuid[], p_hitos jsonb DEFAULT '[]'::jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_assignment_id uuid := coalesce(\n    nullif(p_asignacion ->> 'id', '')::uuid,\n    gen_random_uuid()\n  );\n  v_tipo text := nullif(btrim(p_asignacion ->> 'tipo_flujo'), '');\n  v_titulo text := nullif(btrim(p_asignacion ->> 'titulo'), '');\n  v_ubicacion text := nullif(btrim(p_asignacion ->> 'ubicacion'), '');\n  v_prioridad text := nullif(btrim(p_asignacion ->> 'nivel_prioridad'), '');\n  v_fecha_creacion timestamptz := coalesce(\n    nullif(p_asignacion ->> 'fecha_creacion', '')::timestamptz,\n    now()\n  );\n  v_fecha_limite timestamptz;\n  v_hito_count integer;\n  v_hito jsonb;\nbegin\n  if auth.uid() is null or not coalesce(public.es_admin(), false) then\n    raise exception 'Solo los administradores pueden crear asignaciones.';\n  end if;\n\n  if v_titulo is null then\n    raise exception 'El titulo de la asignacion es obligatorio.';\n  end if;\n\n  if v_tipo not in ('campo', 'administrativa') then\n    raise exception 'El tipo de flujo no es valido.';\n  end if;\n\n  if v_prioridad not in ('baja', 'media', 'alta') then\n    raise exception 'El nivel de prioridad no es valido.';\n  end if;\n\n  if coalesce(cardinality(p_empleados), 0) = 0 then\n    raise exception 'Selecciona al menos un responsable.';\n  end if;\n\n  if jsonb_typeof(coalesce(p_hitos, '[]'::jsonb)) <> 'array' then\n    raise exception 'Los hitos deben enviarse como un arreglo.';\n  end if;\n\n  v_hito_count := jsonb_array_length(coalesce(p_hitos, '[]'::jsonb));\n\n  if v_tipo = 'campo' then\n    if v_ubicacion is null then\n      raise exception 'Las operaciones de campo requieren ubicacion.';\n    end if;\n\n    if v_hito_count = 0 then\n      raise exception 'Las operaciones de campo requieren al menos un hito.';\n    end if;\n  else\n    if v_ubicacion is not null then\n      raise exception 'Las tareas administrativas no deben incluir ubicacion.';\n    end if;\n\n  end if;\n\n  if v_hito_count = 0 then\n    raise exception 'La asignacion requiere al menos un hito.';\n  end if;\n\n    for v_hito in select value from jsonb_array_elements(p_hitos)\n    loop\n      if nullif(v_hito ->> 'id', '') is null\n        or nullif(btrim(v_hito ->> 'descripcion'), '') is null\n        or nullif(v_hito ->> 'orden', '') is null\n        or nullif(v_hito ->> 'fecha_programada', '') is null\n        or nullif(v_hito ->> 'hora_estimada', '') is null then\n        raise exception 'Cada hito requiere id, titulo, orden, fecha y hora.';\n      end if;\n    end loop;\n\n    if (\n      select count(distinct value ->> 'id')\n      from jsonb_array_elements(p_hitos)\n    ) <> v_hito_count then\n      raise exception 'Los identificadores de los hitos no pueden repetirse.';\n    end if;\n\n    if (\n      select count(distinct (value ->> 'orden')::integer)\n      from jsonb_array_elements(p_hitos)\n    ) <> v_hito_count then\n      raise exception 'El orden de los hitos no puede repetirse.';\n    end if;\n\n  if exists (\n    select 1 from (\n      select (h ->> 'fecha_programada')::timestamptz as fecha,\n        lag((h ->> 'fecha_programada')::timestamptz)\n          over (order by (h ->> 'orden')::integer) as anterior\n      from jsonb_array_elements(p_hitos) h\n    ) ordered_hitos\n    where fecha < anterior\n  ) then\n    raise exception 'Las fechas de los hitos deben seguir el orden del itinerario.';\n  end if;\n\n  if v_tipo = 'administrativa' and exists (\n    select 1 from jsonb_array_elements(p_hitos) h\n    where (h ->> 'fecha_programada')::timestamptz\n      < v_fecha_creacion\n  ) then\n    raise exception 'Los hitos administrativos no pueden ser anteriores a la creacion.';\n  end if;\n\n  if v_tipo = 'administrativa' then\n    select (h ->> 'fecha_programada')::timestamptz\n      into v_fecha_limite\n    from jsonb_array_elements(p_hitos) h\n    order by (h ->> 'orden')::integer desc\n    limit 1;\n  end if;\n\n  insert into public.asignaciones (\n    id,\n    titulo,\n    tipo_flujo,\n    ubicacion,\n    nivel_prioridad,\n    instrucciones,\n    estado,\n    fecha_creacion,\n    fecha_limite\n  ) values (\n    v_assignment_id,\n    v_titulo,\n    v_tipo,\n    case when v_tipo = 'campo' then v_ubicacion else null end,\n    v_prioridad,\n    nullif(btrim(p_asignacion ->> 'instrucciones'), ''),\n    coalesce(nullif(p_asignacion ->> 'estado', ''), 'pendiente'),\n    v_fecha_creacion,\n    case when v_tipo = 'administrativa' then v_fecha_limite else null end\n  );\n\n  insert into public.asignacion_equipo (asignacion_id, perfil_id)\n  select v_assignment_id, perfil_id\n  from unnest(p_empleados) as perfil_id\n  group by perfil_id;\n\n    insert into public.hitos_itinerario (\n      id,\n      asignacion_id,\n      orden,\n      descripcion,\n      hora_estimada,\n      completado,\n      estado_hito,\n      fecha_programada\n    )\n    select\n      (hito ->> 'id')::uuid,\n      v_assignment_id,\n      (hito ->> 'orden')::integer,\n      btrim(hito ->> 'descripcion'),\n      (hito ->> 'hora_estimada')::time,\n      false,\n      case\n        when (hito ->> 'orden')::integer = 1 then 'en_curso'\n        else 'bloqueado'\n      end,\n      (hito ->> 'fecha_programada')::timestamptz\n    from jsonb_array_elements(p_hitos) as hito;\n\n  return v_assignment_id;\nend;\n$function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "milestone_private",
+      "signature": "milestone_private.save_members(uuid,jsonb,jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION milestone_private.save_members(p_assignment uuid, p_hitos jsonb, p_supervisores jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare v_hito jsonb;\nbegin\n  delete from public.confirmaciones_hitos c using public.hitos_itinerario h\n    where h.id=c.hito_id and h.asignacion_id=p_assignment and not exists(\n      select 1 from jsonb_array_elements(p_hitos) j\n      cross join lateral jsonb_array_elements_text(j->'colaboradores') u\n      where (j->>'id')::uuid=h.id and u.value::uuid=c.usuario_id);\n\n  delete from public.hitos_colaboradores c using public.hitos_itinerario h\n    where h.id=c.hito_id and h.asignacion_id=p_assignment and not exists(\n      select 1 from jsonb_array_elements(p_hitos) j\n      cross join lateral jsonb_array_elements_text(j->'colaboradores') u\n      where (j->>'id')::uuid=h.id and u.value::uuid=c.usuario_id);\n\n  for v_hito in select value from jsonb_array_elements(p_hitos) loop\n    insert into public.hitos_colaboradores(hito_id,usuario_id,hora_programada)\n      select (v_hito->>'id')::uuid,value::uuid,(v_hito->>'fecha_programada')::timestamptz\n      from jsonb_array_elements_text(v_hito->'colaboradores')\n      on conflict do nothing;\n  end loop;\n\n  update public.hitos_colaboradores c set hora_programada=h.fecha_programada\n    from public.hitos_itinerario h\n    where h.id=c.hito_id and h.asignacion_id=p_assignment and c.confirmado_at is null;\n\n  delete from public.asignacion_supervisores where asignacion_id=p_assignment;\n  insert into public.asignacion_supervisores\n    select distinct p_assignment,value::uuid\n    from jsonb_array_elements_text(p_supervisores);\n\n  insert into sla_private.windows(hito_id,hora_programada)\n    select id,fecha_programada from public.hitos_itinerario where asignacion_id=p_assignment\n    on conflict(hito_id) do update set hora_programada=excluded.hora_programada;\n\n  delete from sla_private.participants\n    where hito_id in(select id from public.hitos_itinerario where asignacion_id=p_assignment);\n  insert into sla_private.participants\n    select c.hito_id,c.usuario_id from public.hitos_colaboradores c\n    join public.hitos_itinerario h on h.id=c.hito_id\n    where h.asignacion_id=p_assignment;\nend\n$function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "milestone_private",
+      "signature": "milestone_private.update_legacy(uuid,jsonb,uuid[],jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION milestone_private.update_legacy(p_asignacion_id uuid, p_asignacion jsonb, p_empleados uuid[], p_hitos jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_old public.asignaciones%rowtype;\n  v_hito jsonb;\n  v_progress boolean;\n  v_count integer;\nbegin\n  if auth.uid() is null or not coalesce(public.es_admin(), false) then\n    raise exception 'Solo administradores pueden editar asignaciones' using errcode = '42501';\n  end if;\n\n  select * into v_old\n  from public.asignaciones\n  where id = p_asignacion_id\n  for update;\n  if not found then\n    raise exception 'La asignacion ya no existe' using errcode = 'P0002';\n  end if;\n\n  perform 1\n  from public.hitos_itinerario\n  where asignacion_id = p_asignacion_id\n  order by orden\n  for update;\n\n  if nullif(btrim(p_asignacion->>'titulo'), '') is null\n     or coalesce(cardinality(p_empleados), 0) = 0\n     or coalesce(p_asignacion->>'nivel_prioridad', '') not in ('baja', 'media', 'alta') then\n    raise exception 'Revisa titulo, responsables y prioridad' using errcode = '23514';\n  end if;\n  if (p_asignacion->>'tipo_flujo') is distinct from v_old.tipo_flujo then\n    raise exception 'No se puede cambiar el tipo de una asignacion existente' using errcode = '23514';\n  end if;\n  if jsonb_typeof(p_hitos) is distinct from 'array' then\n    raise exception 'Itinerario invalido' using errcode = '23514';\n  end if;\n\n  v_count := jsonb_array_length(p_hitos);\n  if v_count = 0 then\n    raise exception 'La asignacion requiere al menos un hito' using errcode = '23514';\n  end if;\n\n  if v_old.tipo_flujo = 'campo' then\n    if nullif(btrim(p_asignacion->>'ubicacion'), '') is null then\n      raise exception 'Campo requiere ubicacion e itinerario' using errcode = '23514';\n    end if;\n  elsif nullif(p_asignacion->>'ubicacion', '') is not null then\n    raise exception 'Administracion no admite ubicacion' using errcode = '23514';\n  end if;\n\n  if exists (\n    select 1 from jsonb_array_elements(p_hitos) h\n    where nullif(btrim(h->>'descripcion'), '') is null\n      or nullif(h->>'fecha_programada', '') is null\n      or nullif(h->>'id', '') is null\n      or coalesce((h->>'orden')::integer, 0) < 1\n  ) then\n    raise exception 'Cada hito requiere titulo, fecha y orden' using errcode = '23514';\n  end if;\n  if (select count(distinct h->>'id') from jsonb_array_elements(p_hitos) h) <> v_count\n    or (select count(distinct h->>'orden') from jsonb_array_elements(p_hitos) h) <> v_count then\n    raise exception 'Los hitos deben tener IDs y ordenes unicos' using errcode = '23514';\n  end if;\n  if exists (\n    select 1 from (\n      select (h->>'fecha_programada')::timestamptz fecha,\n        lag((h->>'fecha_programada')::timestamptz)\n          over (order by (h->>'orden')::integer) anterior\n      from jsonb_array_elements(p_hitos) h\n    ) ordered_hitos\n    where fecha < anterior\n  ) then\n    raise exception 'Las fechas de los hitos deben seguir el orden del itinerario' using errcode = '23514';\n  end if;\n  if v_old.tipo_flujo = 'administrativa' and exists (\n    select 1 from jsonb_array_elements(p_hitos) h\n    where (h->>'fecha_programada')::timestamptz < v_old.fecha_creacion\n  ) then\n    raise exception 'Los hitos administrativos no pueden ser anteriores a la creacion' using errcode = '23514';\n  end if;\n  if exists (\n    select 1\n    from jsonb_array_elements(p_hitos) j\n    join public.hitos_itinerario h on h.id = (j->>'id')::uuid\n    where h.asignacion_id <> p_asignacion_id\n  ) then\n    raise exception 'Hito ajeno a la asignacion' using errcode = '42501';\n  end if;\n\n  select exists (\n    select 1 from public.hitos_itinerario\n    where asignacion_id = p_asignacion_id\n      and (coalesce(completado, false) or estado_hito = 'completado')\n  ) into v_progress;\n\n  if v_progress and exists (\n    select 1 from public.hitos_itinerario h\n    where h.asignacion_id = p_asignacion_id\n      and (coalesce(h.completado, false) or h.estado_hito = 'completado')\n      and not exists (\n        select 1 from jsonb_array_elements(p_hitos) j\n        where (j->>'id')::uuid = h.id and (j->>'orden')::integer = h.orden\n      )\n  ) then\n    raise exception 'Los hitos completados deben conservarse en su posicion original' using errcode = '23514';\n  end if;\n\n  update public.asignaciones\n  set titulo = btrim(p_asignacion->>'titulo'),\n    ubicacion = nullif(btrim(p_asignacion->>'ubicacion'), ''),\n    nivel_prioridad = p_asignacion->>'nivel_prioridad',\n    instrucciones = nullif(btrim(p_asignacion->>'instrucciones'), ''),\n    fecha_limite = case when v_old.tipo_flujo = 'administrativa' then (\n      select (h->>'fecha_programada')::timestamptz\n      from jsonb_array_elements(p_hitos) h\n      order by (h->>'orden')::integer desc\n      limit 1\n    ) else null end\n  where id = p_asignacion_id;\n\n  delete from public.asignacion_equipo\n  where asignacion_id = p_asignacion_id;\n  insert into public.asignacion_equipo(asignacion_id, perfil_id)\n    select p_asignacion_id, e\n    from (select distinct unnest(p_empleados) e) s;\n\n  delete from public.hitos_itinerario h\n  where asignacion_id = p_asignacion_id\n    and not exists (\n      select 1 from jsonb_array_elements(p_hitos) j\n      where (j->>'id')::uuid = h.id\n    );\n\n  for v_hito in select value from jsonb_array_elements(p_hitos) loop\n    insert into public.hitos_itinerario(\n      id, asignacion_id, orden, descripcion, hora_estimada,\n      fecha_programada, estado_hito, completado\n    ) values (\n      (v_hito->>'id')::uuid, p_asignacion_id, (v_hito->>'orden')::integer,\n      btrim(v_hito->>'descripcion'), (v_hito->>'hora_estimada')::time,\n      (v_hito->>'fecha_programada')::timestamptz, 'bloqueado', false\n    )\n    on conflict(id) do update\n    set orden = excluded.orden,\n      descripcion = excluded.descripcion,\n      hora_estimada = excluded.hora_estimada,\n      fecha_programada = excluded.fecha_programada;\n  end loop;\n\n  update public.hitos_itinerario\n  set estado_hito = 'bloqueado'\n  where asignacion_id = p_asignacion_id\n    and not (coalesce(completado, false) or estado_hito = 'completado');\n  update public.hitos_itinerario\n  set estado_hito = 'en_curso'\n  where id = (\n    select id from public.hitos_itinerario\n    where asignacion_id = p_asignacion_id\n      and not (coalesce(completado, false) or estado_hito = 'completado')\n    order by orden\n    limit 1\n  );\n\n  update public.asignaciones\n  set estado = case\n    when not exists (\n      select 1 from public.hitos_itinerario h\n      where h.asignacion_id = p_asignacion_id\n        and not (coalesce(h.completado, false) or h.estado_hito = 'completado')\n    ) then 'completada'\n    when exists (\n      select 1 from public.hitos_itinerario h\n      where h.asignacion_id = p_asignacion_id\n        and (coalesce(h.completado, false) or h.estado_hito = 'completado')\n    ) then 'en_curso'\n    else 'pendiente'\n  end\n  where id = p_asignacion_id;\nend;\n$function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "milestone_private",
+      "signature": "milestone_private.validate_members(jsonb,jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION milestone_private.validate_members(p_hitos jsonb, p_supervisores jsonb)\n RETURNS uuid[]\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare j jsonb; members uuid[]; supervisors uuid[];\nbegin\n  if auth.uid() is null or not public.account_is_approved() or not public.es_admin() then\n    raise exception 'Solo administradores pueden gestionar hitos' using errcode='42501'; end if;\n  if jsonb_typeof(p_hitos) is distinct from 'array' or jsonb_array_length(p_hitos)=0 then\n    raise exception 'Agrega al menos un hito'; end if;\n  for j in select value from jsonb_array_elements(p_hitos) loop\n    if jsonb_typeof(j->'colaboradores') is distinct from 'array' then\n      raise exception 'Actualiza la app: selecciona colaboradores en cada hito'; end if;\n    if jsonb_array_length(j->'colaboradores')=0 then raise exception 'Cada hito necesita colaboradores'; end if;\n  end loop;\n  if jsonb_typeof(p_supervisores) is distinct from 'array' then raise exception 'Supervisores invalidos'; end if;\n  select coalesce(array_agg(distinct u.value::uuid),'{}') into members\n    from jsonb_array_elements(p_hitos) h cross join lateral jsonb_array_elements_text(h->'colaboradores') u;\n  select coalesce(array_agg(distinct value::uuid),'{}') into supervisors from jsonb_array_elements_text(p_supervisores);\n  if exists(select 1 from unnest(members||supervisors) u where not exists(\n    select 1 from public.perfiles p join account_private.access a on a.user_id=p.id\n    where p.id=u and a.estado='aprobada')) then\n    raise exception 'Selecciona usuarios con acceso aprobado'; end if;\n  return array(select distinct unnest(members||supervisors));\nend $function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "sla_private",
+      "signature": "sla_private.advance_from_check_in()",
+      "definition": "CREATE OR REPLACE FUNCTION sla_private.advance_from_check_in()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare assignment_id uuid;\nbegin\n  select h.asignacion_id into assignment_id\n  from public.hitos_itinerario h where h.id = new.hito_id;\n  if assignment_id is not null then perform sla_private.advance(assignment_id); end if;\n  return new;\nend $function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "sla_private",
+      "signature": "sla_private.advance(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION sla_private.advance(p_assignment uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  perform 1 from public.asignaciones where id = p_assignment for update;\n  if not found then return; end if;\n\n  with progress as (\n    select h.id, count(c.usuario_id) > 0 and bool_and(c.confirmado_at is not null) as done,\n      max(c.confirmado_at) as confirmed_at\n    from public.hitos_itinerario h\n    left join public.hitos_colaboradores c on c.hito_id = h.id\n    where h.asignacion_id = p_assignment\n    group by h.id\n  )\n  update public.hitos_itinerario h\n  set completado = p.done,\n      estado_hito = case when p.done then 'completado' else 'en_curso' end,\n      hora_real_completado = case when p.done then p.confirmed_at else null end\n  from progress p\n  where h.id = p.id\n    and (h.completado,h.estado_hito,h.hora_real_completado) is distinct from\n      (p.done,case when p.done then 'completado' else 'en_curso' end,\n       case when p.done then p.confirmed_at else null end);\n\n  update public.asignaciones a\n  set estado = case\n    when exists (\n      select 1 from public.hitos_colaboradores c\n      join public.hitos_itinerario h on h.id = c.hito_id\n      where h.asignacion_id = a.id\n    ) and not exists (\n      select 1 from public.hitos_colaboradores c\n      join public.hitos_itinerario h on h.id = c.hito_id\n      where h.asignacion_id = a.id and c.confirmado_at is null\n    ) then 'completada'\n    when exists (\n      select 1 from public.hitos_colaboradores c\n      join public.hitos_itinerario h on h.id = c.hito_id\n      where h.asignacion_id = a.id and c.confirmado_at is not null\n    ) then 'en_curso'\n    else 'pendiente'\n  end\n  where a.id = p_assignment;\nend $function$\n",
+      "owner": "postgres"
+    },
+    {
+      "schema": "sla_private",
+      "signature": "sla_private.protect_history()",
+      "definition": "CREATE OR REPLACE FUNCTION sla_private.protect_history()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if exists(select 1 from public.confirmaciones_hitos where hito_id=old.id) then\n    if tg_op='DELETE' then\n      if exists(select 1 from public.asignaciones where id=old.asignacion_id)\n        and not (coalesce(current_setting('soundisco.deleting_assignment',true),'')=old.asignacion_id::text\n          and public.es_admin()) then\n        raise exception 'No puedes eliminar un hito con confirmaciones'; end if;\n      return old;\n    end if;\n    if (new.asignacion_id,new.orden,new.fecha_programada) is distinct from (old.asignacion_id,old.orden,old.fecha_programada) then\n      raise exception 'No puedes cambiar el horario ni orden de un hito confirmado'; end if;\n  end if;\n  return new;\nend $function$\n",
+      "owner": "postgres"
+    }
+  ],
+  "triggers": [
+    {
+      "schema": "account_private",
+      "name": "access",
+      "definition": "CREATE TRIGGER account_approval_sync_auth AFTER INSERT OR UPDATE OF estado ON account_private.access FOR EACH ROW EXECUTE FUNCTION account_private.sync_approved_auth()"
+    },
+    {
+      "schema": "notification_private",
+      "name": "assignment_events",
+      "definition": "CREATE CONSTRAINT TRIGGER flush_assignment AFTER INSERT ON notification_private.assignment_events DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION notification_private.flush_assignment()"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "definition": "CREATE TRIGGER account_assignee_guard BEFORE INSERT OR UPDATE ON asignacion_equipo FOR EACH ROW EXECUTE FUNCTION account_private.check_assignee()"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "definition": "CREATE CONSTRAINT TRIGGER availability_team AFTER INSERT OR DELETE OR UPDATE ON asignacion_equipo DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION scheduling_private.assignment_changed()"
+    },
+    {
+      "schema": "public",
+      "name": "asignacion_equipo",
+      "definition": "CREATE TRIGGER notification_capture BEFORE INSERT OR DELETE OR UPDATE ON asignacion_equipo FOR EACH ROW EXECUTE FUNCTION notification_private.capture_assignment()"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "definition": "CREATE CONSTRAINT TRIGGER availability_assignment AFTER INSERT OR DELETE OR UPDATE ON asignaciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION scheduling_private.assignment_changed()"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "definition": "CREATE TRIGGER cancel_deleted_assignment_reminders AFTER DELETE ON asignaciones FOR EACH ROW EXECUTE FUNCTION notification_private.cancel_deleted_assignment_reminders()"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "definition": "CREATE TRIGGER cancel_stale_assignment_reminders AFTER DELETE ON asignaciones FOR EACH ROW EXECUTE FUNCTION notification_private.cancel_stale_milestone_reminders()"
+    },
+    {
+      "schema": "public",
+      "name": "asignaciones",
+      "definition": "CREATE TRIGGER notification_capture BEFORE INSERT OR DELETE OR UPDATE ON asignaciones FOR EACH ROW EXECUTE FUNCTION notification_private.capture_assignment()"
+    },
+    {
+      "schema": "public",
+      "name": "comunicados",
+      "definition": "CREATE TRIGGER moderate_bulletin_content BEFORE INSERT OR UPDATE OF asunto, mensaje ON comunicados FOR EACH ROW EXECUTE FUNCTION moderation_private.validate_content()"
+    },
+    {
+      "schema": "public",
+      "name": "comunicados",
+      "definition": "CREATE TRIGGER notification_bulletin AFTER INSERT OR DELETE OR UPDATE ON comunicados FOR EACH ROW EXECUTE FUNCTION notification_private.bulletin_event()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "definition": "CREATE TRIGGER advance_assignment_from_check_in AFTER UPDATE OF estado, confirmado_at ON hitos_colaboradores FOR EACH ROW WHEN (old.confirmado_at IS DISTINCT FROM new.confirmado_at OR old.estado IS DISTINCT FROM new.estado) EXECUTE FUNCTION sla_private.advance_from_check_in()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "definition": "CREATE TRIGGER cancel_stale_member_reminders AFTER DELETE OR UPDATE ON hitos_colaboradores FOR EACH ROW EXECUTE FUNCTION notification_private.cancel_stale_milestone_reminders()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_colaboradores",
+      "definition": "CREATE TRIGGER notification_member_reminder AFTER INSERT OR UPDATE OF confirmado_at ON hitos_colaboradores FOR EACH ROW EXECUTE FUNCTION notification_private.sync_member_reminder()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE CONSTRAINT TRIGGER availability_milestones AFTER INSERT OR DELETE OR UPDATE ON hitos_itinerario DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION scheduling_private.assignment_changed()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE TRIGGER cancel_stale_milestone_reminders AFTER DELETE OR UPDATE ON hitos_itinerario FOR EACH ROW EXECUTE FUNCTION notification_private.cancel_stale_milestone_reminders()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE TRIGGER granular_protect_delete BEFORE DELETE ON hitos_itinerario FOR EACH ROW EXECUTE FUNCTION sla_private.protect_history()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE TRIGGER notification_capture BEFORE INSERT OR DELETE OR UPDATE ON hitos_itinerario FOR EACH ROW EXECUTE FUNCTION notification_private.capture_assignment()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE TRIGGER notification_milestone_reminders AFTER UPDATE OF fecha_programada ON hitos_itinerario FOR EACH ROW EXECUTE FUNCTION notification_private.sync_milestone_reminders()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE TRIGGER sla_protect_history BEFORE UPDATE ON hitos_itinerario FOR EACH ROW EXECUTE FUNCTION sla_private.protect_history()"
+    },
+    {
+      "schema": "public",
+      "name": "hitos_itinerario",
+      "definition": "CREATE TRIGGER sync_assignment_deadline AFTER INSERT OR DELETE OR UPDATE ON hitos_itinerario FOR EACH ROW EXECUTE FUNCTION sync_assignment_deadline_from_milestones()"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "definition": "CREATE TRIGGER moderate_note_content BEFORE INSERT OR UPDATE OF contenido ON notas_asignacion FOR EACH ROW EXECUTE FUNCTION moderation_private.validate_content()"
+    },
+    {
+      "schema": "public",
+      "name": "notas_asignacion",
+      "definition": "CREATE TRIGGER notification_assignment_note AFTER INSERT ON notas_asignacion FOR EACH ROW EXECUTE FUNCTION notification_private.assignment_note_added()"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "definition": "CREATE TRIGGER account_notification_filter BEFORE INSERT ON notificaciones_app FOR EACH ROW EXECUTE FUNCTION account_private.filter_notification()"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "definition": "CREATE TRIGGER android_notification_push AFTER INSERT ON notificaciones_app FOR EACH ROW EXECUTE FUNCTION android_push_private.enqueue_push()"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "definition": "CREATE TRIGGER guard_reminder_insert BEFORE INSERT ON notificaciones_app FOR EACH ROW EXECUTE FUNCTION notification_private.guard_reminder_insert()"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_app",
+      "definition": "CREATE TRIGGER notification_push AFTER INSERT ON notificaciones_app FOR EACH ROW EXECUTE FUNCTION notification_private.enqueue_push()"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "definition": "CREATE TRIGGER account_access_created AFTER INSERT ON perfiles FOR EACH ROW EXECUTE FUNCTION account_private.new_profile()"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "definition": "CREATE TRIGGER notification_profile_registered AFTER INSERT ON perfiles FOR EACH ROW EXECUTE FUNCTION notification_private.profile_registered()"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "definition": "CREATE TRIGGER protect_profile_identity BEFORE UPDATE ON perfiles FOR EACH ROW EXECUTE FUNCTION account_private.protect_profile_identity()"
+    },
+    {
+      "schema": "public",
+      "name": "perfiles",
+      "definition": "CREATE TRIGGER proteger_rol_perfil BEFORE INSERT OR UPDATE ON perfiles FOR EACH ROW EXECUTE FUNCTION proteger_rol_perfil()"
+    }
+  ],
+  "view": " SELECT id,\n        CASE\n            WHEN estado = 'completada'::text THEN 'completada'::text\n            WHEN fecha_limite <= now() THEN 'vencida'::text\n            ELSE estado\n        END AS estado\n   FROM asignaciones a;",
+  "indexes": [
+    {
+      "definition": "CREATE INDEX push_device_profile ON notification_private.devices USING btree (perfil_id)"
+    },
+    {
+      "definition": "CREATE INDEX android_outbox_installation ON android_push_private.outbox USING btree (installation)"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX notification_event_recipient ON public.notificaciones_app USING btree (perfil_id, evento_key)"
+    },
+    {
+      "definition": "CREATE INDEX notification_assignment_reminders ON public.notificaciones_app USING btree (destino_id) WHERE ((destino_tipo = 'asignacion'::text) AND (tipo = 'recordatorio'::text))"
+    },
+    {
+      "definition": "CREATE INDEX supervisors_user ON public.asignacion_supervisores USING btree (usuario_id, asignacion_id)"
+    },
+    {
+      "definition": "CREATE INDEX android_outbox_recipient ON android_push_private.outbox USING btree (recipient)"
+    },
+    {
+      "definition": "CREATE INDEX android_outbox_pending ON android_push_private.outbox USING btree (next_attempt) WHERE ((sent_at IS NULL) AND (attempts < 8))"
+    },
+    {
+      "definition": "CREATE INDEX android_outbox_sent ON android_push_private.outbox USING btree (sent_at) WHERE (sent_at IS NOT NULL)"
+    },
+    {
+      "definition": "CREATE INDEX assignments_pending_deadline ON public.asignaciones USING btree (fecha_limite) WHERE (estado <> ALL (ARRAY['completada'::text, 'vencida'::text]))"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX push_unique_device ON notification_private.devices USING btree (token, environment)"
+    },
+    {
+      "definition": "CREATE INDEX notes_user_created ON public.notas_asignacion USING btree (usuario_id, created_at)"
+    },
+    {
+      "definition": "CREATE INDEX outbox_sent_retention ON notification_private.outbox USING btree (sent_at) WHERE (sent_at IS NOT NULL)"
+    },
+    {
+      "definition": "CREATE INDEX android_push_pending ON android_push_private.outbox USING btree (next_attempt) WHERE (sent_at IS NULL)"
+    },
+    {
+      "definition": "CREATE INDEX notes_assignment_time ON public.notas_asignacion USING btree (asignacion_id, created_at)"
+    },
+    {
+      "definition": "CREATE INDEX assignments_history ON public.asignaciones USING btree (fecha_creacion DESC, id DESC)"
+    },
+    {
+      "definition": "CREATE INDEX milestones_assignment_order ON public.hitos_itinerario USING btree (asignacion_id, orden DESC)"
+    },
+    {
+      "definition": "CREATE INDEX team_employee_assignment ON public.asignacion_equipo USING btree (perfil_id, asignacion_id)"
+    },
+    {
+      "definition": "CREATE INDEX confirmations_user_time ON public.confirmaciones_hitos USING btree (usuario_id, created_at)"
+    },
+    {
+      "definition": "CREATE INDEX milestone_reminders_next ON notification_private.milestone_reminders USING btree (next_reminder_at, hito_id, usuario_id)"
+    },
+    {
+      "definition": "CREATE INDEX confirmations_user_schedule ON public.confirmaciones_hitos USING btree (usuario_id, hora_programada)"
+    },
+    {
+      "definition": "CREATE INDEX outbox_ready ON notification_private.outbox USING btree (next_attempt) WHERE ((sent_at IS NULL) AND (attempts < 8))"
+    },
+    {
+      "definition": "CREATE INDEX confirmations_assignment ON public.confirmaciones_hitos USING btree (asignacion_id)"
+    },
+    {
+      "definition": "CREATE INDEX sla_participants_user ON sla_private.participants USING btree (usuario_id, hito_id)"
+    },
+    {
+      "definition": "CREATE INDEX note_reports_pending ON moderation_private.note_reports USING btree (created_at, id) WHERE (resolved_at IS NULL)"
+    },
+    {
+      "definition": "CREATE INDEX notification_unread_recipient ON public.notificaciones_app USING btree (perfil_id) WHERE (leida IS NOT TRUE)"
+    },
+    {
+      "definition": "CREATE INDEX assignments_state_history ON public.asignaciones USING btree (estado, fecha_creacion DESC, id DESC)"
+    },
+    {
+      "definition": "CREATE INDEX outbox_installation ON notification_private.outbox USING btree (installation)"
+    },
+    {
+      "definition": "CREATE INDEX notification_recipient_date ON public.notificaciones_app USING btree (perfil_id, fecha_creacion DESC)"
+    },
+    {
+      "definition": "CREATE INDEX android_devices_recipient ON android_push_private.devices USING btree (perfil_id)"
+    },
+    {
+      "definition": "CREATE INDEX hitos_colaboradores_usuario ON public.hitos_colaboradores USING btree (usuario_id, hito_id)"
+    }
+  ],
+  "extraFunctions": [
+    {
+      "definition": "CREATE OR REPLACE FUNCTION account_private.normalizar_cargo(p_cargo text)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\n  select case lower(btrim(coalesce(p_cargo, '')))\n    when 'técnico de sonido' then 'Técnico de sonido'\n    when 'tecnico de sonido' then 'Técnico de sonido'\n    when 'técnico audiovisuales' then 'Técnico audiovisuales'\n    when 'tecnico audiovisuales' then 'Técnico audiovisuales'\n    when 'técnico audiovisual' then 'Técnico audiovisuales'\n    when 'tecnico audiovisual' then 'Técnico audiovisuales'\n    when 'técnico de pantallas' then 'Técnico audiovisuales'\n    when 'tecnico de pantallas' then 'Técnico audiovisuales'\n    when 'técnico de iluminación' then 'Técnico de iluminación'\n    when 'tecnico de iluminación' then 'Técnico de iluminación'\n    when 'tecnico de iluminacion' then 'Técnico de iluminación'\n    when 'encargado de estructura' then 'Encargado de estructura'\n    when 'técnico de estructuras' then 'Encargado de estructura'\n    when 'tecnico de estructuras' then 'Encargado de estructura'\n    when 'encargado de almacén' then 'Encargado de almacén'\n    when 'encargado de almacen' then 'Encargado de almacén'\n    when 'supervisor' then 'Supervisor'\n    when 'jefe de cuadrilla' then 'Supervisor'\n    when 'administrativo' then 'Administrativo'\n    when 'administración' then 'Administrativo'\n    when 'administracion' then 'Administrativo'\n    when 'contabilidad' then 'Contabilidad'\n    when 'recursos humanos' then 'Recursos Humanos'\n    when 'marketing digital' then 'Marketing Digital'\n    when 'chofer/técnico de sonido' then 'Chofer/Técnico de sonido'\n    when 'chofer/tecnico de sonido' then 'Chofer/Técnico de sonido'\n    when 'chofer/técnico de audiovisuales' then 'Chofer/Técnico de audiovisuales'\n    when 'chofer/tecnico de audiovisuales' then 'Chofer/Técnico de audiovisuales'\n    when 'chofer/técnico de iluminación' then 'Chofer/Técnico de iluminación'\n    when 'chofer/tecnico de iluminación' then 'Chofer/Técnico de iluminación'\n    when 'chofer/tecnico de iluminacion' then 'Chofer/Técnico de iluminación'\n    when 'chofer/encargado de estructura' then 'Chofer/Encargado de estructura'\n    when 'chofer/encargado de almacén' then 'Chofer/Encargado de almacén'\n    when 'chofer/encargado de almacen' then 'Chofer/Encargado de almacén'\n    else null\n  end;\n$function$\n"
+    }
+  ]
+}

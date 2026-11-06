@@ -8,15 +8,21 @@ struct AdminDashboardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private let nombre: String
     private let onCreateAssignment: (() -> Void)?
+    private let isActive: Bool
+    private let refreshRevision: Int
 
-    init(nombre: String, model: AdminDashboardViewModel? = nil, onCreateAssignment: (() -> Void)? = nil) {
+    init(nombre: String, model: AdminDashboardViewModel? = nil, onCreateAssignment: (() -> Void)? = nil,
+         isActive: Bool = true, refreshRevision: Int = 0) {
         self.nombre = nombre
         self.onCreateAssignment = onCreateAssignment
+        self.isActive = isActive
+        self.refreshRevision = refreshRevision
         _model = StateObject(wrappedValue: model ?? AdminDashboardViewModel())
     }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     AgendaHomeHeader(name: nombre, searching: $searching)
@@ -36,7 +42,7 @@ struct AdminDashboardView: View {
                     ViewThatFits(in: .horizontal) {
                         HStack { sectionTitle; Spacer(); showAll }
                         VStack(alignment: .leading, spacing: 8) { sectionTitle; showAll }
-                    }
+                    }.id("admin-assignment-page")
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
                             ForEach(FiltroAsignacionAdmin.homeOptions, id: \.self) { filter in
@@ -53,7 +59,7 @@ struct AdminDashboardView: View {
                         ContentUnavailableView {
                             Label("No se pudo actualizar el panel", systemImage: "wifi.exclamationmark")
                         } description: { Text(error) } actions: {
-                            Button("Reintentar") { Task { await model.cargarMetricas() } }
+                            Button("Reintentar") { Task { await model.reintentar() } }
                         }
                     } else if !model.isLoading && model.asignacionesFiltradas.isEmpty {
                         ContentUnavailableView("Sin asignaciones", systemImage: "tray",
@@ -68,16 +74,22 @@ struct AdminDashboardView: View {
                                 AssignmentCard(assignment: Assignment(assignment), now: context.date)
                             }
                             .buttonStyle(.plain)
-                            .task { await model.cargarSiguientePaginaIfNeeded(current: assignment) }
                         }
                         if model.isLoadingMore {
                             ProgressView("Cargando más…").padding(.vertical, 12)
                         }
                     }
+                    if model.hasMore || model.pageIndex > 0 {
+                        AssignmentPaginationControls(pageIndex: model.pageIndex, hasMore: model.hasMore,
+                            loading: model.isLoading || model.isLoadingMore,
+                            previous: { Task { await model.cargarPaginaAnterior(); proxy.scrollTo("admin-assignment-page", anchor: .top) } },
+                            next: { Task { await model.cargarSiguientePagina(); proxy.scrollTo("admin-assignment-page", anchor: .top) } })
+                    }
                 }.padding(20).frame(maxWidth: 680).frame(maxWidth: .infinity)
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .refreshable { await model.cargarMetricas() }
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .tint(Brand.red)
@@ -90,7 +102,10 @@ struct AdminDashboardView: View {
         .onChange(of: model.busqueda) { _, _ in
             if searching { model.programarBusqueda() }
         }
-        .task { await model.cargarMetricas() }
+        .task(id: "\(isActive)-\(refreshRevision)") {
+            guard isActive else { return }
+            await model.cargarMetricas()
+        }
         .sheet(isPresented: $showingCreation) {
             NavigationStack {
                 AdminCreationTypeView {

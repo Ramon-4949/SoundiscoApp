@@ -8,15 +8,17 @@ struct HomeView: View {
     @ObservedObject private var push = PushNotificationService.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var tab = 0
+    @State private var assignmentRefreshRevision = 0
 
     var body: some View {
         TabView(selection: $tab) {
             NavigationStack {
                 if let employee = profile.profile {
                     if employee.rol == "admin" {
-                        AdminDashboardView(nombre: employee.nombre_completo ?? auth.displayName)
+                        AdminDashboardView(nombre: employee.nombre_completo ?? auth.displayName,
+                            isActive: tab == 0, refreshRevision: assignmentRefreshRevision)
                     } else {
-                        AssignmentListView(agenda: agenda)
+                        AssignmentListView(agenda: agenda, isActive: tab == 0, refreshRevision: assignmentRefreshRevision)
                     }
                 } else if let error = profile.error {
                     ContentUnavailableView {
@@ -36,7 +38,7 @@ struct HomeView: View {
             NavigationStack { BulletinsView() }
                 .tabItem { Label("Mensajes", systemImage: "bubble.left") }.tag(1)
                 .badge(notifications.unreadMessageCount)
-            NavigationStack { AgendaCalendarView(agenda: agenda) }
+            NavigationStack { AgendaCalendarView(isActive: tab == 2, refreshRevision: assignmentRefreshRevision) }
                 .tabItem { Label("Calendario", systemImage: "calendar") }.tag(2)
             NavigationStack { ProfileView() }
                 .tabItem { Label("Perfil", systemImage: "person.crop.circle") }.tag(3)
@@ -48,23 +50,20 @@ struct HomeView: View {
             if let id = auth.userID { await notifications.observe(userID: id) }
         }
         .task(id: auth.userID) {
-            if let id = auth.userID { await agenda.observe(userID: id) }
-        }
-        .task(id: auth.userID) {
             if let id = auth.userID { await push.connect(userID: id) }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, let id = auth.userID {
+                assignmentRefreshRevision += 1
                 Task {
                     await push.connect(userID: id)
                     await notifications.load(userID: id)
-                    await agenda.load(userID: id)
                 }
             }
         }
         .onChange(of: notifications.items.map(\.id)) { oldIDs, newIDs in
-            guard oldIDs != newIDs, let id = auth.userID else { return }
-            Task { await agenda.load(userID: id) }
+            guard oldIDs != newIDs else { return }
+            assignmentRefreshRevision += 1
         }
         .onChange(of: push.receivedNotificationID) { _, _ in
             guard let id = auth.userID else { return }

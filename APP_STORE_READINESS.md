@@ -63,6 +63,8 @@ No se eliminó ninguna cuenta de producción para probar este flujo. Antes del e
 
 Preparar cuentas de prueba aprobadas de empleado y administrador con datos ficticios, sin información de clientes ni empleados reales. El empleado debe tener al menos una asignación con hitos. Facilitar credenciales en App Review Information, contacto atendido y las instrucciones de navegación. No utilizar el admin real de la empresa.
 
+Se preparó `Supabase/admin_content_ownership.sql` para vincular cada asignación y comunicado al administrador que lo creó, sin un entorno demo separado. **Pendiente de aplicar en producción y validar desde la app.** El usuario confirmó a `yankee_admin@gmail.com` como creador de todos los registros anteriores y el script ya está configurado con ese correo. Instrucciones: `Supabase/ADMIN_CONTENT_OWNERSHIP.md`. La lista de cuentas y los avisos de registro siguen compartidos; este cambio no convierte al admin de pruebas en una cuenta aislada de todos los datos personales.
+
 El revisor no debe esperar la aprobación de una cuenta recién creada. No hay bypass de autenticación ni permisos especiales para Apple. Mantener Supabase y Render disponibles durante la revisión.
 
 Texto base para Review Notes, una vez activado el SQL:

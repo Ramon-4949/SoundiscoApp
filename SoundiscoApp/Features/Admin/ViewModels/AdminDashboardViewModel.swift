@@ -9,15 +9,17 @@ final class AdminDashboardViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var isLoadingMore = false
     @Published private(set) var hasMore = false
+    @Published private(set) var pageIndex = 0
     @Published private(set) var errorMessage: String?
     @Published var filtro: FiltroAsignacionAdmin = .pendientes
     @Published var busqueda = ""
 
     private let client: SupabaseClient
-    private let pageSize = 50
+    private let pageSize = 10
     private var nextOffset: Int?
     private var generation = 0
     private var searchTask: Task<Void, Never>?
+    private var failedOffset: Int?
 
     var asignacionesFiltradas: [Asignacion] { asignaciones }
 
@@ -26,6 +28,7 @@ final class AdminDashboardViewModel: ObservableObject {
     }
 
     func cargarMetricas() async {
+        failedOffset = nil
         generation += 1
         let run = generation
         isLoading = true
@@ -37,11 +40,11 @@ final class AdminDashboardViewModel: ObservableObject {
             async let summaryRequest: DashboardSummaryResponse = client
                 .rpc("admin_dashboard_summary")
                 .execute().value
-            async let pageRequest = fetchPage(offset: 0)
+            async let pageRequest = fetchPage(offset: pageIndex * pageSize)
             let (summary, page) = try await (summaryRequest, pageRequest)
             guard !Task.isCancelled, generation == run else { return }
             metricas = summary.metrics
-            apply(page, replacing: true)
+            apply(page)
         } catch {
             guard !Task.isCancelled, generation == run else { return }
             errorMessage = AuthNotice.failure(error).message
@@ -49,7 +52,7 @@ final class AdminDashboardViewModel: ObservableObject {
     }
 
     func aplicarFiltro(_ nuevoFiltro: FiltroAsignacionAdmin) async {
-        guard filtro != nuevoFiltro else { return }
+        searchTask?.cancel()
         filtro = nuevoFiltro
         await reloadAssignments()
     }
@@ -60,6 +63,14 @@ final class AdminDashboardViewModel: ObservableObject {
 
     func programarBusqueda() {
         searchTask?.cancel()
+        generation += 1
+        asignaciones = []
+        pageIndex = 0
+        hasMore = false
+        failedOffset = nil
+        errorMessage = nil
+        isLoading = true
+        isLoadingMore = false
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -67,18 +78,36 @@ final class AdminDashboardViewModel: ObservableObject {
         }
     }
 
-    func cargarSiguientePaginaIfNeeded(current assignment: Asignacion) async {
-        guard assignment.id == asignaciones.last?.id, hasMore, !isLoading, !isLoadingMore,
-              let offset = nextOffset else { return }
+    func cargarSiguientePagina() async {
+        guard hasMore, let offset = nextOffset else { return }
+        await cargarPagina(offset: offset)
+    }
+
+    func cargarPaginaAnterior() async {
+        guard pageIndex > 0 else { return }
+        await cargarPagina(offset: (pageIndex - 1) * pageSize)
+    }
+
+    func reintentar() async {
+        if let failedOffset { await cargarPagina(offset: failedOffset) }
+        else { await cargarMetricas() }
+    }
+
+    private func cargarPagina(offset: Int) async {
+        guard !isLoading, !isLoadingMore else { return }
         let run = generation
         isLoadingMore = true
+        errorMessage = nil
         defer { if generation == run { isLoadingMore = false } }
         do {
             let page = try await fetchPage(offset: offset)
             guard !Task.isCancelled, generation == run else { return }
-            apply(page, replacing: false)
+            apply(page)
+            pageIndex = offset / pageSize
+            failedOffset = nil
         } catch {
             guard !Task.isCancelled, generation == run else { return }
+            failedOffset = offset
             errorMessage = AuthNotice.failure(error).message
         }
     }
@@ -89,11 +118,15 @@ final class AdminDashboardViewModel: ObservableObject {
         isLoading = true
         isLoadingMore = false
         errorMessage = nil
+        asignaciones = []
+        pageIndex = 0
+        hasMore = false
+        failedOffset = nil
         defer { if generation == run { isLoading = false } }
         do {
             let page = try await fetchPage(offset: 0)
             guard !Task.isCancelled, generation == run else { return }
-            apply(page, replacing: true)
+            apply(page)
         } catch {
             guard !Task.isCancelled, generation == run else { return }
             errorMessage = AuthNotice.failure(error).message
@@ -109,13 +142,8 @@ final class AdminDashboardViewModel: ObservableObject {
         )).execute().value
     }
 
-    private func apply(_ page: DashboardAssignmentsPage, replacing: Bool) {
-        if replacing {
-            asignaciones = page.items
-        } else {
-            let existing = Set(asignaciones.map(\.id))
-            asignaciones.append(contentsOf: page.items.filter { !existing.contains($0.id) })
-        }
+    private func apply(_ page: DashboardAssignmentsPage) {
+        asignaciones = page.items
         hasMore = page.hasMore
         nextOffset = page.nextOffset
     }
